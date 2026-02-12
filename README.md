@@ -6,11 +6,11 @@ Also, be sure to check out the Wiki for information on how to maintain your team
 
 ## TeamName
 
-<!--The name of your team.-->
+CryptoBros
 
 ### Project Abstract
 
-<!--A one paragraph summary of what the software will do.-->
+This project is an Ethereum-based cryptocurrency ecosystem designed to bridge the gap between enterprise-grade software and decentralized finance. By leveraging a Java-integrated framework, the project provides a robust, type-safe backend for blockchain interactions, ensuring high performance and seamless integration with traditional development stacks.
 
 This is an example paragraph written in markdown. You can use *italics*, **bold**, and other formatting options. You can also <u>use inline html</u> to format your text. The example sections included in this document are not necessarily all the sections you will want, and it is possible that you won't use all the one's provided. It is your responsibility to create a document that adequately conveys all the information about your project specifications and requirements.
 
