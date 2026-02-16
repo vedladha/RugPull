@@ -191,22 +191,22 @@
 
 ## Relationships / Cardinality
 
-**1:1 (One-to-One)**  
-- `Users.user_id → UserProfiles.user_id`  
-- `Users.user_id → UserWallets.user_id`  
+**1:1 (One-to-One)**
+- `Users.user_id → UserProfiles.user_id`
+- `Users.user_id → UserWallets.user_id`
 
-**1:N (One-to-Many)**  
-- `Users.user_id → Items.user_id`  
-- `Users.user_id → Orders.user_id`  
-- `Users.user_id → Reviews.user_id`  
-- `Users.user_id → Notifications.user_id`  
-- `Items.item_id → ItemImages.item_id`  
-- `Items.item_id → Reviews.item_id`  
-- `Categories.category_id → Items.category_id`  
-- `Orders.order_id → CryptoTransactions.order_id (optional)`  
-- `Users.user_id → Tags.user_id`  
-- `CryptoTransactions.user_id → Users.user_id`  
+**1:N (One-to-Many)**
+- `Users.user_id → Items.user_id`
+- `Users.user_id → Orders.user_id`
+- `Users.user_id → Reviews.user_id`
+- `Users.user_id → Notifications.user_id`
+- `Items.item_id → ItemImages.item_id`
+- `Items.item_id → Reviews.item_id`
+- `Categories.category_id → Items.category_id`
+- `Orders.order_id → CryptoTransactions.order_id (optional)`
+- `Users.user_id → Tags.user_id`
+- `Users.user_id → CryptoTransactions.user_id`
 
-**N:M (Many-to-Many)**  
-- `Items.item_id ↔ Tags.tag_id via ItemTags`  
-- `Users.user_id ↔ Items.item_id via Wishlist`  
+**N:M (Many-to-Many)**
+- `Items.item_id ↔ Tags.tag_id via ItemTags`
+- `Users.user_id ↔ Items.item_id via Wishlist`
