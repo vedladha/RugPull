@@ -1,258 +1,114 @@
-# Specification Document
+# Team 32 Crypto Marketplace
 
-Please fill out this document to reflect your team's project. This is a living document and will need to be updated regularly. You may also remove any section to its own document (e.g. a separate standards and conventions document), however you must keep the header and provide a link to that other document under the header.
+![Team 32 logo](logo.png)
 
-Also, be sure to check out the Wiki for information on how to maintain your team's requirements.
+This document is the living specification for Team 32's CS506 project.
 
-## TeamName
+## Team Name
 
-<!--The name of your team.-->
+Rug Pullers
 
-### Project Abstract
+## Project Abstract
 
-<!--A one paragraph summary of what the software will do.-->
+Team 32 is building a crypto-enabled online marketplace where users can create accounts, list items, browse products, place orders, and track wallet activity. All monetary transactions will be done in RugPull coin.
 
-This is an example paragraph written in markdown. You can use *italics*, **bold**, and other formatting options. You can also <u>use inline html</u> to format your text. The example sections included in this document are not necessarily all the sections you will want, and it is possible that you won't use all the one's provided. It is your responsibility to create a document that adequately conveys all the information about your project specifications and requirements.
+## Customer
 
-Please view this file's source to see `<!--comments-->` with guidance on how you might use the different sections of this document. 
+People who uses Facebook marketplace or Ebay, but rather spend crypto for purchases.
 
-### Customer
+## Specification
 
-<!--A brief description of the customer for this software, both in general (the population who might eventually use such a system) and specifically for this document (the customer(s) who informed this document). Every project will have a customer from the CS506 instructional staff. Requirements should not be derived simply from discussion among team members. Ideally your customer should not only talk to you about requirements but also be excited later in the semester to use the system.-->
+### Core Functional Scope
 
-### Specification
+1. User accounts and profiles
+2. Item listing and inventory management
+3. Category and tag based discovery
+4. Orders with status tracking
+5. Wallet balances and crypto transaction history
+6. Wishlist support
+7. Item reviews and ratings
+8. User notifications
 
-<!--A detailed specification of the system. UML, or other diagrams, such as finite automata, or other appropriate specification formalisms, are encouraged over natural language.-->
+### Data Model
 
-<!--Include sections, for example, illustrating the database architecture (with, for example, an ERD).-->
+The full schema is maintained in `SCHEMA.md`.
 
-<!--Included below are some sample diagrams, including some example tech stack diagrams.-->
-
-#### Technology Stack
-
-Here are some sample technology stacks that you can use for inspiration:
-
-```mermaid
-flowchart RL
-subgraph Front End
-	A(Javascript: React)
-end
-	
-subgraph Back End
-	B(Python: Django with \nDjango Rest Framework)
-end
-	
-subgraph Database
-	C[(MySQL)]
-end
-
-A <-->|"REST API"| B
-B <-->|Django ORM| C
-```
+High-level entity relationships:
 
 ```mermaid
-flowchart RL
-subgraph Front End
-	A(Javascript: Vue)
-end
-	
-subgraph Back End
-	B(Python: Flask)
-end
-	
-subgraph Database
-	C[(MySQL)]
-end
-
-A <-->|"REST API"| B
-B <-->|SQLAlchemy| C
-```
-
-```mermaid
-flowchart RL
-subgraph Front End
-	A(Javascript: Vue)
-end
-	
-subgraph Back End
-	B(Javascript: Express)
-end
-	
-subgraph Database
-	C[(MySQL)]
-end
-
-A <-->|"REST API"| B
-B <--> C
-```
-
-```mermaid
-flowchart RL
-subgraph Front End
-	A(Static JS, CSS, HTML)
-end
-	
-subgraph Back End
-	B(Java: SpringBoot)
-end
-	
-subgraph Database
-	C[(MySQL)]
-end
-
-A <-->|HTTP| B
-B <--> C
-```
-
-```mermaid
-flowchart RL
-subgraph Front End
-	A(Mobile App)
-end
-	
-subgraph Back End
-	B(Python: Django)
-end
-	
-subgraph Database
-	C[(MySQL)]
-end
-
-A <-->|REST API| B
-B <-->|Django ORM| C
-```
-
-
-
-#### Database
-
-```mermaid
----
-title: Sample Database ERD for an Order System
----
 erDiagram
-    Customer ||--o{ Order : "placed by"
-    Order ||--o{ OrderItem : "contains"
-    Product ||--o{ OrderItem : "included in"
+    Users ||--|| UserProfiles : has
+    Users ||--|| UserWallets : owns
+    Users ||--o{ Items : lists
+    Users ||--o{ Orders : places
+    Users ||--o{ Reviews : writes
+    Users ||--o{ Notifications : receives
+    Users ||--o{ Tags : creates
+    Users ||--o{ CryptoTransactions : performs
 
-    Customer {
-        int customer_id PK
-        string name
-        string email
-        string phone
-    }
+    Categories ||--o{ Items : classifies
+    Items ||--o{ ItemImages : has
+    Items ||--o{ Reviews : receives
+    Items ||--o{ Orders : ordered_in
 
-    Order {
-        int order_id PK
-        int customer_id FK
-        string order_date
-        string status
-    }
+    Items ||--o{ ItemTags : linked
+    Tags ||--o{ ItemTags : linked
 
-    Product {
-        int product_id PK
-        string name
-        string description
-        decimal price
-    }
+    Users ||--o{ Wishlist : owns
+    Items ||--o{ Wishlist : appears_in
 
-    OrderItem {
-        int order_item_id PK
-        int order_id FK
-        int product_id FK
-        int quantity
-    }
+    Orders ||--o{ CryptoTransactions : generates
 ```
 
-#### Class Diagram
-
-```mermaid
----
-title: Sample Class Diagram for Animal Program
----
-classDiagram
-    class Animal {
-        - String name
-        + Animal(String name)
-        + void setName(String name)
-        + String getName()
-        + void makeSound()
-    }
-    class Dog {
-        + Dog(String name)
-        + void makeSound()
-    }
-    class Cat {
-        + Cat(String name)
-        + void makeSound()
-    }
-    class Bird {
-        + Bird(String name)
-        + void makeSound()
-    }
-    Animal <|-- Dog
-    Animal <|-- Cat
-    Animal <|-- Bird
-```
-
-#### Flowchart
-
-```mermaid
----
-title: Sample Program Flowchart
----
-graph TD;
-    Start([Start]) --> Input_Data[/Input Data/];
-    Input_Data --> Process_Data[Process Data];
-    Process_Data --> Validate_Data{Validate Data};
-    Validate_Data -->|Valid| Process_Valid_Data[Process Valid Data];
-    Validate_Data -->|Invalid| Error_Message[/Error Message/];
-    Process_Valid_Data --> Analyze_Data[Analyze Data];
-    Analyze_Data --> Generate_Output[Generate Output];
-    Generate_Output --> Display_Output[/Display Output/];
-    Display_Output --> End([End]);
-    Error_Message --> End;
-```
-
-#### Behavior
-
-```mermaid
----
-title: Sample State Diagram For Coffee Application
----
-stateDiagram
-    [*] --> Ready
-    Ready --> Brewing : Start Brewing
-    Brewing --> Ready : Brew Complete
-    Brewing --> WaterLowError : Water Low
-    WaterLowError --> Ready : Refill Water
-    Brewing --> BeansLowError : Beans Low
-    BeansLowError --> Ready : Refill Beans
-```
-
-#### Sequence Diagram
+### Typical Purchase Flow
 
 ```mermaid
 sequenceDiagram
+    participant Buyer
+    participant Frontend
+    participant Backend
+    participant DB
 
-participant ReactFrontend
-participant DjangoBackend
-participant MySQLDatabase
-
-ReactFrontend ->> DjangoBackend: HTTP Request (e.g., GET /api/data)
-activate DjangoBackend
-
-DjangoBackend ->> MySQLDatabase: Query (e.g., SELECT * FROM data_table)
-activate MySQLDatabase
-
-MySQLDatabase -->> DjangoBackend: Result Set
-deactivate MySQLDatabase
-
-DjangoBackend -->> ReactFrontend: JSON Response
-deactivate DjangoBackend
+    Buyer->>Frontend: Select item and quantity
+    Frontend->>Backend: Submit order request
+    Backend->>DB: Validate stock and wallet balance
+    DB-->>Backend: Validation result
+    Backend->>DB: Create order and crypto transaction records
+    DB-->>Backend: Persisted order + transaction
+    Backend-->>Frontend: Return order confirmation
+    Frontend-->>Buyer: Show status and updated balance
 ```
 
-### Standards & Conventions
+## Technology Stack
 
-<!--This is a link to a seperate coding conventions document / style guide-->
-[Style Guide & Conventions](STYLE.md)
+Current project artifacts confirm:
+
+- Relational database design is defined in `SCHEMA.md`
+- Java coding standards are defined in `STYLE.md`
+
+Planned implementation stack (to be finalized by team):
+
+- Frontend: Web client
+- Backend: Java service layer
+- Database: SQL relational database
+
+Note: replace this section with exact frameworks and runtime versions once selected.
+
+## Standards and Conventions
+
+- Coding style: `STYLE.md`
+- Roles and sprint ownership: `ROLES.md`
+- Walking skeleton plan: `SKELETON.md`
+
+## Repository Structure
+
+- `README.md`: Project specification overview (this file)
+- `SCHEMA.md`: Marketplace database schema and cardinality
+- `ROLES.md`: Scrum Master and Product Owner assignments by sprint
+- `STYLE.md`: Project coding conventions
+- `SKELETON.md`: Walking skeleton notes
+- `RESEARCH/`: Research reports and references
+
+## Status
+
+This repository currently contains foundational project documentation. Implementation repositories/modules should be linked here once created.
