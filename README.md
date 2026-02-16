@@ -33,8 +33,6 @@ People who uses Facebook marketplace or Ebay, but rather spend crypto for purcha
 
 The full schema is maintained in `SCHEMA.md`.
 
-High-level entity relationships:
-
 ```mermaid
 erDiagram
     Users ||--|| UserProfiles : has
@@ -91,8 +89,6 @@ Planned implementation stack (to be finalized by team):
 - Frontend: Web client
 - Backend: Java service layer
 - Database: SQL relational database
-
-Note: replace this section with exact frameworks and runtime versions once selected.
 
 ## Standards and Conventions
 
