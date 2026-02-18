@@ -14,7 +14,7 @@ Team 32 is building a crypto-enabled online marketplace where users can create a
 
 ## Customer
 
-People who uses Facebook marketplace or Ebay, but rather spend crypto for purchases.
+People who uses Facebook marketplace or Ebay but rather use crypto to purchase.
 
 ## Specification
 
@@ -84,11 +84,11 @@ Current project artifacts confirm:
 - Relational database design is defined in `SCHEMA.md`
 - Java coding standards are defined in `STYLE.md`
 
-Planned implementation stack (to be finalized by team):
+Planned implementation stack:
 
-- Frontend: Web client
-- Backend: Java service layer
-- Database: SQL relational database
+- Frontend: Web client using React
+- Backend: Java with Sprint
+- Database: MySQL
 
 ## Standards and Conventions
 
