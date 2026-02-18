@@ -87,7 +87,7 @@ Current project artifacts confirm:
 Planned implementation stack:
 
 - Frontend: Web client using React
-- Backend: Java with Sprint
+- Backend: Java with Spring
 - Database: MySQL
 
 ## Standards and Conventions
