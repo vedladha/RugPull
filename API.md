@@ -8,9 +8,12 @@ This document outlines the main API endpoints for the crypto-powered marketplace
 
 ---
 
+## Overview
+
+---
 
 
-## 1. Users & Authentication
+### 1. Users & Authentication
 
 Handles signup, login, and account management.
 
@@ -32,7 +35,7 @@ Handles signup, login, and account management.
 
 
 
-## 2. User Profiles
+### 2. User Profiles
 
 Manages display information for users.
 
@@ -50,7 +53,7 @@ Manages display information for users.
 
 
 
-## 3. Items
+### 3. Items
 
 Marketplace listings management.
 
@@ -74,7 +77,7 @@ Marketplace listings management.
 
 
 
-## 4. Categories
+### 4. Categories
 
 
 
@@ -92,7 +95,7 @@ Marketplace listings management.
 
 
 
-## 5. Tags
+### 5. Tags
 
 
 
@@ -109,7 +112,7 @@ Marketplace listings management.
 
 
 
-## 6. Orders
+### 6. Orders
 
 Buying and selling workflow.
 
@@ -129,7 +132,7 @@ Buying and selling workflow.
 
 
 
-## 7. Wishlist
+### 7. Wishlist
 
 
 
@@ -145,7 +148,7 @@ Buying and selling workflow.
 
 
 
-## 8. Crypto Transactions \& Wallets
+### 8. Crypto Transactions \& Wallets
 
 
 
@@ -164,7 +167,7 @@ Buying and selling workflow.
 
 
 
-## 9. Reviews
+### 9. Reviews
 
 
 
@@ -182,7 +185,7 @@ Buying and selling workflow.
 
 
 
-## 10. Notifications
+### 10. Notifications
 
 
 
@@ -195,4 +198,180 @@ Buying and selling workflow.
 
 
 ---
+
+
+## Detailed Endpoint Reference
+
+---
+
+### POST /auth/signup
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| email | String | Y | User email |
+| password | String | Y | Password |
+| display_name | String | N | Optional user display name, defaults to email |
+
+
+#### Request Example
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "display_name": "User"
+}
+```
+
+#### Response Example
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "display_name": "User"
+  },
+  "access_token": "{jwt access token}",
+  "refresh_token": "{jwt refresh token}",
+  "expires_in": 3600
+}
+```
+
+### POST /auth/login
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| email | String | Y | User email |
+| password | String | Y | User password |
+
+#### Request Example
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+#### Response Example
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "display_name": "User"
+  },
+  "access_token": "{jwt access token}",
+  "refresh_token": "{jwt refresh token}",
+  "expires_in": 3600
+}
+```
+
+### POST /auth/logout
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "message": "User successfully logged out"
+}
+```
+
+### POST /auth/refresh
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| refresh_token | String | Y | The refresh token issued at login or signup |
+
+#### Request Example
+```json
+{
+  "refresh_token": "{jwt refresh token}"
+}
+```
+
+#### Response Example
+```json
+{
+  "access_token": "{jwt access token}",
+  "expires_in": 3600
+}
+```
+
+### GET /users/me
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "display_name": "User",
+  "bio": "A really cool user."
+}
+```
+
+###  PUT/PATCH /users/me
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| email | String | N | New email |
+| password | String | N | New password |
+| display_name | string | N | New display name|
+
+#### Request Example
+```json
+{
+  "email": "newemail@example.com",
+  "password": "NewPassword321",
+  "display_name": "NewUser"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "email": "newemail@example.com",
+  "display_name": "NewUser"
+}
+```
+
+### DELETE /users/me
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "message": "User account marked as deleted",
+  "deleted": true
+}
+```
 
