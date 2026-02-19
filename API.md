@@ -2,7 +2,7 @@
 
 
 
-This document outlines the main API endpoints for the crypto-powered marketplace.
+This document outlines the main API endpoints for the $RPC marketplace.
 
 
 
