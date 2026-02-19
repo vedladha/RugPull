@@ -1641,3 +1641,97 @@ Buying and selling workflow.
 ```
 
 ---
+
+### GET /notifications
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| unread | Boolean | N | Filter by unread |
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of notifications per page |
+
+#### Response Example
+```json
+[
+  {
+    "id": 8001,
+    "type": "order_update",
+    "title": "Order Completed",
+    "message": "Your order #5001 has been completed.",
+    "read": false,
+    "created_at": "2026-02-18T22:00:00Z"
+  },
+  {
+    "id": 8002,
+    "type": "wishlist_price_drop",
+    "title": "Price Drop Alert",
+    "message": "An item in your wishlist has dropped in price.",
+    "read": true,
+    "created_at": "2026-02-18T21:30:00Z"
+  }
+]
+```
+
+---
+
+### GET /notifications/{notification_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| notification_id | Number | Y | ID of the notification |
+
+#### Response Example
+```json
+{
+  "id": 8001,
+  "type": "order_update",
+  "title": "Order Completed",
+  "message": "Your order #5001 has been completed.",
+  "read": false,
+  "metadata": {
+    "order_id": 5001
+  },
+  "created_at": "2026-02-18T22:00:00Z"
+}
+```
+
+---
+
+### PATCH /notifications/{notification_id}/read
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| notification_id | Number | Y | ID of the notification |
+
+
+#### Response Example
+```json
+{
+  "id": 8001,
+  "read": true,
+  "updated_at": "2026-02-18T22:10:00Z"
+}
+```
