@@ -124,7 +124,6 @@ Buying and selling workflow.
 | `/orders/{order_id}` | GET | Get order details |
 | `/orders` | POST | Place a new order |
 | `/orders/{order_id}` | PUT/PATCH | Update order info (cancel, etc.) |
-| `/orders/{order_id}/status` | PATCH | Update order status (`pending`, `completed`, `cancelled`) |
 
 
 
@@ -1017,6 +1016,165 @@ Buying and selling workflow.
 ```json
 {
   "message": "Tag successfully deleted"
+}
+```
+
+---
+
+### GET /orders
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| status | String | N | Filter by status |
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of orders per page |
+
+#### Response Example
+```json
+[
+  {
+    "id": 5001,
+    "user_id": 123,
+    "status": "pending",
+    "total_amount": 4.7,
+    "created_at": "2026-02-18T17:00:00Z"
+  },
+  {
+    "id": 5002,
+    "user_id": 123,
+    "status": "completed",
+    "total_amount": 1.2,
+    "created_at": "2026-02-17T14:30:00Z"
+  }
+]
+```
+
+---
+
+### GET /orders/{order_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| order_id | Number | Y | ID of the order |
+
+#### Response Example
+```json
+{
+  "id": 5001,
+  "user_id": 123,
+  "status": "pending",
+  "items": [
+    {
+      "item_id": 101,
+      "title": "Crypto Art #1",
+      "quantity": 1,
+      "price": 2.5
+    },
+    {
+      "item_id": 102,
+      "title": "Crypto Collectible #2",
+      "quantity": 2,
+      "price": 1.1
+    }
+  ],
+  "total_amount": 4.7,
+  "created_at": "2026-02-18T17:00:00Z"
+}
+```
+
+---
+
+### POST /orders
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| items | array | Y | Array of items to purchase |
+
+#### Items Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| item_id | Number | Y | ID of the item |
+| quantity | Number | Y | Quantity to purchase |
+
+#### Request Example
+```json
+{
+  "items": [
+    { "item_id": 100, "quantity": 1 },
+    { "item_id": 234, "quantity": 3 }
+  ]
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 5003,
+  "user_id": 1,
+  "status": "pending",
+  "total_amount": 67
+}
+```
+
+---
+
+### PUT/PATCH /orders/{order_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| order_id | Number | Y | ID of the order |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| status | String | Y | Update order status |
+
+#### Request Example
+```json
+{
+  "status": "cancelled"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 5003,
+  "status": "cancelled"
 }
 ```
 
