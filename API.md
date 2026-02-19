@@ -1178,3 +1178,95 @@ Buying and selling workflow.
 }
 ```
 
+---
+
+### GET /widhlist
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of orders per page |
+
+#### Response Example
+```json
+[
+  {
+    "item_id": 101,
+    "title": "Crypto Art #1",
+    "price": 2.5,
+    "thumbnail": "image1.png",
+    "added_at": "2026-02-18T19:00:00Z"
+  },
+  {
+    "item_id": 205,
+    "title": "Rare Collectible #7",
+    "price": 5.0,
+    "thumbnail": "image7.png",
+    "added_at": "2026-02-17T15:22:00Z"
+  }
+]
+```
+
+---
+
+### POST /wishlist
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| item_id | Number | Y | ID of the item to add |
+
+#### Request Example
+```json
+{
+  "item_id": 69
+}
+```
+
+#### Response Example
+```json
+{
+  "message": "Item added to wishlist",
+  "item_id": 69
+}
+```
+
+---
+
+### DELETE /wishlist/{item_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-------|------|----------|-------------|
+| item_id | Number | Y | ID of the item to remove |
+
+#### Response Example
+```json
+{
+  "message": "Item removed from wishlist",
+  "item_id": 101
+}
+```
+
