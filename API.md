@@ -1270,3 +1270,197 @@ Buying and selling workflow.
 }
 ```
 
+---
+
+### GET /wallets
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "user_id": 123,
+  "balances": [
+    {
+      "currency": "RPC",
+      "available": 0.75,
+      "locked": 0.05
+    }
+  ],
+  "updated_at": "2026-02-18T20:00:00Z"
+}
+```
+
+---
+
+### POST /wallets/deposit
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| amount | Number | Y | Amount to deposit |
+
+#### Request Example
+```json
+{
+  "amount": 1.2
+}
+```
+
+#### Response Example
+```json
+{
+  "message": "Deposit recorded and pending confirmation",
+  "amount": 1.2,
+  "status": "pending"
+}
+```
+
+---
+
+### POST /wallets/withdraw
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| amount | Number | Y | Amount to withdraw |
+
+#### Request Example
+```json
+{
+  "amount": 1.2
+}
+```
+
+#### Response Example
+```json
+{
+  "message": "Withdrawal recorded and pending confirmation",
+  "amount": 1.2,
+  "status": "pending"
+}
+```
+
+---
+
+### POST /wallets/transfer
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| amount | Number | Y | Amount to withdraw |
+| recipient_user_id | Number | Y | ID of recipient user |
+
+#### Request Example
+```json
+{
+  "amount": 2,
+  "recipient_user_id": 345
+}
+```
+
+#### Response Example
+```json
+{
+  "message": "Transfer completed",
+  "amount": 2,
+  "from_user_id": 1,
+  "to_user_id": 345,
+  "transaction_id": 3456
+}
+```
+
+---
+
+### GET /transactions
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-------|------|----------|-------------|
+| type | String | N | Filter by type |
+| status | String | N | Filter by status |
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of transactions per page |
+
+#### Response Example
+```json
+[
+  {
+    "id": 9001,
+    "type": "withdraw",
+    "amount": 0.25,
+    "status": "pending",
+    "created_at": "2026-02-18T20:15:00Z"
+  },
+  {
+    "id": 9010,
+    "type": "transfer",
+    "amount": 1.5,
+    "status": "completed",
+    "created_at": "2026-02-18T20:20:00Z"
+  }
+]
+```
+
+---
+
+### GET /transactions/{transaction_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-------|------|----------|-------------|
+| transaction_id | Number | Y | ID of the transaction |
+
+#### Response Example
+```json
+{
+  "id": 9001,
+  "type": "withdraw",
+  "amount": 0.25,
+  "status": "pending",
+  "details": {
+    "destination_addr": "1FfmbHfnpaZjKFvyi1okTjJJusN455paPH"
+  },
+  "created_at": "2026-02-18T20:15:00Z",
+  "updated_at": "2026-02-18T20:16:00Z"
+}
+```
