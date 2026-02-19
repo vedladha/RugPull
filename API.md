@@ -458,3 +458,292 @@ Buying and selling workflow.
 }
 ```
 
+---
+
+### GET /items
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| category | String | N | Filter items by category ID or name |
+| tag | String | N | Filter items by tag ID or name |
+| price_min | Number | N | Minimum price for filtering |
+| price_max | Number | N | Maximum price for filtering |
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of items per page |
+
+#### Response Example
+```json
+{
+  {
+    "id": 1,
+    "title": "Painting",
+    "description": "Limited edition painting",
+    "price": 2,
+    "stock": 10,
+    "category": "Art",
+    "tags": ["Painting", "Art"],
+    "images": ["image1.png", "image2.png"]
+  },
+  {
+    "id": 2,
+    "title": "Pokémon Card",
+    "description": "Limited edition Pokémon card",
+    "price": 5.12,
+    "stock": 2,
+    "category": "Collectibles",
+    "tags": ["Pokémon", "Rare"],
+    "images": []
+  }
+}
+```
+
+---
+
+### GET /items/{item_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item |
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "title": "Painting",
+  "description": "Limited edition painting",
+  "price": 2,
+  "stock": 10,
+  "category": "Art",
+  "tags": ["Painting", "Art"],
+  "images": ["image1.png", "image2.png"]
+}
+```
+
+---
+
+### POST /items
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| title | String | Y | Item title |
+| description | String | Y | Item description |
+| price | Number | Y | Price in crypto |
+| stock | Number | Y | Number of item available |
+| category | String | Y | Category for the item |
+| tags | Array | N | Array of tags |
+
+#### Request Example
+```json
+{
+  "title": "Cool Box",
+  "description": "A super cool box",
+  "price": 10000,
+  "stock": 1,
+  "category": "Trinkets",
+  "tags": ["Box", "Awesome", "Cool"]
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 3,
+  "title": "Cool Box",
+  "description": "A super cool box",
+  "price": 10000,
+  "stock": 2,
+  "category": "Trinkets",
+  "tags": ["Box", "Awesome", "Cool"]
+}
+```
+
+---
+
+### PUT/PATCH /items/{item_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item|
+
+#### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| title | String | N | New item title |
+| description | String | N | New item description |
+| price | Number | N | New item price |
+| stock | Number | N | New item stock |
+| category | String | N | New item category |
+| tags | Array | N | New item tags |
+
+#### Request Example
+```json
+{
+  "price: 9999999,
+  "stock": 1
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 3,
+  "title": "Cool Box",
+  "description": "A super cool box",
+  "price": 9999999,
+  "stock": 1,
+  "category": "Trinkets",
+  "tags": ["Box", "Awesome", "Cool"]
+}
+```
+
+---
+
+### DELETE /items/{item_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item |
+
+#### Response Example
+```json
+{
+  "message": "Item successfully deleted",
+  "deleted": true
+}
+```
+
+---
+
+### POST /items/{item_id}/images
+
+#### Headers
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+| Content-Type | multipart/form-data |
+
+#### Path Parameters
+| Parameter | Type | Required | Description |
+| item_id | String | Y | ID of the item |
+
+#### Response Example
+{
+  "uploaded": ["image1.png", "image2.png"]
+}
+
+---
+
+### DELETE /items/{item_id}/images/{image_id}
+
+#### Headers
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item |
+| image_id | String | Y | ID of the image |
+
+#### Response Example
+```json
+{
+  "message": "Image successfully removed"
+}
+```
+
+---
+
+### POST /items/{item_id}/tags
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| tag | String | Y | Tag to attach |
+
+#### Request Example
+```json
+{
+  "tag": "Art"
+}
+```
+
+#### Response Example
+```json
+{
+  "message": "Tag attached successfully"
+}
+```
+
+### DELETE /items/{item_id}/tags/{tag}
+
+#### Headers
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer <access_token> |
+
+#### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| item_id | String | Y | ID of the item |
+| tag | String | Y | Tag to remove |
+
+#### Response Example
+```json
+{
+  "message": "Tag removed successfully"
+}
+```
