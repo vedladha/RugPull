@@ -663,12 +663,15 @@ Buying and selling workflow.
 
 #### Path Parameters
 | Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
 | item_id | String | Y | ID of the item |
 
 #### Response Example
+```json
 {
   "uploaded": ["image1.png", "image2.png"]
 }
+```
 
 ---
 
@@ -728,6 +731,8 @@ Buying and selling workflow.
 }
 ```
 
+---
+
 ### DELETE /items/{item_id}/tags/{tag}
 
 #### Headers
@@ -745,5 +750,164 @@ Buying and selling workflow.
 ```json
 {
   "message": "Tag removed successfully"
+}
+```
+
+---
+
+### GET /categories
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of categories per page |
+
+#### Response Example
+```json
+{
+  {
+    "id": 1,
+    "name": "Art",
+    "parent_id": null
+  },
+  {
+    "id": 2,
+    "name": "Digital Art",
+    "parent_id": 1
+  }
+}
+```
+
+---
+
+### GET /categories/{category_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| category_id | Number | Y | ID of the category to fetch |
+
+#### Response Example
+```json
+{
+  "id": 2,
+  "name": "Digital Art",
+  "parent_id": 1,
+  "description": "Digital artwork"
+}
+```
+
+---
+
+### POST /categories
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | String | Y | Name of the category |
+| parent_id | Number | N | Parent category |
+| description | String | N | Description |
+
+#### Request Example
+```json
+{
+  "name": "Sports",
+  "description": "Physical activities"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 3,
+  "name": "Sports",
+  "parent_id": null,
+  "description": "Physical activites"
+}
+```
+
+---
+
+### PUT/PATCH /categories/{category_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| category_id | Number | Y | ID of the category to update |
+
+#### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | String | Y | New name |
+| parent_id | Number | N | New parent category |
+| description | String | N | New description |
+
+#### Request Example
+```json
+{
+  "name": "New Digital Art",
+  "description": "New and improved digital artwork"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 2,
+  "name": "New Digital Art",
+  "parent_id": 1,
+  "description": "New and improved digital artwork"
+}
+```
+
+---
+
+### DELETE /categories/{category_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| category_id | Number | Y | ID of the category to delete |
+
+#### Response Example
+```json
+{
+  "message": "Category deleted",
+  "deleted": true
 }
 ```
