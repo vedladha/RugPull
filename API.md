@@ -238,6 +238,8 @@ Buying and selling workflow.
 }
 ```
 
+---
+
 ### POST /auth/login
 
 #### Request Body
@@ -269,6 +271,8 @@ Buying and selling workflow.
 }
 ```
 
+---
+
 ### POST /auth/logout
 
 #### Headers
@@ -283,6 +287,8 @@ Buying and selling workflow.
   "message": "User successfully logged out"
 }
 ```
+
+---
 
 ### POST /auth/refresh
 
@@ -307,6 +313,8 @@ Buying and selling workflow.
 }
 ```
 
+---
+
 ### GET /users/me
 
 #### Headers
@@ -325,6 +333,8 @@ Buying and selling workflow.
 }
 ```
 
+---
+
 ###  PUT/PATCH /users/me
 
 #### Headers
@@ -339,25 +349,26 @@ Buying and selling workflow.
 |-------|------|----------|-------------|
 | email | String | N | New email |
 | password | String | N | New password |
-| display_name | string | N | New display name|
 
 #### Request Example
 ```json
 {
   "email": "newemail@example.com",
   "password": "NewPassword321",
-  "display_name": "NewUser"
 }
 ```
+
+---
 
 #### Response Example
 ```json
 {
   "id": 1,
   "email": "newemail@example.com",
-  "display_name": "NewUser"
 }
 ```
+
+---
 
 ### DELETE /users/me
 
@@ -372,6 +383,78 @@ Buying and selling workflow.
 {
   "message": "User account marked as deleted",
   "deleted": true
+}
+```
+
+---
+
+### GET /profiles/{user_id}
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| user_id | String | Y | ID of the user whose profile to fetch |
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "display_name": "User",
+  "bio": "A really cool user"
+}
+```
+
+---
+
+### GET /profiles/me
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "display_name": "User",
+  "bio": "A really cool user"
+}
+```
+
+---
+
+### PUT/PATCH /profiles/me
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| display_name | String | N | Update display name |
+| bio | String | N | Update bio |
+
+#### Request Example
+```json
+{
+  "display_name": "NewUser",
+  "bio": "New bio"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "display_name": "NewUser",
+  "bio": "New bio"
 }
 ```
 
