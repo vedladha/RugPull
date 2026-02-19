@@ -911,3 +911,112 @@ Buying and selling workflow.
   "deleted": true
 }
 ```
+
+---
+
+### GET /tags
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of categories per page |
+
+#### Response Example
+```json
+[
+  {
+    "id": 1,
+    "name": "Outside"
+  },
+  {
+    "id": 2,
+    "name": "Blue"
+  }
+]
+```
+
+---
+
+### GET /tags/{tag_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| tag_id | Number | Y | ID of the tag |
+
+#### Response Example
+```json
+{
+  "id": 2,
+  "name": "Blue"
+}
+```
+
+---
+
+### POST /tags
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | String | Y | Name of the tag |
+
+#### Request Example
+```json
+{
+  "name": "Red"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 4,
+  "name": "Red"
+}
+```
+
+---
+
+### DELETE /tags/{tag_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| tag_id | Number | Y | ID of the tag |
+
+#### Response Example
+```json
+{
+  "message": "Tag successfully deleted"
+}
+```
+
