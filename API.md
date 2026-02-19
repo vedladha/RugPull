@@ -147,7 +147,7 @@ Buying and selling workflow.
 
 
 
-### 8. Crypto Transactions \& Wallets
+### 8. Crypto Transactions & Wallets
 
 
 
@@ -1464,3 +1464,180 @@ Buying and selling workflow.
   "updated_at": "2026-02-18T20:16:00Z"
 }
 ```
+
+---
+
+### GET /reviews
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Query Parameters
+
+| Parameters | Type | Required | Description |
+|------------|------|----------|-------------|
+| item_id | Number | N | Filters reviews by item |
+| user_id | Number | N | Filters reviews by user |
+| rating | Number | N | Filters review by rating |
+| page | Number | N | Page number for pagination |
+| limit | Number | N | Number of reviews per page |
+
+#### Response Example
+```json
+[
+  {
+    "id": 7001,
+    "item_id": 101,
+    "user_id": 123,
+    "rating": 5,
+    "comment": "Amazing quality!",
+    "created_at": "2026-02-18T21:00:00Z"
+  },
+  {
+    "id": 7002,
+    "item_id": 101,
+    "user_id": 456,
+    "rating": 4,
+    "comment": "Great but a bit pricey.",
+    "created_at": "2026-02-18T21:05:00Z"
+  }
+]
+```
+
+---
+
+### GET /reviews/{review_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| review_id | Number | Y | ID of the review |
+
+#### Response Example
+```json
+{
+  "id": 7001,
+  "item_id": 101,
+  "user_id": 123,
+  "rating": 5,
+  "comment": "Amazing quality!",
+  "created_at": "2026-02-18T21:00:00Z",
+  "updated_at": "2026-02-18T21:00:00Z"
+}
+```
+
+---
+
+### POST /reviews
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| item_id | Number | Y | ID of the item being reviewed |
+| rating | Number | Y | Rating value |
+| Comment | String | N | Review text |
+
+#### Request Example
+```json
+{
+  "item_id": 101,
+  "rating": 5,
+  "comment": "Absolutely loved it!"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 7003,
+  "item_id": 101,
+  "user_id": 123,
+  "rating": 5,
+  "comment": "Absolutely loved it!",
+  "created_at": "2026-02-18T21:15:00Z"
+}
+```
+
+---
+
+### PUT/PATCH /reviews/{review_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| review_id | Number | Y | ID of the review |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| rating | Number | Y | New rating value |
+| Comment | String | N | New review text |
+
+#### Request Example
+```json
+{
+  "rating": 4,
+  "comment": "Great!"
+}
+```
+
+#### Response Example
+```json
+{
+  "id": 7003,
+  "rating": 4,
+  "comment": "Great!",
+  "updated_at": "2026-02-18T21:30:00Z"
+}
+```
+
+---
+
+### DELETE /reviews/{review_id}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| review_id | Number | Y | ID of the review |
+
+#### Response Example
+```json
+{
+  "message": "Review successfully deleted",
+  "deleted": true
+}
+```
+
+---
