@@ -36,6 +36,7 @@ checkstyle {
 }
 
 tasks.named<Test>("test") {
+    environment(env.allVariables())
     useJUnitPlatform()
 }
 
