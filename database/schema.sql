@@ -26,6 +26,7 @@ CREATE TABLE UserProfiles (
         ON DELETE CASCADE
 );
 
+/*
 -- Categories
 CREATE TABLE Categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -223,3 +224,4 @@ CREATE INDEX idx_items_user_deleted ON Items(user_id, deleted);
 CREATE INDEX idx_users_deleted ON Users(deleted);
 CREATE INDEX idx_orders_status ON Orders(order_status);
 CREATE INDEX idx_cryptotransactions_status ON CryptoTransactions(transaction_status);
+*/
