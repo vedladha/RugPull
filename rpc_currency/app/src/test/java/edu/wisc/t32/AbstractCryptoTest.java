@@ -55,8 +55,10 @@ public abstract class AbstractCryptoTest {
         .setInitialBalance(new Hbar(initialBalance))
         .freezeWith(client)
         .sign(operatorKey);
-    final var response = assertDoesNotThrow(() -> tx.execute(client), "Failed to spin test account.");
-    final var receipt = assertDoesNotThrow(() -> response.getReceipt(client), "Failed to get receipt.");
+    final var response =
+        assertDoesNotThrow(() -> tx.execute(client), "Failed to spin test account.");
+    final var receipt =
+        assertDoesNotThrow(() -> response.getReceipt(client), "Failed to get receipt.");
     return new ClientPair(receipt.accountId, key, operatorId, client);
   }
 
@@ -66,7 +68,8 @@ public abstract class AbstractCryptoTest {
    * @param accountId  the Hedera accountId
    * @param privateKey the Hedera account privateKey
    */
-  protected record ClientPair(AccountId accountId, PrivateKey privateKey, AccountId guarantor, Client client) implements Closeable {
+  protected record ClientPair(AccountId accountId, PrivateKey privateKey, AccountId guarantor,
+                              Client client) implements Closeable {
     @Override
     public void close() throws IOException {
       var tx = new AccountDeleteTransaction()
