@@ -1,0 +1,5 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:5173" # Host port 3000 [can change if needed], container port 5173 [DO NOT CHANGE, vite listens on port 5173]
