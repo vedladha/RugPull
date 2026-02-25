@@ -1,7 +1,3 @@
-CREATE DATABASE IF NOT EXISTS marketplace_dev;
-
-USE marketplace_dev;
-
 -- Users
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
