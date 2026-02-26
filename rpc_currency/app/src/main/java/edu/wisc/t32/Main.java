@@ -20,22 +20,36 @@ public class Main {
    * @param args the command line arguments given to the $RPC deployment
    */
   public static void main(String[] args) {
-        operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
-        operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
+    AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
+    PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
 
-        Client client = Client.forTestnet().setOperator(operatorId, operatorKey);
-        
-        PrivateKey adminKey = PrivateKey.generateED25519();
-        
-        TokenCreateTransaction transaction = new TokenCreateTransaction()
-            .setTokenName("Rug Pull Coin")
-            .setTokenSymbol("RPC")
-            .setDecimals(2)
-            .setInitialSupply(10000)
-            .setTreasuryAccountId(operatorId)
-            .setAdminKey(adminKey.getPublicKey())
-            .freezeWith(client);
+    Client client = Client.forTestnet().setOperator(operatorId, operatorKey);
 
+    try {
+      PrivateKey adminKey = PrivateKey.generateED25519();
+
+      TokenCreateTransaction transaction = new TokenCreateTransaction()
+          .setTokenName("Rug Pull Coin")
+          .setTokenSymbol("RPC")
+          .setDecimals(2)
+          .setInitialSupply(10000)
+          .setTreasuryAccountId(operatorId)
+          .setAdminKey(adminKey.getPublicKey())
+          .freezeWith(client);
+
+      TransactionResponse txResponse = transaction.sign(adminKey).execute(client);
+      TransactionReceipt receipt = txResponse.getReceipt(client);
+      LOGGER.info("Fungible token created: {}", receipt.tokenId);
+    } 
+    catch (Exception e) {
+      LOGGER.error("Token creation failed.", e);
+    } 
+    finally {
+      try {
+        client.close();
+      } catch (Exception e) {
+        LOGGER.warn("Failed to close Hedera client cleanly: {}", e.getMessage());
+      }
+    }
   }
-
 }
