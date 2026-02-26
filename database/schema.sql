@@ -1,9 +1,10 @@
-CREATE DATABASE IF NOT EXISTS marketplace_dev;
+SET NAMES 'utf8mb4';
+SET time_zone = '+00:00';
 
-USE marketplace_dev;
+START TRANSACTION;
 
 -- Users
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -11,10 +12,10 @@ CREATE TABLE Users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- UserProfiles
-CREATE TABLE UserProfiles (
+CREATE TABLE IF NOT EXISTS UserProfiles (
     user_id INT PRIMARY KEY,
     display_name VARCHAR(255) UNIQUE,
     bio TEXT,
@@ -24,11 +25,13 @@ CREATE TABLE UserProfiles (
     CONSTRAINT fk_userprofiles_users
         FOREIGN KEY (user_id) REFERENCES Users(user_id)
         ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+COMMIT;
 
 /*
 -- Categories
-CREATE TABLE Categories (
+CREATE TABLE IF NOT EXISTS Categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) UNIQUE,
     parent_id INT,
@@ -39,7 +42,7 @@ CREATE TABLE Categories (
 );
 
 -- Items
-CREATE TABLE Items (
+CREATE TABLE IF NOT EXISTS Items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     price DECIMAL(30, 8), -- Price in crypto amount
@@ -60,7 +63,7 @@ CREATE TABLE Items (
 );
 
 -- ItemImages
-CREATE TABLE ItemImages (
+CREATE TABLE IF NOT EXISTS ItemImages (
     image_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     image_url VARCHAR(500) NOT NULL,
@@ -75,7 +78,7 @@ CREATE TABLE ItemImages (
 );
 
 -- Tags
-CREATE TABLE Tags (
+CREATE TABLE IF NOT EXISTS Tags (
     tag_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     name VARCHAR(255) UNIQUE,
@@ -87,7 +90,7 @@ CREATE TABLE Tags (
 );
 
 -- ItemTags
-CREATE TABLE ItemTags (
+CREATE TABLE IF NOT EXISTS ItemTags (
     item_id INT,
     tag_id INT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +107,7 @@ CREATE TABLE ItemTags (
 );
 
 -- Orders
-CREATE TABLE Orders (
+CREATE TABLE IF NOT EXISTS Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     item_id INT,
@@ -125,7 +128,7 @@ CREATE TABLE Orders (
 );
 
 -- Wishlists
-CREATE TABLE WISHLISTS (
+CREATE TABLE IF NOT EXISTS Wishlists (
     user_id INT,
     item_id INT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -142,7 +145,7 @@ CREATE TABLE WISHLISTS (
 );
 
 -- CryptoTransactions
-CREATE TABLE CryptoTransactions (
+CREATE TABLE IF NOT EXISTS CryptoTransactions (
     transaction_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT,
     user_id INT,
@@ -163,7 +166,7 @@ CREATE TABLE CryptoTransactions (
 );
 
 -- UserWallets
-CREATE TABLE UserWallets (
+CREATE TABLE IF NOT EXISTS UserWallets (
     user_id INT PRIMARY KEY,
     wallet_address VARCHAR(255) UNIQUE NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -175,7 +178,7 @@ CREATE TABLE UserWallets (
 );
 
 -- Reviews
-CREATE TABLE Reviews (
+CREATE TABLE IF NOT EXISTS Reviews (
     review_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -195,7 +198,7 @@ CREATE TABLE Reviews (
 );
 
 -- Notifications
-CREATE TABLE Notifications (
+CREATE TABLE IF NOT EXISTS Notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     notification_type ENUM('order', 'gift', 'review', 'system', 'other'),
@@ -209,19 +212,4 @@ CREATE TABLE Notifications (
         FOREIGN KEY (user_id) REFERENCES Users(user_id)
         ON DELETE CASCADE
 );
-
-CREATE INDEX idx_items_user ON Items(user_id);
-CREATE INDEX idx_orders_user ON Orders(user_id);
-CREATE INDEX idx_orders_item ON Orders(item_id);
-CREATE INDEX idx_reviews_item ON Reviews(item_id);
-CREATE INDEX idx_reviews_user ON Reviews(user_id);
-CREATE INDEX idx_items_category ON Items(category_id);
-CREATE INDEX idx_itemimages_item ON ItemImages(item_id);
-CREATE INDEX idx_cryptotransactions_user ON CryptoTransactions(user_id);
-CREATE INDEX idx_cryptotransactions_order ON CryptoTransactions(order_id);
-CREATE INDEX idx_notifications_user ON Notifications(user_id);
-CREATE INDEX idx_items_user_deleted ON Items(user_id, deleted);
-CREATE INDEX idx_users_deleted ON Users(deleted);
-CREATE INDEX idx_orders_status ON Orders(order_status);
-CREATE INDEX idx_cryptotransactions_status ON CryptoTransactions(transaction_status);
 */
