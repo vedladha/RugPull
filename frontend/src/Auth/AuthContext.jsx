@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("INSERT_API_PORT", {
+        fetch("http://localhost:8080/auth/me", {
             credentials: "include",
         })
             .then((res) => res.ok ? res.json() : null)
@@ -15,8 +15,21 @@ export function AuthProvider({ children }) {
             .finally(() => setLoading(false));
     }, []);
 
+    async function register(username, email, password) {
+        const response = await fetch("http://localhost:8080/auth/register", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password }),
+        });
+
+        if (!response.ok) throw new Error("Error registering user");
+        const data = await response.json();
+        return data;
+    }
+
     async function signIn(email, password) {
-        const response = await fetch("INSERT_API_LOGIN_CALL", {
+        const response = await fetch("http://localhost:8080/auth/login", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -31,7 +44,7 @@ export function AuthProvider({ children }) {
     }
 
     async function signOut() {
-        await fetch("INSERT_API_LOGOUT_CALL", {
+        await fetch("http://localhost:8080/auth/logout", {
             method: "POST",
             credentials: "include",
         });
