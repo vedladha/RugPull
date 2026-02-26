@@ -12,44 +12,50 @@ import com.hedera.hashgraph.sdk.*;
  */
 public class Main {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
   /**
    * Launches the $RPC deployment application.
    *
    * @param args the command line arguments given to the $RPC deployment
    */
-  public static void main(String[] args) {
-    AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
-    PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
+    public static void main(String[] args) {
+        AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
+        PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
 
-    Client client = Client.forTestnet().setOperator(operatorId, operatorKey);
+        Client client = Client.forTestnet().setOperator(operatorId, operatorKey);
 
-    try {
-      PrivateKey adminKey = PrivateKey.generateED25519();
+        try {        
+            // adminKey has full control over token configuration and properties. It allows updating token name, 
+            // symbol, treasury, keys, and other properties. If not set, the token becomes immutable.
+            PrivateKey adminKey = PrivateKey.generateED25519();
+            // supplyKey controls minting (increasing supply) and burning (decreasing supply) of tokens. If not 
+            // set, no minting or burning are possible.
+            PrivateKey supplyKey = PrivateKey.generateED25519();
 
-      TokenCreateTransaction transaction = new TokenCreateTransaction()
-          .setTokenName("Rug Pull Coin")
-          .setTokenSymbol("RPC")
-          .setDecimals(2)
-          .setInitialSupply(10000)
-          .setTreasuryAccountId(operatorId)
-          .setAdminKey(adminKey.getPublicKey())
-          .freezeWith(client);
+            TokenCreateTransaction transaction = new TokenCreateTransaction()
+                .setTokenName("Rug Pull Coin")
+                .setTokenSymbol("RPC")
+                .setDecimals(2)
+                .setInitialSupply(10000)
+                .setTreasuryAccountId(operatorId)
+                .setAdminKey(adminKey.getPublicKey())
+                .setSupplyKey(supplyKey.getPublicKey())
+                .freezeWith(client);
 
-      TransactionResponse txResponse = transaction.sign(adminKey).execute(client);
-      TransactionReceipt receipt = txResponse.getReceipt(client);
-      LOGGER.info("Fungible token created: {}", receipt.tokenId);
-    } 
-    catch (Exception e) {
-      LOGGER.error("Token creation failed.", e);
-    } 
-    finally {
-      try {
-        client.close();
-      } catch (Exception e) {
-        LOGGER.warn("Failed to close Hedera client cleanly: {}", e.getMessage());
-      }
+            TransactionResponse txResponse = transaction.sign(adminKey).execute(client);
+            TransactionReceipt receipt = txResponse.getReceipt(client);
+            LOGGER.info("Fungible token created: {}", receipt.tokenId);
+        } 
+        catch (Exception e) {
+            LOGGER.error("Token creation failed.", e);
+        } 
+        finally {
+            try {
+                client.close();
+            } catch (Exception e) {
+                LOGGER.warn("Failed to close Hedera client cleanly: {}", e.getMessage());
+            }
+        }
     }
-  }
 }
