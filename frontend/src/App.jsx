@@ -1,18 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./index.css";
+import Navbar from "./Components/Navbar.jsx";
+import Hero from "./Hero.jsx";
+import PageCards from "./Components/PageCards.jsx";
+import AuthModal from "./Auth/AuthModal.jsx";
+import Footer from "./Components/Footer.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [modal, setModal] = useState(null); // null | "signin" | "signup"
 
   return (
     <>
-      <div>
-        <h1>Hello World</h1>
-      </div>
-    </>
-  )
-}
+      <Navbar onSignInClick={() => setModal("signin")} />
 
-export default App
+      <Hero onCreateAccountClick={() => setModal("signup")} />
+
+      <PageCards />
+
+      <Footer />
+
+      {modal && (
+        <AuthModal
+          initialSignUp={modal === "signup"}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </>
+  );
+}
