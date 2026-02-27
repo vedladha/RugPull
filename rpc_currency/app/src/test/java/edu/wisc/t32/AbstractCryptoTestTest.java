@@ -1,7 +1,6 @@
 package edu.wisc.t32;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,6 @@ class AbstractCryptoTestTest extends AbstractCryptoTest {
   public void testSpinAccount() {
     ClientPair acc1 = assertDoesNotThrow(() -> spinTestAccount(20));
     assertDoesNotThrow(acc1::close);
-    assertTrue(true);
   }
 
 }
