@@ -13,6 +13,7 @@
 | password_salt   | VARCHAR, not NULL        | Salt for hashing                           |
 | created_at      | DATETIME, default current time |                                         |
 | updated_at      | DATETIME, default current time |                                         |
+| deleted         | BOOLEAN, default FALSE | Soft deletion for users |
 
 ---
 
@@ -109,7 +110,7 @@
 | quantity       | INT, default 1           | Amount of item being ordered         |
 | price          | DECIMAL(30,8), not NULL  | Price in crypto amount               |
 | fee_percentage | DECIMAL(5, 2), default 2.5 | Marketplace fee percentage placed on order |
-| status         | ENUM('pending','completed','cancelled'), default 'pending' | Status of order completion |
+| order_status   | ENUM('pending','completed','cancelled'), default 'pending' | Status of order completion |
 | created_at     | DATETIME, default current timestamp |                                 |
 | updated_at     | DATETIME, default current timestamp |                                 |
 
@@ -131,17 +132,17 @@
 ## CryptoTransactions
 **Stores all crypto transactions that happen in the marketplace**
 
-| Column           | Type                     | Notes                                  |
-|-----------------|-------------------------|---------------------------------------|
-| transaction_id    | INT, primary key, auto-increment | Unique transaction identifier      |
-| order_id          | INT, foreign key → Orders.order_id, optional | Optional connection to an item order |
-| user_id           | INT, foreign key → Users.user_id | User engaged in transaction        |
-| amount            | DECIMAL(30,8)            | Amount of crypto in the transaction   |
-| transaction_type  | ENUM('payment','refund','fee','deposit','withdrawal','gift','adjustment') | Transaction type |
-| transaction_hash  | VARCHAR, unique          | Transaction hash on blockchain        |
-| status            | ENUM('pending','confirmed','failed') | Transaction status                 |
-| created_at        | DATETIME, default current timestamp |                                   |
-| confirmed_at      | DATETIME, nullable       | Time transaction was confirmed        |
+| Column             | Type                     | Notes                                  |
+|--------------------|-------------------------|---------------------------------------|
+| transaction_id     | INT, primary key, auto-increment | Unique transaction identifier      |
+| order_id           | INT, foreign key → Orders.order_id, optional | Optional connection to an item order |
+| user_id            | INT, foreign key → Users.user_id | User engaged in transaction        |
+| amount             | DECIMAL(30,8)            | Amount of crypto in the transaction   |
+| transaction_type   | ENUM('payment','refund','fee','deposit','withdrawal','gift','adjustment') | Transaction type |
+| transaction_hash   | VARCHAR, unique          | Transaction hash on blockchain        |
+| transaction_status | ENUM('pending','confirmed','failed') | Transaction status                 |
+| created_at         | DATETIME, default current timestamp |                                   |
+| confirmed_at       | DATETIME, nullable       | Time transaction was confirmed        |
 
 ---
 
@@ -151,7 +152,7 @@
 | Column        | Type                     | Notes                                  |
 |---------------|-------------------------|---------------------------------------|
 | user_id       | INT, primary key, foreign key → Users.user_id | Unique user identifier         |
-| balance_amount| DECIMAL(30, 8), default 0 | Amount of crypto in the wallet       |
+| wallet_address| VARCHAR(255) | Wallet to retrieve balance from       |
 | created_at    | DATETIME, default current time |                                     |
 | updated_at    | DATETIME, default current time |                                     |
 
@@ -181,8 +182,8 @@
 | notification_id  | INT, primary key, auto-increment | Unique notification identifier |
 | user_id          | INT, foreign key → Users.user_id | User to notify                   |
 | type             | ENUM('order','gift','review','system') | Type of notification         |
-| read             | BOOLEAN, default FALSE   | If the user has seen the notification |
-| reference_id     | INT, NULL               | Points to the table that the notification is for |
+| seen             | BOOLEAN, default FALSE   | If the user has seen the notification |
+| reference_id     | INT, NULLABLE               | Points to the table that the notification is for |
 | reference_type   | VARCHAR                 | Which table the reference_id points to |
 | created_at       | DATETIME, default current time |                                     |
 | updated_at       | DATETIME, default current time |                                     |

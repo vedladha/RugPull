@@ -1,5 +1,20 @@
-Here is where you will explain your plan for the Walking Skeleton.
+The objective is to set up a minimal version of the app that proves the core components can communicating. The stack consists of:
 
-We will talk more about this in the future. In summary, the Walking Skeleton is a plan for setting up a minimal version of your tech stack. This is less than a MVP (minimum viable product) as this is not meant to be a product. It is to prove that you are able to integrate the three main components of your application: front end, back end, and database. 
+- **Frontend:** React with Vite  
+- **Backend:** SpringBoot  
+- **Database:** MySQL  
+- **Crypto:** Hedera Hashgraph (for future functionality)
 
-To complete the Skeleton you must be able to interact with your front end, have that interaction be sent to your backend, have something be stored in your database, and return a result back to the front end. This feature does not have to be particularly powerful or meaningful, but you must prove that you can communicate between each component of your application.
+### Steps:
+
+1. **Frontend:** A simple form will collect data and send it to the backend.
+2. **Backend:** A SpringBoot API will process the data, store it in MySQL, and retrieve it when requested.
+3. **Database:** MySQL will hold the data (e.g., names or items).
+4. **Hedera Hashgraph:** Initially set up in the backend for future blockchain features.
+
+The flow will be:  
+- **Frontend → Backend → Database → Backend → Frontend.**
+
+The primary goal is ensuring these components interact. The backend will receive data from the frontend, store it in MySQL, retrieve it, and send it back to the frontend. The Hedera setup will be ready for future use.
+
+This setup lays the foundation for expanding features and functionality once the basic integration works.

@@ -1,4 +1,5 @@
 plugins {
+    checkstyle
     application
     alias(libs.plugins.shadow)
 }
@@ -29,7 +30,13 @@ application {
     mainClass = main
 }
 
+checkstyle {
+    toolVersion = "13.2.0"
+    configFile = rootProject.file("config").resolve("checkstyle.xml")
+}
+
 tasks.named<Test>("test") {
+    environment(env.allVariables())
     useJUnitPlatform()
 }
 
@@ -55,6 +62,7 @@ tasks.shadowJar {
 }
 
 tasks.build {
+    dependsOn(tasks.check)
     dependsOn(tasks.named<Test>("test"))
     finalizedBy(copyJars)
 }
