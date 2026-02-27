@@ -14,7 +14,7 @@ class AbstractCryptoTestTest extends AbstractCryptoTest {
   @Test
   public void testSpinAccount() {
     ClientPair acc1 = assertDoesNotThrow(() -> spinTestAccount(20));
-    // assertDoesNotThrow(acc1::close);
+    assertDoesNotThrow(acc1::close);
     assertTrue(true);
   }
 

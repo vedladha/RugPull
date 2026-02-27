@@ -24,3 +24,18 @@ To build the project into a jar file
 two separate jars are found in the `build/libs/` directory. `app.jar` and `app-bundle.jar`. `app.jar` will not run
 and does not include the needed dependencies. It is a flat source jar. `app-bundle.jar` includes all dependencies and
 may be run from the command line using `java -jar app-bundle.jar`
+
+## Account setup for Hedera
+The operator account ID is the Hedera account that acts as the treasury for our token. It serves these key purposes:
+    - Holds the initial supply of tokens when the token is created
+    - Manages token distribution — all minted tokens go to this account
+    - Required for every token creation transaction
+
+It's simply a standard Hedera account ID (e.g., 0.0.47938602) that you designate as the token's treasury.
+
+
+
+## Token Creation
+We create our own cryptocurrency $RPC on Hedera using the Hedera Token Service (HTS). We use a function called TokenCreateTransaction to create our token, which HTS supports natively.
+
+HTS native tokens are faster and cheaper, with built-in compliance features. ERC-20 smart contracts offer more flexibility for custom logic (DeFi, governance). We can also use a hybrid approach — create tokens via HTS and manage them through smart contracts using facade contracts (HIP-218/HIP-376).
