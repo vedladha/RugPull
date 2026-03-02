@@ -38,4 +38,3 @@ It's simply a standard Hedera account ID (e.g., 0.0.47938602) that you designate
 ## Token Creation
 We create our own cryptocurrency $RPC on Hedera using the Hedera Token Service (HTS). We use a function called TokenCreateTransaction to create our token, which HTS supports natively.
 
-HTS native tokens are faster and cheaper, with built-in compliance features. ERC-20 smart contracts offer more flexibility for custom logic (DeFi, governance). We can also use a hybrid approach — create tokens via HTS and manage them through smart contracts using facade contracts (HIP-218/HIP-376).

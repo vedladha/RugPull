@@ -19,50 +19,49 @@ import org.slf4j.LoggerFactory;
  */
 public class Main {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
   /**
    * Launches the $RPC deployment application.
    *
    * @param args the command line arguments given to the $RPC deployment
    */
-    @SuppressWarnings("null")
-    public static void main(String[] args) {
-        AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
-        PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
+  @SuppressWarnings("null")
+  public static void main(String[] args) {
+    AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
+    PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
 
-        try (Client client = Client.forTestnet().setOperator(operatorId, operatorKey)) {
-            // adminKey has full control over token configuration and properties. It allows updating token name, 
-            // symbol, treasury, keys, and other properties. If not set, the token becomes immutable.
-            PrivateKey adminKey = PrivateKey.generateED25519();
-            // supplyKey controls minting (increasing supply) and burning (decreasing supply) of tokens. If not 
-            // set, no minting or burning are possible.
-            PrivateKey supplyKey = PrivateKey.generateED25519();
-            
-            Path keyFile = Path.of("rpc_keys.txt").toAbsolutePath();
-            Files.writeString(
-                keyFile,
-                "adminKey=" + adminKey + System.lineSeparator()
-                    + "supplyKey=" + supplyKey + System.lineSeparator()
-            );
-            LOGGER.info("Saved adminKey and supplyKey to {}", keyFile);
+    try (Client client = Client.forTestnet().setOperator(operatorId, operatorKey)) {
+      // adminKey has full control over token config and properties. It allows updating token name,
+      // symbol, treasury, keys, and other properties. If not set, the token becomes immutable.
+      PrivateKey adminKey = PrivateKey.generateED25519();
+      // supplyKey controls minting (increasing supply) and burning (decreasing supply) of tokens.
+      // If not set, no minting or burning are possible.
+      PrivateKey supplyKey = PrivateKey.generateED25519();
 
-            TokenCreateTransaction transaction = new TokenCreateTransaction()
-                .setTokenName("Rug Pull Coin")
-                .setTokenSymbol("RPC")
-                .setDecimals(2)
-                .setInitialSupply(10000)
-                .setTreasuryAccountId(operatorId)
-                .setAdminKey(adminKey.getPublicKey())
-                .setSupplyKey(supplyKey.getPublicKey())
-                .freezeWith(client);
+      Path keyFile = Path.of("rpc_keys.txt").toAbsolutePath();
+      Files.writeString(
+          keyFile,
+          "adminKey=" + adminKey + System.lineSeparator()
+              + "supplyKey=" + supplyKey + System.lineSeparator()
+      );
+      LOGGER.info("Saved adminKey and supplyKey to {}", keyFile);
 
-            TransactionResponse txResponse = transaction.sign(adminKey).execute(client);
-            TransactionReceipt receipt = txResponse.getReceipt(client);
-            LOGGER.info("Fungible token created: {}", receipt.tokenId);
-        } 
-        catch (Exception e) {
-            LOGGER.error("Token creation failed.", e);
-        } 
+      TokenCreateTransaction transaction = new TokenCreateTransaction()
+          .setTokenName("Rug Pull Coin")
+          .setTokenSymbol("RPC")
+          .setDecimals(2)
+          .setInitialSupply(10000)
+          .setTreasuryAccountId(operatorId)
+          .setAdminKey(adminKey.getPublicKey())
+          .setSupplyKey(supplyKey.getPublicKey())
+          .freezeWith(client);
+
+      TransactionResponse txResponse = transaction.sign(adminKey).execute(client);
+      TransactionReceipt receipt = txResponse.getReceipt(client);
+      LOGGER.info("Fungible token created: {}", receipt.tokenId);
+    } catch (Exception e) {
+      LOGGER.error("Token creation failed.", e);
     }
+  }
 }
