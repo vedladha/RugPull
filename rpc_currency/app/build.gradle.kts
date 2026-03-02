@@ -40,6 +40,14 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
+tasks.named<JavaExec>("run") {
+    environment(env.allVariables())
+}
+
+tasks.named<JavaExec>("runShadow") {
+    environment(env.allVariables())
+}
+
 val copyJars by tasks.registering(Copy::class) {
     from(tasks.jar)
     from(tasks.shadowJar)
