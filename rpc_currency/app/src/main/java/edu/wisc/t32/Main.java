@@ -44,7 +44,7 @@ public class Main {
 
     try (Client client = Client.forTestnet().setOperator(operatorId, operatorKey)) {
       final CryptoCreationResult createResult = createCurrency(client, Path.of("rpc_keys.txt"));
-      if (createResult.status == Status.OK && createResult.tokenId != null) {
+      if (createResult.status == Status.SUCCESS && createResult.tokenId != null) {
         LOGGER.info("Token created with id {}", createResult.tokenId);
       } else {
         LOGGER.info("Failed to create token. Creation returned with result status {}",
