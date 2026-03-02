@@ -8,3 +8,6 @@ build
 .kotlin
 
 .env
+
+# Ignore the bin directory and its contents
+rpc_currency/app/bin/
