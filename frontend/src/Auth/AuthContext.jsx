@@ -47,13 +47,14 @@ export function AuthProvider({ children }) {
 
     if (!loginResponse.ok) throw new Error("Incorrect email or password");
 
-    const profileResponse = await fetch(`${API}/auth/profile`, {
+    /*const profileResponse = await fetch(`${API}/auth/profile`, {
       credentials: "include",
-    });
-    const profile = await profileResponse.json();
 
-    setUser(profile);
-    return profile;
+    });*/
+    const data = await loginResponse.json();
+
+    setUser(data);
+    return data;
   }
 
   async function signOut() {

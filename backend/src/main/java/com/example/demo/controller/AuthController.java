@@ -85,7 +85,6 @@ public class AuthController {
      */
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@CookieValue(name = "jwt") String token) {
-        //TODO: Implement JWT token validation and user retrieval based on the token in a future implementation.
         return ResponseEntity.ok(Map.of("message", "This endpoint will return the user's profile information based on the JWT token in a future implementation."));
     }
 
