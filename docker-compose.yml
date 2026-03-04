@@ -20,7 +20,7 @@ services:
       - .env
 
   database:
-    image: mysql:8.1
+    build: ./database
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}

@@ -107,4 +107,8 @@ docker compose down
 ```
 or kill them manually with docker kill.
 
-This will not remove your local database.
+This will not remove your local database, to remove your local database, run:
+```bash
+docker compose down -v
+```
+When you run docker compose up again, docker will rebuild the database based on database/schema.sql.

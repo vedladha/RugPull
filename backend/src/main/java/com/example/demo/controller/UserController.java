@@ -34,8 +34,8 @@ public class UserController {
 
     @PostMapping("/users/addUser")
     public ResponseEntity<?> addNewUser(@RequestParam String email,
-            @RequestParam String passwordHash,
-            @RequestParam String passwordSalt) {
+            @RequestParam String passwordHash
+            ) {
 
         if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.badRequest().body("Email already exists");
@@ -44,7 +44,6 @@ public class UserController {
         User u = new User();
         u.setEmail(email);
         u.setPasswordHash(passwordHash);
-        u.setPasswordSalt(passwordSalt);
         u.setDeleted(false);
 
         return ResponseEntity.ok(userRepository.save(u));

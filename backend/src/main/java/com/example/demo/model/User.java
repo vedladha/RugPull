@@ -20,10 +20,6 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @JsonIgnore
-    @Column(name = "password_salt", nullable = false)
-    private String passwordSalt;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,9 +40,6 @@ public class User {
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-
-    public String getPasswordSalt() { return passwordSalt; }
-    public void setPasswordSalt(String passwordSalt) { this.passwordSalt = passwordSalt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
