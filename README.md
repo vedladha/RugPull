@@ -103,7 +103,13 @@ Planned implementation stack:
 - `ROLES.md`: Scrum Master and Product Owner assignments by sprint
 - `STYLE.md`: Project coding conventions
 - `SKELETON.md`: Walking skeleton notes
+- `docker-compose.yml`: Compose file for setting up and running frontend, backend, & db containers
+- `docker-compose_guide.md`: Instructions for setting up docker environment
 - `RESEARCH/`: Research reports and references
+- `frontend/`: React/Vite frontend server
+- `backend/`: Java Spring backend app
+- `database/`: MYSQL database schema & setup
+- `rpc_currency/`: Setup and Documentation for creating $RPC currency
 
 ## Status
 
