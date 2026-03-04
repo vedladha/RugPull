@@ -2,16 +2,21 @@ import { useState } from "react";
 import { useAuth } from "./AuthContext.jsx";
 
 export default function AuthModal({ initialSignUp = false, onClose }) {
-  const { signIn } = useAuth();
+  const { signIn, register } = useAuth();
   const [isSignUp, setIsSignUp] = useState(initialSignUp);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState(null);
 
   async function handleSubmit() {
     setError(null);
     try {
-      await signIn(email, password);
+      if (isSignUp) {
+        await register(displayName, email, password);
+      } else {
+        await signIn(email, password);
+      }
       onClose();
     } catch (err) {
       setError(err.message);
@@ -27,8 +32,8 @@ export default function AuthModal({ initialSignUp = false, onClose }) {
 
         {isSignUp && (
           <>
-            <div className="modal-label">Username</div>
-            <input className="modal-input" type="text" placeholder="username" />
+            <div className="modal-label">Display Name</div>
+            <input className="modal-input" type="text" placeholder="display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}/>
           </>
         )}
 

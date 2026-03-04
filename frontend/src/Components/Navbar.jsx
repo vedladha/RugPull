@@ -10,6 +10,7 @@ export default function Navbar({ onSignInClick }) {
         <button className="nav-btn">Sell</button>
         <button className="nav-btn">About</button>
       </div>
+      {user && <div className="nav-user">Hello, {user.displayName}!</div>}
       {user
         ? <button className="nav-signin" onClick={signOut}>Sign Out</button>
         : <button className="nav-signin" onClick={onSignInClick}>Sign In</button>
