@@ -16,4 +16,9 @@ class AbstractCryptoTestTest extends AbstractCryptoTest {
     assertDoesNotThrow(acc1::close);
   }
 
+  @Test
+  public void testSpinToken() {
+    TestToken token = assertDoesNotThrow(() -> spinTestToken(100));
+    assertDoesNotThrow(token::close);
+  }
 }
