@@ -28,19 +28,12 @@ public class AuthService {
      */
     public User register(String displayName, String email, String password) {
         // TODO: Implement password hashing and salting in a future implementation. For now, we're storing passwords in plain text for initial testing.
-        /*SecureRandom random = new SecureRandom();
-        byte[] saltBytes = new byte[16];
-        random.nextBytes(saltBytes);
-        String salt = Base64.getEncoder().encodeToString(saltBytes);
-
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hashedPassword = encoder.encode(password + salt);
-        System.out.println("Generated salt: " + salt);
-        System.out.println("Hashed password: " + hashedPassword);*/
+        String hashedPassword = encoder.encode(password);
 
         User user = new User();
         user.setEmail(email);
-        user.setPasswordHash(password);
+        user.setPasswordHash(hashedPassword);
         user.setDeleted(false);
         
         UserProfile profile = new UserProfile();
@@ -63,9 +56,8 @@ public class AuthService {
     public User login(String email, String password) {
         return userRepo.findByEmail(email)
                 .filter(user -> {
-                    //BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-                    //return encoder.matches(password + salt, user.getPasswordHash());
-                    return user.getPasswordHash().equals(password);
+                    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+                    return encoder.matches(password, user.getPasswordHash());
                 })
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
     }
