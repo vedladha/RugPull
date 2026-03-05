@@ -41,7 +41,6 @@ public class AuthService {
         User user = new User();
         user.setEmail(email);
         user.setPasswordHash(password);
-        user.setPasswordSalt(password);
         user.setDeleted(false);
         
         UserProfile profile = new UserProfile();
