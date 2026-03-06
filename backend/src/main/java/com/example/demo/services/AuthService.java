@@ -3,6 +3,7 @@ package com.example.demo.services;
 import com.example.demo.model.User;
 import com.example.demo.model.UserProfile;
 import com.example.demo.repository.UserRepository;
+import edu.wisc.t32.api.WalletService;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -35,19 +36,19 @@ public class AuthService {
         user.setEmail(email);
         user.setPasswordHash(hashedPassword);
         user.setDeleted(false);
-        
+
         UserProfile profile = new UserProfile();
         profile.setDisplayName(displayName);
         profile.setUser(user);
 
         user.setUserProfile(profile);
 
-        return userRepo.save(user);
+      return userRepo.save(user);
     }
 
     /****
      * Login method - authenticates the user by checking if the provided email exists and if the password matches the stored password hash.
-     * Currently, since we're storing passwords in plain text for initial testing, it simply compares the provided password with the stored password hash. 
+     * Currently, since we're storing passwords in plain text for initial testing, it simply compares the provided password with the stored password hash.
      * In a future implementation, this will be updated to hash the provided password with the stored salt and compare it to the stored password hash.
      * @param email - the email address provided by the user for authentication
      * @param password - the password provided by the user for authentication

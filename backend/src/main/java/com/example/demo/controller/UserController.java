@@ -4,6 +4,7 @@ import com.example.demo.model.User;
 import com.example.demo.model.UserProfile;
 import com.example.demo.repository.UserProfileRepository;
 import com.example.demo.repository.UserRepository;
+import edu.wisc.t32.api.WalletService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +42,6 @@ public class UserController {
         User u = new User();
         u.setEmail(email);
         u.setPasswordHash(passwordHash);
-        u.setPasswordSalt(passwordSalt);
         u.setDeleted(false);
 
         return ResponseEntity.ok(userRepository.save(u));
