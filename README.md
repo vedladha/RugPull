@@ -79,16 +79,10 @@ sequenceDiagram
 
 ## Technology Stack
 
-Current project artifacts confirm:
-
-- Relational database design is defined in `SCHEMA.md`
-- Java coding standards are defined in `STYLE.md`
-
-Planned implementation stack:
-
-- Frontend: Web client using React
-- Backend: Java with Spring
+- Frontend: React 19 + Vite 7
+- Backend: Java 21 + Spring Boot 4.0
 - Database: MySQL
+- Infrastructure: Docker + Docker Compose
 
 ## Standards and Conventions
 
@@ -109,8 +103,25 @@ Planned implementation stack:
 - `frontend/`: React/Vite frontend server
 - `backend/`: Java Spring backend app
 - `database/`: MYSQL database schema & setup
-- `rpc_currency/`: Setup and Documentation for creating $RPC currency
+- `rpc_currency/`: Custom $RPC cryptocurrency wallet implementation (Java)
 
-## Status
+## Getting Started
 
-This repository currently contains foundational project documentation. Implementation repositories/modules should be linked here once created.
+1. Copy the environment template and fill in your values:
+   ```bash
+   cp .env.example .env
+   ```
+2. Start all services (frontend, backend, database):
+   ```bash
+   docker compose up --build
+   ```
+3. Open `http://localhost:3000` in your browser.
+
+See `docker-compose_guide.md` for more detail.
+
+## What's Implemented
+
+- **User authentication** — register and login with BCrypt-hashed passwords (`/auth/register`, `/auth/login`, `/auth/logout`)
+- **User profiles** — display name and bio, created automatically on registration
+- **React frontend** — landing page with sign-in and create-account modals wired to the backend
+- **Dockerized environment** — all three services (frontend, backend, database) run via Docker Compose
