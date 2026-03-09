@@ -3,19 +3,37 @@ import "./index.css";
 import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
+import Listings from "./Listings.jsx";
 import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState("home"); // "home" | "listings"
   const [modal, setModal] = useState(null); // null | "signin" | "signup"
 
   return (
     <>
-      <Navbar onSignInClick={() => setModal("signin")} />
+      <Navbar
+        onSignInClick={() => setModal("signin")}
+        onNavigate={setCurrentPage}
+        currentPage={currentPage}
+      />
 
-      <Hero onCreateAccountClick={() => setModal("signup")} />
+      {currentPage === "home" ? (
+        <>
+          <Hero onCreateAccountClick={() => setModal("signup")} />
+          <PageCards
+            onCardClick={(action) => {
+              if (action === "marketplace") {
+                setCurrentPage("listings");
+              }
 
-      <PageCards />
+            }}
+          />
+        </>
+      ) : currentPage === "listings" ? (
+        <Listings />
+      ) : null}
 
       <Footer />
 
