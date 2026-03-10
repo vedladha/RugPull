@@ -234,7 +234,10 @@ Buying and selling workflow.
     "email": "user@example.com",
     "displayName": "User",
     "walletAddress": "0.0.1234567"
-  }
+  },
+  "access_token": "{jwt access token}",
+  "refresh_token": "{jwt refresh token}",
+  "expires_in": 3600
 }
 ```
 
@@ -265,7 +268,10 @@ Buying and selling workflow.
     "email": "user@example.com",
     "displayName": "User",
     "walletAddress": "0.0.1234567"
-  }
+  },
+  "access_token": "{jwt access token}",
+  "refresh_token": "{jwt refresh token}",
+  "expires_in": 3600
 }
 ```
 
