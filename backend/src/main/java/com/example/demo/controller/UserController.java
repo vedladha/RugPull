@@ -8,8 +8,8 @@ import com.example.demo.model.UserWallet;
 import com.example.demo.repository.UserProfileRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserWalletRepository;
-import com.example.demo.service.HederaAccountService;
 import com.example.demo.service.PasswordService;
+import com.example.demo.service.RpcWalletService;
 import jakarta.transaction.Transactional;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,19 +32,19 @@ public class UserController {
     private final UserProfileRepository userProfileRepository;
     private final UserWalletRepository userWalletRepository;
     private final PasswordService passwordService;
-    private final HederaAccountService hederaAccountService;
+    private final RpcWalletService rpcWalletService;
 
     public UserController(
             UserRepository userRepository,
             UserProfileRepository userProfileRepository,
             UserWalletRepository userWalletRepository,
             PasswordService passwordService,
-            HederaAccountService hederaAccountService) {
+            RpcWalletService rpcWalletService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.userWalletRepository = userWalletRepository;
         this.passwordService = passwordService;
-        this.hederaAccountService = hederaAccountService;
+        this.rpcWalletService = rpcWalletService;
     }
 
     @PostMapping("/auth/signup")
@@ -81,22 +81,22 @@ public class UserController {
             userProfileRepository.save(profile);
         }
 
-        final String hederaAccountId;
+        final RpcWalletService.WalletCredentials walletCredentials;
         try {
-            hederaAccountId = hederaAccountService.createAccountId();
+            walletCredentials = rpcWalletService.createWallet();
         } catch (IllegalStateException e) {
-            LOGGER.error("Signup failed while creating Hedera account for {}", email, e);
+            LOGGER.error("Signup failed while creating wallet for {}", email, e);
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(
                             Map.of(
-                                    "error", "Could not create Hedera account for new user",
+                                    "error", "Could not create wallet for new user",
                                     "details", e.getMessage()));
         }
 
         UserWallet wallet = new UserWallet();
         wallet.setUser(user);
-        wallet.setWalletAddress(hederaAccountId);
+        wallet.setWalletAddress(walletCredentials.walletId());
         userWalletRepository.save(wallet);
 
         return ResponseEntity.status(HttpStatus.CREATED)

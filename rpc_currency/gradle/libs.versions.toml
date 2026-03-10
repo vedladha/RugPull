@@ -1,5 +1,5 @@
 [versions]
-grpc = "1.64.0"
+grpc = "1.76.0"
 gson = "2.13.2"
 hedera-hashgraph = "2.67.0-beta.1"
 junit-jupiter = "6.0.3"
@@ -8,12 +8,12 @@ shadow = "9.3.1"
 dotenv-gradle = "4.0.0"
 
 [libraries]
-grpc = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
+grpc = { module = "io.grpc:grpc-okhttp", version.ref = "grpc" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 hedera-hashgraph = { module = "com.hedera.hashgraph:sdk", version.ref = "hedera-hashgraph" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-slf4j = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
