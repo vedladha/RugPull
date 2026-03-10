@@ -97,6 +97,7 @@ public class UserController {
         UserWallet wallet = new UserWallet();
         wallet.setUser(user);
         wallet.setWalletAddress(walletCredentials.walletId());
+        wallet.setWalletPrivateKey(walletCredentials.walletPrivateKey());
         userWalletRepository.save(wallet);
 
         return ResponseEntity.status(HttpStatus.CREATED)

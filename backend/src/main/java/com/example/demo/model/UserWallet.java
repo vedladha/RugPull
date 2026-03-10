@@ -28,6 +28,10 @@ public class UserWallet {
     @Column(name = "wallet_address", nullable = false, unique = true)
     private String walletAddress;
 
+    @JsonIgnore
+    @Column(name = "wallet_private_key", nullable = false)
+    private String walletPrivateKey;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -42,6 +46,9 @@ public class UserWallet {
 
     public String getWalletAddress() { return walletAddress; }
     public void setWalletAddress(String walletAddress) { this.walletAddress = walletAddress; }
+
+    public String getWalletPrivateKey() { return walletPrivateKey; }
+    public void setWalletPrivateKey(String walletPrivateKey) { this.walletPrivateKey = walletPrivateKey; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

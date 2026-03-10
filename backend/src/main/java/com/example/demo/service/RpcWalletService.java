@@ -39,6 +39,10 @@ public class RpcWalletService {
                 throw new IllegalStateException(
                         "Wallet service did not return a valid wallet ID for the new user.");
             }
+            if (wallet.getWalletPrivateKey() == null || wallet.getWalletPrivateKey().isBlank()) {
+                throw new IllegalStateException(
+                        "Wallet service did not return a private key for the new user.");
+            }
             return new WalletCredentials(wallet.getWalletId(), wallet.getWalletPrivateKey());
         } catch (IllegalStateException | IllegalArgumentException e) {
             throw new IllegalStateException(
