@@ -26,6 +26,37 @@ CREATE TABLE IF NOT EXISTS UserProfiles (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- UserWallets
+CREATE TABLE IF NOT EXISTS UserWallets (
+    user_id INT PRIMARY KEY,
+    wallet_address VARCHAR(255) UNIQUE NOT NULL,
+    wallet_private_key VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_userwallets_users
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @wallet_private_key_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'UserWallets'
+      AND COLUMN_NAME = 'wallet_private_key'
+);
+
+SET @wallet_private_key_migration = IF(
+    @wallet_private_key_exists = 0,
+    'ALTER TABLE UserWallets ADD COLUMN wallet_private_key VARCHAR(255) NOT NULL DEFAULT '''' AFTER wallet_address',
+    'SELECT ''wallet_private_key already exists'' AS migration_status'
+);
+
+PREPARE wallet_private_key_stmt FROM @wallet_private_key_migration;
+EXECUTE wallet_private_key_stmt;
+DEALLOCATE PREPARE wallet_private_key_stmt;
+
 COMMIT;
 
 /*
@@ -168,6 +199,7 @@ CREATE TABLE IF NOT EXISTS CryptoTransactions (
 CREATE TABLE IF NOT EXISTS UserWallets (
     user_id INT PRIMARY KEY,
     wallet_address VARCHAR(255) UNIQUE NOT NULL,
+    wallet_private_key VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

@@ -8,40 +8,36 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/auth/profile/`, {
-      credentials: "include",
-    })
+    fetch(`${API}/api/auth/profile/`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data.user ?? null))
       .finally(() => setLoading(false));
   }, []);
 
   async function register(displayName, email, password) {
-    const response = await fetch(`${API}/auth/register`, {
+    const response = await fetch(`${API}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ displayName, email, password }),
-      credentials: "include",
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Registration failed");
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || errorData?.error || "Registration failed");
     }
-    const profile = await response.json();
-    console.log("Registered user profile:", profile.displayName);
-    setUser(profile);
-    return profile;
+    const data = await response.json();
+    console.log("Registered user profile:", data.user?.displayName);
+    setUser(data.user);
+    return data.user;
   }
 
   async function signIn(email, password) {
     const loginResponse = await fetch(
-      `${API}/auth/login`,
+      `${API}/api/auth/login`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials: "include",
       },
     );
 
@@ -49,14 +45,13 @@ export function AuthProvider({ children }) {
 
     const data = await loginResponse.json();
 
-    setUser(data);
-    return data;
+    setUser(data.user);
+    return data.user;
   }
 
   async function signOut() {
-    await fetch(`${API}/auth/logout`, {
+    await fetch(`${API}/api/auth/logout`, {
       method: "POST",
-      credentials: "include",
     });
     setUser(null);
   }

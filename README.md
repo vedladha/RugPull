@@ -121,7 +121,7 @@ See `docker-compose_guide.md` for more detail.
 
 ## What's Implemented
 
-- **User authentication** — register and login with BCrypt-hashed passwords (`/auth/register`, `/auth/login`, `/auth/logout`)
+- **User authentication** — signup, login, and logout with BCrypt-hashed passwords (`/api/auth/signup`, `/api/auth/login`, `/api/auth/logout`)
 - **User profiles** — display name and bio, created automatically on registration
 - **React frontend** — landing page with sign-in and create-account modals wired to the backend
 - **Dockerized environment** — all three services (frontend, backend, database) run via Docker Compose

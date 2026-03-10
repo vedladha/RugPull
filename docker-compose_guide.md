@@ -34,6 +34,11 @@ This needs to be done once per developer on setup, and then subsequently rerun w
 docker compose exec -T database   mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ./database/schema.sql
 ```
 
+For existing databases, if signup fails because `wallet_private_key` is missing, run:
+```bash
+docker compose exec -T database mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "ALTER TABLE UserWallets ADD COLUMN wallet_private_key VARCHAR(255) NOT NULL DEFAULT '' AFTER wallet_address;"
+```
+
 To open an interactive MySQL shell, run:
 ```bash
 docker compose exec database mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME"

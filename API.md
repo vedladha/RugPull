@@ -17,13 +17,16 @@ This document outlines the main API endpoints for the $RPC marketplace.
 
 Handles signup, login, and account management.
 
+Current frontend-backed auth flow uses `/api/auth/*` endpoints.
+Legacy `/auth/*` auth routes still exist in a separate controller, but frontend signup/login/logout uses `/api/auth/*`.
+
 
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/signup` | POST | Create a new user (email, password, optional profile info) |
-| `/auth/login` | POST | Authenticate user and return JWT/session token |
-| `/auth/logout` | POST | Invalidate token/session |
+| `/api/auth/signup` | POST | Create a new user and wallet (`walletAddress` returned in `user`) |
+| `/api/auth/login` | POST | Authenticate user |
+| `/api/auth/logout` | POST | Logout |
 | `/auth/refresh` | POST | Refresh the JWT/session token |
 | `/users/me` | GET | Fetch the logged in user account info |
 | `/users/me` | PUT/PATCH | Update logged in user account info |
@@ -203,7 +206,7 @@ Buying and selling workflow.
 
 ---
 
-### POST /auth/signup
+### POST /api/auth/signup
 
 #### Request Body
 
@@ -211,7 +214,7 @@ Buying and selling workflow.
 |-------|------|----------|-------------|
 | email | String | Y | User email |
 | password | String | Y | Password |
-| display_name | String | N | Optional user display name, defaults to email |
+| displayName | String | N | Optional user display name |
 
 
 #### Request Example
@@ -219,7 +222,7 @@ Buying and selling workflow.
 {
   "email": "user@example.com",
   "password": "password123",
-  "display_name": "User"
+  "displayName": "User"
 }
 ```
 
@@ -229,17 +232,15 @@ Buying and selling workflow.
   "user": {
     "id": 1,
     "email": "user@example.com",
-    "display_name": "User"
-  },
-  "access_token": "{jwt access token}",
-  "refresh_token": "{jwt refresh token}",
-  "expires_in": 3600
+    "displayName": "User",
+    "walletAddress": "0.0.1234567"
+  }
 }
 ```
 
 ---
 
-### POST /auth/login
+### POST /api/auth/login
 
 #### Request Body
 
@@ -262,28 +263,20 @@ Buying and selling workflow.
   "user": {
     "id": 1,
     "email": "user@example.com",
-    "display_name": "User"
-  },
-  "access_token": "{jwt access token}",
-  "refresh_token": "{jwt refresh token}",
-  "expires_in": 3600
+    "displayName": "User",
+    "walletAddress": "0.0.1234567"
+  }
 }
 ```
 
 ---
 
-### POST /auth/logout
-
-#### Headers
-
-| Header | Value |
-|--------|-------|
-| Authorization | Bearer `<access_token>` |
+### POST /api/auth/logout
 
 #### Response Example
 ```json
 {
-  "message": "User successfully logged out"
+  "message": "Logged out"
 }
 ```
 

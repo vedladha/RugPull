@@ -153,6 +153,7 @@
 |---------------|-------------------------|---------------------------------------|
 | user_id       | INT, primary key, foreign key → Users.user_id | Unique user identifier         |
 | wallet_address| VARCHAR(255) | Wallet to retrieve balance from       |
+| wallet_private_key | VARCHAR(255), not NULL | Wallet private key (currently stored as plain text) |
 | created_at    | DATETIME, default current time |                                     |
 | updated_at    | DATETIME, default current time |                                     |
 
