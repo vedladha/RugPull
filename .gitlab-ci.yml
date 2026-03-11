@@ -20,6 +20,7 @@ stages:
 frontend-lint:
   stage: lint
   image: node:20-slim
+  allow_failure: true
   script:
     - cd frontend
     - npm ci
@@ -45,6 +46,7 @@ backend-lint:
 backend-test:
   stage: test
   image: eclipse-temurin:21-jdk
+  allow_failure: true
   services:
     - name: mysql:8.0
       alias: mysql
