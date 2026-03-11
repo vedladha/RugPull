@@ -74,7 +74,11 @@ backend-test:
 crypto-test:
   stage: test
   image: eclipse-temurin:21-jdk
+  variables:
+    OPERATOR_ID: $HEDERA_OPERATOR_ID
+    OPERATOR_KEY: $HEDERA_OPERATOR_KEY
+    RPC_CURRENCY_ID: $RPC_CURRENCY_ID
   script:
     - cd rpc_currency
     - chmod +x gradlew
-    - ./gradlew test -DOPERATOR_ID=$HEDERA_OPERATOR_ID -DOPERATOR_KEY=$HEDERA_OPERATOR_KEY
+    - ./gradlew test
