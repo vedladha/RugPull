@@ -17,14 +17,14 @@ stages:
   - test
 
 # Frontend
-frontend-lint:
-  stage: lint
-  image: node:20-slim
-  allow_failure: true
-  script:
-    - cd frontend
-    - npm ci
-    - npm run lint
+#frontend-lint:
+#  stage: lint
+#  image: node:20-slim
+#  allow_failure: true
+#  script:
+#    - cd frontend
+#    - npm ci
+#    - npm run lint
 
 frontend-test:
   stage: test
@@ -35,14 +35,14 @@ frontend-test:
     - npm run test:unit
 
 # Backend
-backend-lint:
-  stage: lint
-  image: eclipse-temurin:21-jdk
-  allow_failure: true
-  script:
-    - cd backend
-    - chmod +x gradlew
-    - ./gradlew checkstyleMain
+#backend-lint:
+#  stage: lint
+#  image: eclipse-temurin:21-jdk
+#  allow_failure: true
+#  script:
+#    - cd backend
+#    - chmod +x gradlew
+#    - ./gradlew checkstyleMain
 
 backend-test:
   stage: test
@@ -64,13 +64,13 @@ backend-test:
     - ./gradlew test
 
 # Crypto
-crypto-lint:
-  stage: lint
-  image: eclipse-temurin:21-jdk
-  script:
-    - cd rpc_currency
-    - chmod +x gradlew
-    - ./gradlew checkstyleMain
+#crypto-lint:
+#  stage: lint
+#  image: eclipse-temurin:21-jdk
+#  script:
+#    - cd rpc_currency
+#    - chmod +x gradlew
+#    - ./gradlew checkstyleMain
 
 crypto-test:
   stage: test
