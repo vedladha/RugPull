@@ -4,7 +4,7 @@ SET time_zone = '+00:00';
 START TRANSACTION;
 
 -- Users
-CREATE TABLE IF NOT EXISTS Users (
+CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS Users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- UserProfiles
-CREATE TABLE IF NOT EXISTS UserProfiles (
+CREATE TABLE UserProfiles (
     user_id INT PRIMARY KEY,
     display_name VARCHAR(255) UNIQUE,
     bio TEXT,
