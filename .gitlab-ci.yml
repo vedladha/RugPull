@@ -56,9 +56,8 @@ backend-test:
     MYSQL_PASSWORD: $DB_PASSWORD
     MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
   script:
-    - ls -R
     - apt-get update && apt-get install -y mysql-client
-    - cat database/*.sql | mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE
+    - cat database/database_init/*.sql | mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE
     - cd backend
     - chmod +x gradlew
     - ./gradlew test
