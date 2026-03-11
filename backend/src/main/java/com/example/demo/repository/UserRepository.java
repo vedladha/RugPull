@@ -1,9 +1,22 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository interface for managing {@link User} entities.
+ *
+ * <p>Extends {@link JpaRepository} to provide standard CRUD operations and includes
+ * custom query methods specific to users.
+ */
 public interface UserRepository extends JpaRepository<User, Integer> {
-    Optional<User> findByEmail(String email);
+
+  /**
+   * Retrieves a user by their unique email address.
+   *
+   * @param email the exact email address to search for
+   * @return an {@link Optional} containing the user if found, or empty otherwise
+   */
+  Optional<User> findByEmail(String email);
 }
