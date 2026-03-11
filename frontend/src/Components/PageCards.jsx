@@ -3,7 +3,7 @@ const pages = [
     icon: "🛍️",
     name: "Marketplace",
     desc: "Browse thousands of listings across all categories",
-    action: "marketplace",
+    action: "listings",
   },
   {
     icon: "📦",
@@ -25,7 +25,7 @@ const pages = [
   },
 ];
 
-export default function PageCards({ onCardClick }) {
+export default function PageCards({ onCardClick, onNavigate }) {
   return (
     <div className="pages-section">
       <h2>Where do you want to go?</h2>
@@ -34,9 +34,9 @@ export default function PageCards({ onCardClick }) {
           <div
             className="page-card"
             key={p.name}
-            onClick={() => onCardClick && onCardClick(p.action)}
+            onClick={() => onNavigate && onNavigate(p.action)}
           >
-            <div className="page-icon">{p.icon}</div>
+            <div className="page-icon"> {p.icon} </div>
             <div className="page-name">{p.name}</div>
             <div className="page-desc">{p.desc}</div>
             <div className="page-arrow">→</div>

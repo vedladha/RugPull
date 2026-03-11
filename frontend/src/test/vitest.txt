@@ -1,0 +1,10 @@
+The testing suite we will use for the frontend is called vitest (made for vite specifically)
+Text by component, not by page
+
+Commonly Used Methods:
+vi.fn(): creates a mock function and records its call. Used to simply test when something was properly called
+userEvents: mimics certain user events (click, drag, hover, etc)
+screen.getByRole/Text/etc: searches the DOM for the element described (ex. if its text, looks for something with the exact same text)
+render: virtually renders the DOM for whatever component is specified for later test interactions
+describe: labeled container to group together related tests
+it: defines a single test case with a description of that test

@@ -4,6 +4,7 @@ import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
+import SellPage from "./SellPage.jsx";
 import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
 
@@ -27,12 +28,14 @@ export default function App() {
               if (action === "marketplace") {
                 setCurrentPage("listings");
               }
-
             }}
+            onNavigate={setCurrentPage}
           />
         </>
       ) : currentPage === "listings" ? (
         <Listings />
+      ) : currentPage === "sell" ? (
+        <SellPage />
       ) : null}
 
       <Footer />

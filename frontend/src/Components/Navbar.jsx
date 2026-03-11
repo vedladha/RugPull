@@ -18,7 +18,12 @@ export default function Navbar({ onSignInClick, onNavigate, currentPage }) {
         >
           Marketplace
         </button>
-        <button className="nav-btn">Sell</button>
+        <button
+          className={`nav-btn ${currentPage === "sell" ? "nav-btn-active" : ""}`}
+          onClick={() => onNavigate && onNavigate("sell")}
+        >
+          Sell
+        </button>
         <button className="nav-btn">About</button>
       </div>
       {user && <div className="nav-user">Hello, {user.displayName}!</div>}
