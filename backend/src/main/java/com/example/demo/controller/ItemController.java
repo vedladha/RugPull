@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +45,19 @@ public class ItemController {
 
         Item saved = itemRepository.save(item);
         return ResponseEntity.ok(Map.of("item", saved));
+    }
+
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
+        Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+        if (existing.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
+        }
+
+        Item item = existing.get();
+        item.setDeleted(true);
+        itemRepository.save(item);
+        return ResponseEntity.ok(Map.of("message", "Item deleted", "itemId", itemId));
     }
 
     private String validate(ItemUpdateRequest request) {

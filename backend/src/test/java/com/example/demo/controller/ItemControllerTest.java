@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -117,6 +118,38 @@ class ItemControllerTest {
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
         assertTrue(String.valueOf(body.get("error")).contains("required"));
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    @Test
+    void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
+        Item existing = buildItem(11, 2, "Name", "Description", new BigDecimal("2.00"), 5, false);
+        when(itemRepository.findByItemIdAndDeletedFalse(11)).thenReturn(Optional.of(existing));
+        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResponseEntity<?> response = itemController.deleteItem(11);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("Item deleted", body.get("message"));
+        assertEquals(11, body.get("itemId"));
+
+        ArgumentCaptor<Item> itemCaptor = ArgumentCaptor.forClass(Item.class);
+        verify(itemRepository).save(itemCaptor.capture());
+        assertTrue(Boolean.TRUE.equals(itemCaptor.getValue().getDeleted()));
+    }
+
+    @Test
+    void deleteItem_returnsNotFound_whenItemDoesNotExist() {
+        when(itemRepository.findByItemIdAndDeletedFalse(404)).thenReturn(Optional.empty());
+
+        ResponseEntity<?> response = itemController.deleteItem(404);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("Item not found", body.get("error"));
         verify(itemRepository, never()).save(any(Item.class));
     }
 
