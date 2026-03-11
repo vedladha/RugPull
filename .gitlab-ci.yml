@@ -46,7 +46,7 @@ backend-test:
   stage: test
   image: eclipse-temurin:21-jdk
   services:
-    - mysql:8.0
+    - name: mysql:8.0
       alias: mysql
   variables:
     MYSQL_DATABASE: $DB_NAME
