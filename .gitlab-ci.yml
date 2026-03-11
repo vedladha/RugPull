@@ -77,4 +77,4 @@ crypto-test:
   script:
     - cd rpc_currency
     - chmod +x gradlew
-    - ./gradlew test
+    - ./gradlew test -DOPERATOR_ID=$HEDERA_OPERATOR_ID -DOPERATOR_KEY=$HEDERA_OPERATOR_KEY
