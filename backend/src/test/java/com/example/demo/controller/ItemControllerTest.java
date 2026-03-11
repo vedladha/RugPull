@@ -85,7 +85,7 @@ class ItemControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
-        assertEquals("Name is required", body.get("error"));
+        assertEquals("name is required", body.get("error"));
         verify(itemRepository, never()).save(any(Item.class));
     }
 
@@ -99,7 +99,7 @@ class ItemControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
-        assertEquals("Price must be non-negative", body.get("error"));
+        assertEquals("price must be non-negative", body.get("error"));
         verify(itemRepository, never()).save(any(Item.class));
     }
 
