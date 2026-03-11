@@ -25,6 +25,8 @@ public class ItemController {
         this.itemRepository = itemRepository;
     }
 
+    // Full update for an existing active item.
+    // Requires all of the fields in the request.
     @PutMapping("/{itemId}")
     public ResponseEntity<?> updateItem(@PathVariable Integer itemId, @RequestBody ItemUpdateRequest request) {
         Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
@@ -47,6 +49,8 @@ public class ItemController {
         return ResponseEntity.ok(Map.of("item", saved));
     }
 
+    // Delete: keeps the row and marks it deleted.
+    // Deleted items are filtered out by repo lookups.
     @DeleteMapping("/{itemId}")
     public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
         Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);

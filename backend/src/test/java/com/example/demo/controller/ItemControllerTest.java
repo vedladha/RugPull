@@ -32,6 +32,7 @@ class ItemControllerTest {
     @InjectMocks
     private ItemController itemController;
 
+    // Checks that a valid item update saves new values and should return 200.
     @Test
     void updateItem_returnsUpdatedItem_whenRequestIsValid() {
         Item existing = buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
@@ -59,6 +60,7 @@ class ItemControllerTest {
         verify(itemRepository).save(any(Item.class));
     }
 
+    // Checks that updating a missing item id is handled and should return 404.
     @Test
     void updateItem_returnsNotFound_whenItemDoesNotExist() {
         ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
@@ -73,6 +75,7 @@ class ItemControllerTest {
         verify(itemRepository, never()).save(any(Item.class));
     }
 
+    // Checks that invalid update data is rejected and should return 400.
     @Test
     void updateItem_returnsBadRequest_whenValidationFails() {
         Item existing = buildItem(5, 8, "Name", "Description", new BigDecimal("2.00"), 3, false);
@@ -88,6 +91,7 @@ class ItemControllerTest {
         verify(itemRepository, never()).save(any(Item.class));
     }
 
+    // Checks that name and description are trimmed before save and should return 200.
     @Test
     void updateItem_trimsStringFields_beforeSave() {
         Item existing = buildItem(6, 9, "Name", "Description", new BigDecimal("10.00"), 2, false);
@@ -107,6 +111,7 @@ class ItemControllerTest {
         verify(itemRepository).save(any(Item.class));
     }
 
+    // Checks that a null request body is rejected and should return 400.
     @Test
     void updateItem_returnsBadRequest_whenRequestBodyMissing() {
         Item existing = buildItem(10, 4, "Name", "Description", new BigDecimal("3.50"), 1, false);
@@ -121,6 +126,7 @@ class ItemControllerTest {
         verify(itemRepository, never()).save(any(Item.class));
     }
 
+    // Checks that deleting an existing item marks it deleted and should return 200.
     @Test
     void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
         Item existing = buildItem(11, 2, "Name", "Description", new BigDecimal("2.00"), 5, false);
@@ -140,6 +146,7 @@ class ItemControllerTest {
         assertTrue(Boolean.TRUE.equals(itemCaptor.getValue().getDeleted()));
     }
 
+    // Checks that deleting a missing item id is handled and should return 404.
     @Test
     void deleteItem_returnsNotFound_whenItemDoesNotExist() {
         when(itemRepository.findByItemIdAndDeletedFalse(404)).thenReturn(Optional.empty());
