@@ -2,6 +2,7 @@ FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
+COPY libs/app-bundle.jar libs/app-bundle.jar
 COPY gradlew .
 COPY gradle/ gradle/
 COPY build.gradle settings.gradle ./

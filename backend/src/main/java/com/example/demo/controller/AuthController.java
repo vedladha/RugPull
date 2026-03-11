@@ -1,11 +1,18 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.UserWallet;
+import com.example.demo.repository.UserWalletRepository;
 import com.example.demo.services.AuthService;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserProfileRepository;
 import com.example.demo.model.User;
 //import com.example.demo.util.JwtUtil;
+import com.example.demo.services.RpcWalletService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import jakarta.servlet.http.Cookie;
@@ -15,10 +22,13 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
+
     AuthService authService;
+    RpcWalletService walletService;
     UserRepository userRepository;
     UserProfileRepository userProfileRepository;
+    UserWalletRepository userWalletRepository;
 
     /*****
      * Constructor for AuthController - initializes the AuthService and UserRepository dependencies.
@@ -26,10 +36,12 @@ public class AuthController {
      * @param userRepository - the repository used to interact with the User data in the database, such as checking for existing emails during registration and retrieving user information during login
      * @param userProfileRepository - the repository used to interact with the UserProfile data in the database, such as retrieving user profile information during login
      */
-    public AuthController(AuthService authService, UserRepository userRepository, UserProfileRepository userProfileRepository) {
+    public AuthController(AuthService authService, RpcWalletService walletService, UserRepository userRepository, UserProfileRepository userProfileRepository, UserWalletRepository userWalletRepository) {
         this.authService = authService;
+        this.walletService = walletService;
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
+        this.userWalletRepository = userWalletRepository;
     }
 
     /*****
@@ -53,6 +65,25 @@ public class AuthController {
         }
 
         User user = authService.register(displayName, email, password);
+        final RpcWalletService.WalletCredentials walletCredentials;
+        try {
+            walletCredentials = walletService.createWallet();
+        } catch (IllegalStateException e) {
+            LOGGER.error("Signup failed while creating wallet for {}", email, e);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(
+                    Map.of(
+                        "error", "Could not create wallet for new user",
+                        "details", e.getMessage()));
+        }
+
+
+        UserWallet wallet = new UserWallet();
+        wallet.setUser(user);
+        wallet.setWalletAddress(walletCredentials.walletId());
+        wallet.setWalletPrivateKey(walletCredentials.walletPrivateKey());
+        userWalletRepository.save(wallet);
         return ResponseEntity.ok(Map.of("email", user.getEmail(), "displayName", user.getUserProfile().getDisplayName()));
     }   
 
