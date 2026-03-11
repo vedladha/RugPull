@@ -1,19 +1,29 @@
-FROM eclipse-temurin:21-jdk
-
+#---Build Stage---
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-COPY libs/app-bundle.jar libs/app-bundle.jar
+# Copy dpeendency files
 COPY gradlew .
 COPY gradle/ gradle/
 COPY build.gradle settings.gradle ./
+COPY libs/ libs/
 
+# Cache dependencies for faster rebuild
+RUN ./gradlew dependencies --no-daemon
+
+# Build the application
 COPY src/ src/
+RUN ./gradlew build -x test --no-daemon
 
-RUN chmod +x gradlew
 
-RUN ./gradlew build -x test
+
+#---Run Stage---
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Get the built application from the Build Stage
+COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "build/libs/backend-0.0.1-SNAPSHOT.jar"]
-
+ENTRYPOINT ["java", "-jar", "app.jar"]
