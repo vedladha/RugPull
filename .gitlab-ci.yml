@@ -38,6 +38,7 @@ frontend-test:
 backend-lint:
   stage: lint
   image: eclipse-temurin:21-jdk
+  allow_failure: true
   script:
     - cd backend
     - chmod +x gradlew
@@ -46,7 +47,6 @@ backend-lint:
 backend-test:
   stage: test
   image: eclipse-temurin:21-jdk
-  allow_failure: true
   services:
     - name: mysql:8.0
       alias: mysql
