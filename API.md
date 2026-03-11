@@ -67,7 +67,7 @@ Marketplace listings management.
 | `/items` | GET | List all items (filter by category, tag, price) |
 | `/items/{item_id}` | GET | Fetch single item details |
 | `/items` | POST | Create a new item listing |
-| `/items/{item_id}` | PUT/PATCH | Update item info (price, stock, description) |
+| `/items/{item_id}` | PUT | Update item info (name, description, price, stock) |
 | `/items/{item_id}` | DELETE | Soft delete an item |
 | `/items/{item_id}/images` | POST | Upload images for item |
 | `/items/{item_id}/images/{image_id}` | DELETE | Remove item image |
@@ -581,7 +581,7 @@ Buying and selling workflow.
 
 ---
 
-### PUT/PATCH /items/{item_id}
+### PUT /items/{item_id}
 
 #### Headers
 
@@ -597,31 +597,46 @@ Buying and selling workflow.
 #### Request Body
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| title | String | N | New item title |
-| description | String | N | New item description |
-| price | Number | N | New item price |
-| stock | Number | N | New item stock |
-| category | String | N | New item category |
-| tags | Array | N | New item tags |
+| name | String | Y | Updated item name (non-empty) |
+| description | String | Y | Updated item description (non-empty) |
+| price | Number | Y | Updated price (must be non-negative) |
+| stock | Number | Y | Updated stock (must be non-negative) |
 
 #### Request Example
 ```json
 {
-  "price: 9999999,
-  "stock": 1
+  "name": "Updated Name",
+  "description": "Updated Desc",
+  "price": 25.50,
+  "stock": 9
 }
 ```
 
 #### Response Example
 ```json
 {
-  "id": 3,
-  "title": "Cool Box",
-  "description": "A super cool box",
-  "price": 9999999,
-  "stock": 1,
-  "category": "Trinkets",
-  "tags": ["Box", "Awesome", "Cool"]
+  "item": {
+    "itemId": 3,
+    "userId": 34,
+    "name": "Updated Name",
+    "description": "Updated Desc",
+    "price": 25.50,
+    "stock": 9,
+    "deleted": false
+  }
+}
+```
+
+#### Error Responses
+```json
+{
+  "error": "Item not found"
+}
+```
+
+```json
+{
+  "error": "price must be non-negative"
 }
 ```
 
@@ -644,8 +659,15 @@ Buying and selling workflow.
 #### Response Example
 ```json
 {
-  "message": "Item successfully deleted",
-  "deleted": true
+  "message": "Item deleted",
+  "itemId": 3
+}
+```
+
+#### Error Response
+```json
+{
+  "error": "Item not found"
 }
 ```
 
