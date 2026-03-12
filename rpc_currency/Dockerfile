@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21-jdk
+# Stage 1: build the application JAR with Gradle
+FROM eclipse-temurin:21-jdk AS build
 
 WORKDIR /app
 
@@ -10,8 +11,13 @@ COPY app/ app/
 
 RUN chmod +x gradlew
 
-# build jar
 RUN ./gradlew :app:build -x test
 
-# run jar
-CMD ["java", "-jar", "build/libs/app-bundle.jar"]
+# Stage 2: create a minimal runtime image with only the built JAR
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+COPY --from=build /app/build/libs/app-bundle.jar ./app-bundle.jar
+
+CMD ["java", "-jar", "app-bundle.jar"]
