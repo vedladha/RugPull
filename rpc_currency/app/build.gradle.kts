@@ -66,6 +66,9 @@ tasks.jar {
 tasks.shadowJar {
     enabled = true
 
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    mergeServiceFiles()
+
     archiveClassifier = "bundle"
 }
 

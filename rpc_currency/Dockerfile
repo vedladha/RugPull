@@ -16,8 +16,10 @@ RUN ./gradlew :app:build -x test
 # Stage 2: create a minimal runtime image with only the built JAR
 FROM eclipse-temurin:21-jre
 
+# Keep runtime outputs in /app (safe to bind-mount from host)
 WORKDIR /app
 
-COPY --from=build /app/build/libs/app-bundle.jar ./app-bundle.jar
+# Store the executable jar outside /app so host bind mounts do not hide it
+COPY --from=build /app/build/libs/app-bundle.jar /opt/rpc/app-bundle.jar
 
-CMD ["java", "-jar", "app-bundle.jar"]
+CMD ["java", "-jar", "/opt/rpc/app-bundle.jar"]
