@@ -15,6 +15,8 @@ docker run --rm --env-file ./rpc_currency/.env -v "$(pwd)/rpc_currency/app:/app"
 ```
 This command add ./rpc_currency/.env to system environment and mounts the host rpc_currency/app repository to the container's /app.
 
+Currently, it can't run on CDIS VM as it doesn't allow write access to store the generated keys. But it should work on local machines.
+
 To run the project in the command line or IDE use:
 
 ```bash
