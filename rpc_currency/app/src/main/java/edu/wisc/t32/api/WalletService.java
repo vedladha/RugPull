@@ -48,6 +48,16 @@ public interface WalletService extends AutoCloseable {
       throws IllegalArgumentException, IllegalStateException;
 
   /**
+   * Gets the token balance of the provided wallet in the smallest token units.
+   *
+   * @param wallet the wallet whose balance should be queried
+   * @return the wallet token balance in smallest units
+   * @throws IllegalArgumentException thrown if invalid parameters are passed
+   * @throws IllegalStateException    thrown for network errors
+   */
+  long getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException;
+
+  /**
    * Creates a new wallet service for the given token id.
    *
    * @return the newly created wallet service
