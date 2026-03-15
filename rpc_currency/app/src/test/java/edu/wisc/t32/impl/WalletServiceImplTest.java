@@ -72,6 +72,82 @@ public class WalletServiceImplTest extends AbstractCryptoTest {
   }
 
   @Test
+  void testGetBalance() {
+    final long initialFunding = 7_50;
+    final Wallet wallet = assertDoesNotThrow(() -> this.walletService.createWallet((int) initialFunding),
+        "Wallet creation with funding should not throw");
+
+    final long balance = assertDoesNotThrow(() -> this.walletService.getBalance(wallet),
+        "Wallet balance query should not throw");
+    assertEquals(initialFunding, balance, "getBalance should return the wallet's initial funded balance");
+
+    teardownWallet(wallet);
+  }
+
+  @Test
+  void testCreateWalletInitialFundingDirection() {
+    final long initialFunding = 10_00;
+    final Wallet operatorWallet = new WalletImpl(this.operatorId, this.operatorKey);
+
+    final long operatorStartBalance =
+        assertDoesNotThrow(() -> this.walletService.getBalance(operatorWallet),
+            "Wallet balance query should not throw");
+    final Wallet wallet =
+        assertDoesNotThrow(() -> this.walletService.createWallet((int) initialFunding),
+            "Wallet creation with funding should succeed");
+
+    final long walletBalance = assertDoesNotThrow(() -> this.walletService.getBalance(wallet),
+        "Wallet balance query should not throw");
+    final long operatorEndBalance =
+        assertDoesNotThrow(() -> this.walletService.getBalance(operatorWallet),
+            "Wallet balance query should not throw");
+
+    assertEquals(initialFunding, walletBalance,
+        "The new wallet should receive the requested initial funding");
+    assertEquals(operatorStartBalance - initialFunding, operatorEndBalance,
+        "Operator should pay the wallet initial funding");
+
+    teardownWallet(wallet);
+  }
+
+  @Test
+  void testTransferBalanceDirection() {
+    final long senderStartTokens = 100_00;
+    final long transferAmount = 10_00;
+
+    final Wallet sender =
+        assertDoesNotThrow(() -> this.walletService.createWallet((int) senderStartTokens),
+            "Sender wallet should be created");
+    final Wallet receiver = assertDoesNotThrow(() -> this.walletService.createWallet(0),
+        "Receiver wallet should be created");
+
+    final long senderBalanceBefore = assertDoesNotThrow(() -> this.walletService.getBalance(sender),
+        "Wallet balance query should not throw");
+    final long receiverBalanceBefore =
+        assertDoesNotThrow(() -> this.walletService.getBalance(receiver),
+            "Wallet balance query should not throw");
+
+    final TransferResponse response = assertDoesNotThrow(
+        () -> this.walletService.transferBalance(sender, receiver, (float) transferAmount / 100),
+        "Transfer should not throw");
+    assertEquals(TransferResponse.SUCCESS, response,
+        "Expected transfer to succeed when sender has sufficient balance");
+
+    final long senderBalanceAfter = assertDoesNotThrow(() -> this.walletService.getBalance(sender),
+        "Wallet balance query should not throw");
+    final long receiverBalanceAfter = assertDoesNotThrow(() -> this.walletService.getBalance(receiver),
+        "Wallet balance query should not throw");
+
+    assertEquals(senderBalanceBefore - transferAmount, senderBalanceAfter,
+        "Sender balance should decrease by transfer amount");
+    assertEquals(receiverBalanceBefore + transferAmount, receiverBalanceAfter,
+        "Receiver balance should increase by transfer amount");
+
+    teardownWallet(sender);
+    teardownWallet(receiver);
+  }
+
+  @Test
   void testWalletValidTransaction() {
     final Wallet sender = assertDoesNotThrow(() -> this.walletService.createWallet(100_00),
         "assertion on account creation failed");

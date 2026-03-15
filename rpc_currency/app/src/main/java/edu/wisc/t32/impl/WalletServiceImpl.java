@@ -4,6 +4,7 @@ import static edu.wisc.t32.impl.WalletUtils.assertNotNull;
 
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
@@ -83,8 +84,10 @@ public class WalletServiceImpl implements WalletService {
     }
 
     if (initalFunding > 0) {
+      // transfer tokens from the Operator Account to the newly created account
       receipt =
-          transferToken(accountId, privateKey, this.client.getOperatorAccountId(), initalFunding);
+          transferToken(this.client.getOperatorAccountId(), this.operatorKey, accountId,
+              initalFunding);
       if (receipt.status != Status.SUCCESS) {
         throw new IllegalStateException(
             "The wallet %s failed to receive initial funding. got status code %s"
@@ -167,6 +170,21 @@ public class WalletServiceImpl implements WalletService {
   }
 
   @Override
+  public long getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException {
+    assertNotNull(wallet, "WalletServiceImpl", "wallet", "getBalance");
+
+    final AccountId accountId = AccountId.fromString(wallet.getWalletId());
+
+    try {
+      final var accountInfo = new AccountInfoQuery().setAccountId(accountId).execute(this.client);
+      final var relationship = accountInfo.tokenRelationships.get(this.tokenId);
+      return relationship == null ? 0 : relationship.balance;
+    } catch (TimeoutException | PrecheckStatusException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Override
   public void close() throws Exception {
     this.client.close();
   }
@@ -232,8 +250,8 @@ public class WalletServiceImpl implements WalletService {
                                            AccountId toAccount, long amount)
       throws RuntimeException {
     final TransferTransaction transferTransaction =
-        new TransferTransaction().addTokenTransfer(this.tokenId, fromAccount, amount)
-            .addTokenTransfer(this.tokenId, toAccount, -amount).freezeWith(this.client)
+        new TransferTransaction().addTokenTransfer(this.tokenId, fromAccount, -amount)
+            .addTokenTransfer(this.tokenId, toAccount, amount).freezeWith(this.client)
             .sign(fromAccountKey);
 
     try {
