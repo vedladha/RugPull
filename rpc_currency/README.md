@@ -4,6 +4,19 @@ This readme is specific instructions for the rpc_currency module.
 
 ## Building and Running
 
+To build the project into a jar file in a docker container:
+```bash
+docker build -t rpc-currency ./rpc_currency
+```
+
+To run the project in a docker container:
+```bash
+docker run --rm --env-file ./rpc_currency/.env -v "$(pwd)/rpc_currency/app:/app" rpc-currency
+```
+This command add ./rpc_currency/.env to system environment and mounts the host rpc_currency/app repository to the container's /app.
+
+Currently, it can't run on CDIS VM as it doesn't allow write access to store the generated keys. But it should work on local machines.
+
 To run the project in the command line or IDE use:
 
 ```bash
