@@ -44,7 +44,7 @@ public class ItemController {
    *
    * @param request the data transfer object containing the new item details
    * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
-   * or a 400 (BAD REQUEST) with an error message if validation fails
+   *        or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
   public ResponseEntity<?> createItem(@RequestBody ItemCreateRequest request) {
@@ -61,7 +61,8 @@ public class ItemController {
     item.setStock(request.getStock());
 
     Item saved = itemRepository.save(item);
-    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item", saved));
+    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item",
+        saved));
   }
 
   /**
@@ -80,13 +81,14 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   * does not exist or is marked as deleted
+   *         does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
     if (existing.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+          "Item not found"));
     }
     return ResponseEntity.ok(Map.of("item", existing.get()));
   }
@@ -97,15 +99,16 @@ public class ItemController {
    *
    * @param itemId  the unique identifier of the item to update
    * @param request the data transfer object containing the updated item details
-   * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST if validation fails,
-   * or a 404 NOT FOUND if the item does not exist
+   * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
+   *         if validation fails,  or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
   public ResponseEntity<?> updateItem(@PathVariable Integer itemId,
                                       @RequestBody ItemUpdateRequest request) {
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
     if (existing.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+          "Item not found"));
     }
 
     String validationError = validate(request);
@@ -125,16 +128,19 @@ public class ItemController {
 
   /**
    * Performs a soft delete on an item.
-   * Keeps the database row intact but marks the item as deleted so it is filtered out by standard repository lookups.
+   * Keeps the database row intact but marks the item as deleted so it is filtered out by standard
+   * repository lookups.
    *
    * @param itemId the unique identifier of the item to delete
-   * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does not exist
+   * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does
+   *        not exist
    */
   @DeleteMapping("/{itemId}")
   public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
     if (existing.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+          "Item not found"));
     }
 
     Item item = existing.get();
@@ -147,7 +153,8 @@ public class ItemController {
    * Validates the fields of an incoming {@link ItemCreateRequest}.
    *
    * @param request the creation request payload to validate
-   * @return a string containing the validation error message, or {@code null} if all fields are valid
+   * @return a string containing the validation error message, or {@code null} if all fields are
+   *         valid
    */
   private String validateCreate(ItemCreateRequest request) {
     if (request == null) {
@@ -181,7 +188,8 @@ public class ItemController {
    * Validates the fields of an incoming {@link ItemUpdateRequest}.
    *
    * @param request the update request payload to validate
-   * @return a string containing the validation error message, or {@code null} if all fields are valid
+   * @return a string containing the validation error message, or {@code null} if all fields are
+   *         valid
    */
   private String validate(ItemUpdateRequest request) {
     if (request == null) {

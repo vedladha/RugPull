@@ -43,7 +43,8 @@ public class User {
   @Column(nullable = false)
   private Boolean deleted = false;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private UserProfile userProfile;
 
   /**

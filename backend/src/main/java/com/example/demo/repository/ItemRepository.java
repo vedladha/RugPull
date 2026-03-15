@@ -16,7 +16,8 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
    * Retrieves an item by its ID while explicitly excluding any rows marked as soft-deleted.
    *
    * @param itemId the unique identifier of the item to search for
-   * @return an {@link Optional} containing the item if it exists and is not deleted, or an empty Optional otherwise
+   * @return an {@link Optional} containing the item if it exists and is not deleted, or an empty
+   *         Optional otherwise
    */
   Optional<Item> findByItemIdAndDeletedFalse(Integer itemId);
 
