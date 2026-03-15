@@ -19,146 +19,202 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for managing item entities.
+ * Provides endpoints for creating, retrieving, updating, and soft-deleting items.
+ */
 @RestController
 @RequestMapping("/items")
 public class ItemController {
 
-    private final ItemRepository itemRepository;
+  private final ItemRepository itemRepository;
 
-    public ItemController(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
+  /**
+   * Constructs an ItemController with the necessary repository dependency.
+   *
+   * @param itemRepository the repository used for item database operations
+   */
+  public ItemController(ItemRepository itemRepository) {
+    this.itemRepository = itemRepository;
+  }
+
+  /**
+   * Creates a new item listing.
+   * Requires all fields to be provided in the request body.
+   *
+   * @param request the data transfer object containing the new item details
+   * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
+   * or a 400 (BAD REQUEST) with an error message if validation fails
+   */
+  @PostMapping
+  public ResponseEntity<?> createItem(@RequestBody ItemCreateRequest request) {
+    String validationError = validateCreate(request);
+    if (validationError != null) {
+      return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
-    // Create a new item listing.
-    // Requires all fields in the request.
-    @PostMapping
-    public ResponseEntity<?> createItem(@RequestBody ItemCreateRequest request) {
-        String validationError = validateCreate(request);
-        if (validationError != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", validationError));
-        }
+    Item item = new Item();
+    item.setUserId(request.getUserId());
+    item.setName(request.getName().trim());
+    item.setDescription(request.getDescription().trim());
+    item.setPrice(request.getPrice());
+    item.setStock(request.getStock());
 
-        Item item = new Item();
-        item.setUserId(request.getUserId());
-        item.setName(request.getName().trim());
-        item.setDescription(request.getDescription().trim());
-        item.setPrice(request.getPrice());
-        item.setStock(request.getStock());
+    Item saved = itemRepository.save(item);
+    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item", saved));
+  }
 
-        Item saved = itemRepository.save(item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item", saved));
+  /**
+   * Retrieves all active (non-deleted) items from the database.
+   *
+   * @return a {@link ResponseEntity} containing a list of all active items
+   */
+  @GetMapping
+  public ResponseEntity<?> getAllItems() {
+    List<Item> items = itemRepository.findByDeletedFalse();
+    return ResponseEntity.ok(Map.of("items", items));
+  }
+
+  /**
+   * Retrieves a single active item by its ID.
+   *
+   * @param itemId the unique identifier of the item to retrieve
+   * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
+   * does not exist or is marked as deleted
+   */
+  @GetMapping("/{itemId}")
+  public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
+    Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
+    }
+    return ResponseEntity.ok(Map.of("item", existing.get()));
+  }
+
+  /**
+   * Performs a full update for an existing, active item.
+   * Requires all fields to be present in the request body.
+   *
+   * @param itemId  the unique identifier of the item to update
+   * @param request the data transfer object containing the updated item details
+   * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST if validation fails,
+   * or a 404 NOT FOUND if the item does not exist
+   */
+  @PutMapping("/{itemId}")
+  public ResponseEntity<?> updateItem(@PathVariable Integer itemId,
+                                      @RequestBody ItemUpdateRequest request) {
+    Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
     }
 
-    // Returns all active (non-deleted) items.
-    @GetMapping
-    public ResponseEntity<?> getAllItems() {
-        List<Item> items = itemRepository.findByDeletedFalse();
-        return ResponseEntity.ok(Map.of("items", items));
+    String validationError = validate(request);
+    if (validationError != null) {
+      return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
-    // Returns a single active item by id.
-    @GetMapping("/{itemId}")
-    public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
-        Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
-        if (existing.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
-        }
-        return ResponseEntity.ok(Map.of("item", existing.get()));
+    Item item = existing.get();
+    item.setName(request.getName().trim());
+    item.setDescription(request.getDescription().trim());
+    item.setPrice(request.getPrice());
+    item.setStock(request.getStock());
+
+    Item saved = itemRepository.save(item);
+    return ResponseEntity.ok(Map.of("item", saved));
+  }
+
+  /**
+   * Performs a soft delete on an item.
+   * Keeps the database row intact but marks the item as deleted so it is filtered out by standard repository lookups.
+   *
+   * @param itemId the unique identifier of the item to delete
+   * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does not exist
+   */
+  @DeleteMapping("/{itemId}")
+  public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
+    Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
     }
 
-    // Full update for an existing active item.
-    // Requires all of the fields in the request.
-    @PutMapping("/{itemId}")
-    public ResponseEntity<?> updateItem(@PathVariable Integer itemId, @RequestBody ItemUpdateRequest request) {
-        Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
-        if (existing.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
-        }
+    Item item = existing.get();
+    item.setDeleted(true);
+    itemRepository.save(item);
+    return ResponseEntity.ok(Map.of("message", "Item deleted", "itemId", itemId));
+  }
 
-        String validationError = validate(request);
-        if (validationError != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", validationError));
-        }
-
-        Item item = existing.get();
-        item.setName(request.getName().trim());
-        item.setDescription(request.getDescription().trim());
-        item.setPrice(request.getPrice());
-        item.setStock(request.getStock());
-
-        Item saved = itemRepository.save(item);
-        return ResponseEntity.ok(Map.of("item", saved));
+  /**
+   * Validates the fields of an incoming {@link ItemCreateRequest}.
+   *
+   * @param request the creation request payload to validate
+   * @return a string containing the validation error message, or {@code null} if all fields are valid
+   */
+  private String validateCreate(ItemCreateRequest request) {
+    if (request == null) {
+      return "Request body is required";
     }
-
-    // Delete: keeps the row and marks it deleted.
-    // Deleted items are filtered out by repo lookups.
-    @DeleteMapping("/{itemId}")
-    public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
-        Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
-        if (existing.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
-        }
-
-        Item item = existing.get();
-        item.setDeleted(true);
-        itemRepository.save(item);
-        return ResponseEntity.ok(Map.of("message", "Item deleted", "itemId", itemId));
+    if (request.getUserId() == null) {
+      return "userId is required";
     }
-
-    private String validateCreate(ItemCreateRequest request) {
-        if (request == null) {
-            return "Request body is required";
-        }
-        if (request.getUserId() == null) {
-            return "userId is required";
-        }
-        if (isBlank(request.getName())) {
-            return "name is required";
-        }
-        if (isBlank(request.getDescription())) {
-            return "description is required";
-        }
-        if (request.getPrice() == null) {
-            return "price is required";
-        }
-        if (request.getStock() == null) {
-            return "stock is required";
-        }
-        if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            return "price must be non-negative";
-        }
-        if (request.getStock() < 0) {
-            return "stock must be non-negative";
-        }
-        return null;
+    if (isBlank(request.getName())) {
+      return "name is required";
     }
-
-    private String validate(ItemUpdateRequest request) {
-        if (request == null) {
-            return "Request body is required";
-        }
-        if (isBlank(request.getName())) {
-            return "name is required";
-        }
-        if (isBlank(request.getDescription())) {
-            return "description is required";
-        }
-        if (request.getPrice() == null) {
-            return "price is required";
-        }
-        if (request.getStock() == null) {
-            return "stock is required";
-        }
-        if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            return "price must be non-negative";
-        }
-        if (request.getStock() < 0) {
-            return "stock must be non-negative";
-        }
-        return null;
+    if (isBlank(request.getDescription())) {
+      return "description is required";
     }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
+    if (request.getPrice() == null) {
+      return "price is required";
     }
+    if (request.getStock() == null) {
+      return "stock is required";
+    }
+    if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+      return "price must be non-negative";
+    }
+    if (request.getStock() < 0) {
+      return "stock must be non-negative";
+    }
+    return null;
+  }
+
+  /**
+   * Validates the fields of an incoming {@link ItemUpdateRequest}.
+   *
+   * @param request the update request payload to validate
+   * @return a string containing the validation error message, or {@code null} if all fields are valid
+   */
+  private String validate(ItemUpdateRequest request) {
+    if (request == null) {
+      return "Request body is required";
+    }
+    if (isBlank(request.getName())) {
+      return "name is required";
+    }
+    if (isBlank(request.getDescription())) {
+      return "description is required";
+    }
+    if (request.getPrice() == null) {
+      return "price is required";
+    }
+    if (request.getStock() == null) {
+      return "stock is required";
+    }
+    if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+      return "price must be non-negative";
+    }
+    if (request.getStock() < 0) {
+      return "stock must be non-negative";
+    }
+    return null;
+  }
+
+  /**
+   * Utility method to check if a string is null, empty, or contains only whitespace.
+   *
+   * @param value the string to check
+   * @return {@code true} if the string is null or blank; {@code false} otherwise
+   */
+  private boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
+  }
 }

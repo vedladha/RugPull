@@ -28,329 +28,332 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 class ItemControllerTest {
 
-    @Mock
-    private ItemRepository itemRepository;
+  @Mock
+  private ItemRepository itemRepository;
 
-    @InjectMocks
-    private ItemController itemController;
+  @InjectMocks
+  private ItemController itemController;
 
-    // Checks that a create request was made
-    @Test
-    void createItem_returnsCreatedItem_whenRequestIsValid() {
-        ItemCreateRequest request = buildCreateRequest(7, "New Item", "A new item", "25", 3);
+  // Checks that a create request was made
+  @Test
+  void createItem_returnsCreatedItem_whenRequestIsValid() {
+    ItemCreateRequest request = buildCreateRequest(7, "New Item", "A new item", "25", 3);
 
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> {
-            Item saved = invocation.getArgument(0);
-            saved.setItemId(1);
-            return saved;
-        });
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> {
+      Item saved = invocation.getArgument(0);
+      saved.setItemId(1);
+      return saved;
+    });
 
-        ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(request);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        Item saved = (Item) body.get("item");
-        assertNotNull(saved);
-        assertEquals(1, saved.getItemId());
-        assertEquals(7, saved.getUserId());
-        assertEquals("New Item", saved.getName());
-        assertEquals("A new item", saved.getDescription());
-        assertEquals(0, new BigDecimal("25").compareTo(saved.getPrice()));
-        assertEquals(3, saved.getStock());
-        verify(itemRepository).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    Item saved = (Item) body.get("item");
+    assertNotNull(saved);
+    assertEquals(1, saved.getItemId());
+    assertEquals(7, saved.getUserId());
+    assertEquals("New Item", saved.getName());
+    assertEquals("A new item", saved.getDescription());
+    assertEquals(0, new BigDecimal("25").compareTo(saved.getPrice()));
+    assertEquals(3, saved.getStock());
+    verify(itemRepository).save(any(Item.class));
+  }
 
-    // Checks that missing userId is rejected and should return 400.
-    @Test
-    void createItem_returnsBadRequest_whenUserIdMissing() {
-        ItemCreateRequest request = buildCreateRequest(null, "Name", "Description", "10.00", 1);
+  // Checks that missing userId is rejected and should return 400.
+  @Test
+  void createItem_returnsBadRequest_whenUserIdMissing() {
+    ItemCreateRequest request = buildCreateRequest(null, "Name", "Description", "10.00", 1);
 
-        ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(request);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("userId is required", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("userId is required", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that blank name is rejected and should return 400.
-    @Test
-    void createItem_returnsBadRequest_whenNameIsBlank() {
-        ItemCreateRequest request = buildCreateRequest(1, "   ", "Description", "10.00", 1);
+  // Checks that blank name is rejected and should return 400.
+  @Test
+  void createItem_returnsBadRequest_whenNameIsBlank() {
+    ItemCreateRequest request = buildCreateRequest(1, "   ", "Description", "10.00", 1);
 
-        ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(request);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("name is required", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("name is required", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that negative price is rejected and returns 400 status
-    @Test
-    void createItem_returnsBadRequest_whenPriceIsNegative() {
-        ItemCreateRequest request = buildCreateRequest(1, "Name", "Description", "-1.00", 1);
+  // Checks that negative price is rejected and returns 400 status
+  @Test
+  void createItem_returnsBadRequest_whenPriceIsNegative() {
+    ItemCreateRequest request = buildCreateRequest(1, "Name", "Description", "-1.00", 1);
 
-        ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(request);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("price must be non-negative", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("price must be non-negative", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that a null request body is rejected
-    @Test
-    void createItem_returnsBadRequest_whenRequestBodyMissing() {
-        ResponseEntity<?> response = itemController.createItem(null);
+  // Checks that a null request body is rejected
+  @Test
+  void createItem_returnsBadRequest_whenRequestBodyMissing() {
+    ResponseEntity<?> response = itemController.createItem(null);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertTrue(String.valueOf(body.get("error")).contains("required"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertTrue(String.valueOf(body.get("error")).contains("required"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that name and description as typed matches the database naming conventions 
-    @Test
-    void createItem_trimsStringFields_beforeSave() {
-        ItemCreateRequest request = buildCreateRequest(1, "  Hello  ", "  World  ", "1.00", 1);
+  // Checks that name and description as typed matches the database naming conventions
+  @Test
+  void createItem_trimsStringFields_beforeSave() {
+    ItemCreateRequest request = buildCreateRequest(1, "  Hello  ", "  World  ", "1.00", 1);
 
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(request);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        Item saved = (Item) body.get("item");
-        assertNotNull(saved);
-        assertEquals("Hello", saved.getName());
-        assertEquals("World", saved.getDescription());
-        verify(itemRepository).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    Item saved = (Item) body.get("item");
+    assertNotNull(saved);
+    assertEquals("Hello", saved.getName());
+    assertEquals("World", saved.getDescription());
+    verify(itemRepository).save(any(Item.class));
+  }
 
-    // Checks that getAllItems returns all active items.
-    @Test
-    void getAllItems_returnsListOfActiveItems() {
-        Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
-        Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
+  // Checks that getAllItems returns all active items.
+  @Test
+  void getAllItems_returnsListOfActiveItems() {
+    Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
+    Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
 
-        when(itemRepository.findByDeletedFalse()).thenReturn(List.of(item1, item2));
+    when(itemRepository.findByDeletedFalse()).thenReturn(List.of(item1, item2));
 
-        ResponseEntity<?> response = itemController.getAllItems();
+    ResponseEntity<?> response = itemController.getAllItems();
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        List<?> items = (List<?>) body.get("items");
-        assertEquals(2, items.size());
-    }
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> items = (List<?>) body.get("items");
+    assertEquals(2, items.size());
+  }
 
-    // Checks that getAllItems returns empty list when no items exist.
-    @Test
-    void getAllItems_returnsEmptyList_whenNoItemsExist() {
-        when(itemRepository.findByDeletedFalse()).thenReturn(List.of());
+  // Checks that getAllItems returns empty list when no items exist.
+  @Test
+  void getAllItems_returnsEmptyList_whenNoItemsExist() {
+    when(itemRepository.findByDeletedFalse()).thenReturn(List.of());
 
-        ResponseEntity<?> response = itemController.getAllItems();
+    ResponseEntity<?> response = itemController.getAllItems();
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        List<?> items = (List<?>) body.get("items");
-        assertTrue(items.isEmpty());
-    }
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> items = (List<?>) body.get("items");
+    assertTrue(items.isEmpty());
+  }
 
-    // Checks that getItem returns the item when it exists.
-    @Test
-    void getItem_returnsItem_whenItemExists() {
-        Item existing = buildItem(1, 7, "Name", "Description", new BigDecimal("10.00"), 3, false);
-        when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+  // Checks that getItem returns the item when it exists.
+  @Test
+  void getItem_returnsItem_whenItemExists() {
+    Item existing = buildItem(1, 7, "Name", "Description", new BigDecimal("10.00"), 3, false);
+    when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
 
-        ResponseEntity<?> response = itemController.getItem(1);
+    ResponseEntity<?> response = itemController.getItem(1);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        Item item = (Item) body.get("item");
-        assertNotNull(item);
-        assertEquals(1, item.getItemId());
-        assertEquals("Name", item.getName());
-    }
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    Item item = (Item) body.get("item");
+    assertNotNull(item);
+    assertEquals(1, item.getItemId());
+    assertEquals("Name", item.getName());
+  }
 
-    // Checks that getItem returns 404 when item does not exist.
-    @Test
-    void getItem_returnsNotFound_whenItemDoesNotExist() {
-        when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.empty());
+  // Checks that getItem returns 404 when item does not exist.
+  @Test
+  void getItem_returnsNotFound_whenItemDoesNotExist() {
+    when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = itemController.getItem(5);
+    ResponseEntity<?> response = itemController.getItem(5);
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("Item not found", body.get("error"));
-    }
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item not found", body.get("error"));
+  }
 
-    // Checks that a valid item update saves new values and should return 200.
-    @Test
-    void updateItem_returnsUpdatedItem_whenRequestIsValid() {
-        Item existing = buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
-        ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
+  // Checks that a valid item update saves new values and should return 200.
+  @Test
+  void updateItem_returnsUpdatedItem_whenRequestIsValid() {
+    Item existing =
+        buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
+    ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
 
-        when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ResponseEntity<?> response = itemController.updateItem(1, request);
+    ResponseEntity<?> response = itemController.updateItem(1, request);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
 
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        Item saved = (Item) body.get("item");
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    Item saved = (Item) body.get("item");
 
-        assertNotNull(saved);
-        assertEquals(1, saved.getItemId());
-        assertEquals(7, saved.getUserId());
-        assertEquals("Updated Item", saved.getName());
-        assertEquals("Updated description", saved.getDescription());
-        assertEquals(0, new BigDecimal("49.95").compareTo(saved.getPrice()));
-        assertEquals(12, saved.getStock());
+    assertNotNull(saved);
+    assertEquals(1, saved.getItemId());
+    assertEquals(7, saved.getUserId());
+    assertEquals("Updated Item", saved.getName());
+    assertEquals("Updated description", saved.getDescription());
+    assertEquals(0, new BigDecimal("49.95").compareTo(saved.getPrice()));
+    assertEquals(12, saved.getStock());
 
-        verify(itemRepository).save(any(Item.class));
-    }
+    verify(itemRepository).save(any(Item.class));
+  }
 
-    // Checks that updating a missing item id is handled and should return 404.
-    @Test
-    void updateItem_returnsNotFound_whenItemDoesNotExist() {
-        ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
-        when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
+  // Checks that updating a missing item id is handled and should return 404.
+  @Test
+  void updateItem_returnsNotFound_whenItemDoesNotExist() {
+    ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
+    when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = itemController.updateItem(99, request);
+    ResponseEntity<?> response = itemController.updateItem(99, request);
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("Item not found", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item not found", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that invalid update data is rejected and should return 400.
-    @Test
-    void updateItem_returnsBadRequest_whenValidationFails() {
-        Item existing = buildItem(5, 8, "Name", "Description", new BigDecimal("2.00"), 3, false);
-        ItemUpdateRequest request = buildRequest("   ", "Updated description", "-1", -2);
-        when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
+  // Checks that invalid update data is rejected and should return 400.
+  @Test
+  void updateItem_returnsBadRequest_whenValidationFails() {
+    Item existing = buildItem(5, 8, "Name", "Description", new BigDecimal("2.00"), 3, false);
+    ItemUpdateRequest request = buildRequest("   ", "Updated description", "-1", -2);
+    when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
 
-        ResponseEntity<?> response = itemController.updateItem(5, request);
+    ResponseEntity<?> response = itemController.updateItem(5, request);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("name is required", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("name is required", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that name and description are trimmed before save and should return 200.
-    @Test
-    void updateItem_trimsStringFields_beforeSave() {
-        Item existing = buildItem(6, 9, "Name", "Description", new BigDecimal("10.00"), 2, false);
-        ItemUpdateRequest request = buildRequest("  Trim Me  ", "  Keep Tight  ", "1.00", 1);
+  // Checks that name and description are trimmed before save and should return 200.
+  @Test
+  void updateItem_trimsStringFields_beforeSave() {
+    Item existing = buildItem(6, 9, "Name", "Description", new BigDecimal("10.00"), 2, false);
+    ItemUpdateRequest request = buildRequest("  Trim Me  ", "  Keep Tight  ", "1.00", 1);
 
-        when(itemRepository.findByItemIdAndDeletedFalse(6)).thenReturn(Optional.of(existing));
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(itemRepository.findByItemIdAndDeletedFalse(6)).thenReturn(Optional.of(existing));
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ResponseEntity<?> response = itemController.updateItem(6, request);
+    ResponseEntity<?> response = itemController.updateItem(6, request);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        Item saved = (Item) body.get("item");
-        assertNotNull(saved);
-        assertEquals("Trim Me", saved.getName());
-        assertEquals("Keep Tight", saved.getDescription());
-        verify(itemRepository).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    Item saved = (Item) body.get("item");
+    assertNotNull(saved);
+    assertEquals("Trim Me", saved.getName());
+    assertEquals("Keep Tight", saved.getDescription());
+    verify(itemRepository).save(any(Item.class));
+  }
 
-    // Checks that a null request body is rejected and should return 400.
-    @Test
-    void updateItem_returnsBadRequest_whenRequestBodyMissing() {
-        Item existing = buildItem(10, 4, "Name", "Description", new BigDecimal("3.50"), 1, false);
-        when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(existing));
+  // Checks that a null request body is rejected and should return 400.
+  @Test
+  void updateItem_returnsBadRequest_whenRequestBodyMissing() {
+    Item existing = buildItem(10, 4, "Name", "Description", new BigDecimal("3.50"), 1, false);
+    when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(existing));
 
-        ResponseEntity<?> response = itemController.updateItem(10, null);
+    ResponseEntity<?> response = itemController.updateItem(10, null);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertTrue(String.valueOf(body.get("error")).contains("required"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertTrue(String.valueOf(body.get("error")).contains("required"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    // Checks that deleting an existing item marks it deleted and should return 200.
-    @Test
-    void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
-        Item existing = buildItem(11, 2, "Name", "Description", new BigDecimal("2.00"), 5, false);
-        when(itemRepository.findByItemIdAndDeletedFalse(11)).thenReturn(Optional.of(existing));
-        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+  // Checks that deleting an existing item marks it deleted and should return 200.
+  @Test
+  void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
+    Item existing = buildItem(11, 2, "Name", "Description", new BigDecimal("2.00"), 5, false);
+    when(itemRepository.findByItemIdAndDeletedFalse(11)).thenReturn(Optional.of(existing));
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        ResponseEntity<?> response = itemController.deleteItem(11);
+    ResponseEntity<?> response = itemController.deleteItem(11);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("Item deleted", body.get("message"));
-        assertEquals(11, body.get("itemId"));
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item deleted", body.get("message"));
+    assertEquals(11, body.get("itemId"));
 
-        ArgumentCaptor<Item> itemCaptor = ArgumentCaptor.forClass(Item.class);
-        verify(itemRepository).save(itemCaptor.capture());
-        assertTrue(Boolean.TRUE.equals(itemCaptor.getValue().getDeleted()));
-    }
+    ArgumentCaptor<Item> itemCaptor = ArgumentCaptor.forClass(Item.class);
+    verify(itemRepository).save(itemCaptor.capture());
+    assertTrue(Boolean.TRUE.equals(itemCaptor.getValue().getDeleted()));
+  }
 
-    // Checks that deleting a missing item id is handled and should return 404.
-    @Test
-    void deleteItem_returnsNotFound_whenItemDoesNotExist() {
-        when(itemRepository.findByItemIdAndDeletedFalse(404)).thenReturn(Optional.empty());
+  // Checks that deleting a missing item id is handled and should return 404.
+  @Test
+  void deleteItem_returnsNotFound_whenItemDoesNotExist() {
+    when(itemRepository.findByItemIdAndDeletedFalse(404)).thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = itemController.deleteItem(404);
+    ResponseEntity<?> response = itemController.deleteItem(404);
 
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertNotNull(body);
-        assertEquals("Item not found", body.get("error"));
-        verify(itemRepository, never()).save(any(Item.class));
-    }
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item not found", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
 
-    private ItemCreateRequest buildCreateRequest(Integer userId, String name, String description, String price, Integer stock) {
-        ItemCreateRequest request = new ItemCreateRequest();
-        request.setUserId(userId);
-        request.setName(name);
-        request.setDescription(description);
-        request.setPrice(new BigDecimal(price));
-        request.setStock(stock);
-        return request;
-    }
+  private ItemCreateRequest buildCreateRequest(Integer userId, String name, String description,
+                                               String price, Integer stock) {
+    ItemCreateRequest request = new ItemCreateRequest();
+    request.setUserId(userId);
+    request.setName(name);
+    request.setDescription(description);
+    request.setPrice(new BigDecimal(price));
+    request.setStock(stock);
+    return request;
+  }
 
-    private ItemUpdateRequest buildRequest(String name, String description, String price, Integer stock) {
-        ItemUpdateRequest request = new ItemUpdateRequest();
-        request.setName(name);
-        request.setDescription(description);
-        request.setPrice(new BigDecimal(price));
-        request.setStock(stock);
-        return request;
-    }
+  private ItemUpdateRequest buildRequest(String name, String description, String price,
+                                         Integer stock) {
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setName(name);
+    request.setDescription(description);
+    request.setPrice(new BigDecimal(price));
+    request.setStock(stock);
+    return request;
+  }
 
-    private Item buildItem(Integer itemId, Integer userId, String name, String description,
-                           BigDecimal price, Integer stock, Boolean deleted) {
-        Item item = new Item();
-        item.setItemId(itemId);
-        item.setUserId(userId);
-        item.setName(name);
-        item.setDescription(description);
-        item.setPrice(price);
-        item.setStock(stock);
-        item.setDeleted(deleted);
-        return item;
-    }
+  private Item buildItem(Integer itemId, Integer userId, String name, String description,
+                         BigDecimal price, Integer stock, Boolean deleted) {
+    Item item = new Item();
+    item.setItemId(itemId);
+    item.setUserId(userId);
+    item.setName(name);
+    item.setDescription(description);
+    item.setPrice(price);
+    item.setStock(stock);
+    item.setDeleted(deleted);
+    return item;
+  }
 }
