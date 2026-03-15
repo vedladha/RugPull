@@ -8,10 +8,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.demo.dto.ItemCreateRequest;
 import com.example.demo.dto.ItemUpdateRequest;
 import com.example.demo.model.Item;
 import com.example.demo.repository.ItemRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,166 @@ class ItemControllerTest {
 
     @InjectMocks
     private ItemController itemController;
+
+    // Checks that a create request was made
+    @Test
+    void createItem_returnsCreatedItem_whenRequestIsValid() {
+        ItemCreateRequest request = buildCreateRequest(7, "New Item", "A new item", "25", 3);
+
+        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> {
+            Item saved = invocation.getArgument(0);
+            saved.setItemId(1);
+            return saved;
+        });
+
+        ResponseEntity<?> response = itemController.createItem(request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        Item saved = (Item) body.get("item");
+        assertNotNull(saved);
+        assertEquals(1, saved.getItemId());
+        assertEquals(7, saved.getUserId());
+        assertEquals("New Item", saved.getName());
+        assertEquals("A new item", saved.getDescription());
+        assertEquals(0, new BigDecimal("25").compareTo(saved.getPrice()));
+        assertEquals(3, saved.getStock());
+        verify(itemRepository).save(any(Item.class));
+    }
+
+    // Checks that missing userId is rejected and should return 400.
+    @Test
+    void createItem_returnsBadRequest_whenUserIdMissing() {
+        ItemCreateRequest request = buildCreateRequest(null, "Name", "Description", "10.00", 1);
+
+        ResponseEntity<?> response = itemController.createItem(request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("userId is required", body.get("error"));
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    // Checks that blank name is rejected and should return 400.
+    @Test
+    void createItem_returnsBadRequest_whenNameIsBlank() {
+        ItemCreateRequest request = buildCreateRequest(1, "   ", "Description", "10.00", 1);
+
+        ResponseEntity<?> response = itemController.createItem(request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("name is required", body.get("error"));
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    // Checks that negative price is rejected and returns 400 status
+    @Test
+    void createItem_returnsBadRequest_whenPriceIsNegative() {
+        ItemCreateRequest request = buildCreateRequest(1, "Name", "Description", "-1.00", 1);
+
+        ResponseEntity<?> response = itemController.createItem(request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("price must be non-negative", body.get("error"));
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    // Checks that a null request body is rejected
+    @Test
+    void createItem_returnsBadRequest_whenRequestBodyMissing() {
+        ResponseEntity<?> response = itemController.createItem(null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertTrue(String.valueOf(body.get("error")).contains("required"));
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    // Checks that name and description as typed matches the database naming conventions 
+    @Test
+    void createItem_trimsStringFields_beforeSave() {
+        ItemCreateRequest request = buildCreateRequest(1, "  Hello  ", "  World  ", "1.00", 1);
+
+        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResponseEntity<?> response = itemController.createItem(request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        Item saved = (Item) body.get("item");
+        assertNotNull(saved);
+        assertEquals("Hello", saved.getName());
+        assertEquals("World", saved.getDescription());
+        verify(itemRepository).save(any(Item.class));
+    }
+
+    // Checks that getAllItems returns all active items.
+    @Test
+    void getAllItems_returnsListOfActiveItems() {
+        Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
+        Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
+
+        when(itemRepository.findByDeletedFalse()).thenReturn(List.of(item1, item2));
+
+        ResponseEntity<?> response = itemController.getAllItems();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        List<?> items = (List<?>) body.get("items");
+        assertEquals(2, items.size());
+    }
+
+    // Checks that getAllItems returns empty list when no items exist.
+    @Test
+    void getAllItems_returnsEmptyList_whenNoItemsExist() {
+        when(itemRepository.findByDeletedFalse()).thenReturn(List.of());
+
+        ResponseEntity<?> response = itemController.getAllItems();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        List<?> items = (List<?>) body.get("items");
+        assertTrue(items.isEmpty());
+    }
+
+    // Checks that getItem returns the item when it exists.
+    @Test
+    void getItem_returnsItem_whenItemExists() {
+        Item existing = buildItem(1, 7, "Name", "Description", new BigDecimal("10.00"), 3, false);
+        when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+
+        ResponseEntity<?> response = itemController.getItem(1);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        Item item = (Item) body.get("item");
+        assertNotNull(item);
+        assertEquals(1, item.getItemId());
+        assertEquals("Name", item.getName());
+    }
+
+    // Checks that getItem returns 404 when item does not exist.
+    @Test
+    void getItem_returnsNotFound_whenItemDoesNotExist() {
+        when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.empty());
+
+        ResponseEntity<?> response = itemController.getItem(5);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals("Item not found", body.get("error"));
+    }
 
     // Checks that a valid item update saves new values and should return 200.
     @Test
@@ -158,6 +320,16 @@ class ItemControllerTest {
         assertNotNull(body);
         assertEquals("Item not found", body.get("error"));
         verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    private ItemCreateRequest buildCreateRequest(Integer userId, String name, String description, String price, Integer stock) {
+        ItemCreateRequest request = new ItemCreateRequest();
+        request.setUserId(userId);
+        request.setName(name);
+        request.setDescription(description);
+        request.setPrice(new BigDecimal(price));
+        request.setStock(stock);
+        return request;
     }
 
     private ItemUpdateRequest buildRequest(String name, String description, String price, Integer stock) {
