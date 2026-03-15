@@ -38,6 +38,8 @@ public class MainTest extends AbstractCryptoTest {
     assertNotNull(result.adminKey(), "Admin key must not be null in result");
     assertNotNull(result.supplyKey(), "Supply key must not be null in result");
 
+    // here we delete our tokens before testing any outputs so our asserts
+    // don't leave before we clean up
     TokenDeleteTransaction transaction =
         new TokenDeleteTransaction().setTokenId(result.tokenId()).freezeWith(client)
             .sign(result.adminKey());
@@ -47,9 +49,9 @@ public class MainTest extends AbstractCryptoTest {
         "getting the receipt of a valid tranasction should not throw");
     assertEquals(Status.SUCCESS, receipt.status, "token deletion transaction should succeeed");
 
-
     List<String> lines = assertDoesNotThrow(() -> Files.readAllLines(keysFile));
-    assertEquals("adminKey=%s".formatted(result.adminKey()), lines.get(0));
-    assertEquals("supplyKey=%s".formatted(result.supplyKey()), lines.get(1));
+    assertEquals("tokenId=%s".formatted(result.tokenId()), lines.get(0));
+    assertEquals("adminKey=%s".formatted(result.adminKey()), lines.get(1));
+    assertEquals("supplyKey=%s".formatted(result.supplyKey()), lines.get(2));
   }
 }

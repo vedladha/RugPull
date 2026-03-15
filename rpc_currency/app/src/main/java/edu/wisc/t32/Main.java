@@ -30,7 +30,7 @@ public class Main {
   private static final String TOKEN_NAME = "Rug Pull Coin";
   private static final String TOKEN_SYMBOL = "RPC";
   private static final int DECIMAL_LENGTH = 2;
-  private static final int INITIAL_SUPPLY = 10_000;
+  private static final int INITIAL_SUPPLY = 500_00;
 
   /**
    * Launches the $RPC deployment application.
@@ -39,8 +39,8 @@ public class Main {
    */
   @SuppressWarnings("null")
   public static void main(String[] args) {
-    AccountId operatorId = AccountId.fromString(System.getenv("OPERATOR_ID"));
-    PrivateKey operatorKey = PrivateKey.fromStringECDSA(System.getenv("OPERATOR_KEY"));
+    AccountId operatorId = AccountId.fromString(getenvOrThrow("OPERATOR_ID"));
+    PrivateKey operatorKey = PrivateKey.fromStringECDSA(getenvOrThrow("OPERATOR_KEY"));
 
     try (Client client = Client.forTestnet().setOperator(operatorId, operatorKey)) {
       final CryptoCreationResult createResult = createCurrency(client, Path.of("rpc_keys.txt"));
@@ -81,7 +81,11 @@ public class Main {
 
     if (keyFile != null) {
       Files.writeString(keyFile,
-          "adminKey=" + adminKey + System.lineSeparator() + "supplyKey=" + supplyKey
+          "tokenId=" + receipt.tokenId
+              + System.lineSeparator()
+              + "adminKey=" + adminKey
+              + System.lineSeparator()
+              + "supplyKey=" + supplyKey
               + System.lineSeparator());
       LOGGER.info("Saved adminKey and supplyKey to {}", keyFile);
     }
@@ -102,5 +106,22 @@ public class Main {
   public record CryptoCreationResult(PrivateKey adminKey, PrivateKey supplyKey, TokenId tokenId,
                                      Status status) {
 
+  }
+
+  /**
+   * Gets an environment variable from the environment, but throws if it does not exist.
+   *
+   * @param key the environment variable key
+   * @return the environment variable
+   * @throws IllegalArgumentException thrown if the environment variable can't be found
+   */
+  private static String getenvOrThrow(String key) throws IllegalArgumentException {
+    final String out = System.getenv(key);
+    if (out == null) {
+      throw new IllegalArgumentException(
+          "Could not find the environment variable %s is the environment".formatted(key));
+    }
+
+    return out;
   }
 }
