@@ -86,7 +86,8 @@ public class WalletServiceImpl implements WalletService {
     if (initalFunding > 0) {
       // transfer tokens from the Operator Account to the newly created account
       receipt =
-          transferToken(this.client.getOperatorAccountId(), this.operatorKey, accountId, initalFunding);
+          transferToken(this.client.getOperatorAccountId(), this.operatorKey, accountId,
+              initalFunding);
       if (receipt.status != Status.SUCCESS) {
         throw new IllegalStateException(
             "The wallet %s failed to receive initial funding. got status code %s"
