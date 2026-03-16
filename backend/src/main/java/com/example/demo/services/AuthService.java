@@ -3,62 +3,75 @@ package com.example.demo.services;
 import com.example.demo.model.User;
 import com.example.demo.model.UserProfile;
 import com.example.demo.repository.UserRepository;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.util.Base64;
-
-
+/**
+ * Service class for handling user authentication and registration logic.
+ *
+ * <p>Provides methods for registering new users and authenticating existing ones,
+ * utilizing BCrypt for secure password hashing.
+ */
 @Service
 public class AuthService {
 
-    UserRepository userRepo;
+  UserRepository userRepo;
 
-    public AuthService(UserRepository userRepo) {
-        this.userRepo = userRepo;
-    }
+  /**
+   * Constructs an {@code AuthService} with the specified user repository.
+   *
+   * @param userRepo the repository used for user data operations
+   */
+  public AuthService(UserRepository userRepo) {
+    this.userRepo = userRepo;
+  }
 
-    /****
-     * Register method - creates a new user account with the provided display name, email, and password.
-     * @param displayName - the display name for the user's profile
-     * @param email - the email address for the user's account, which must be unique
-     * @param password - the password for the user's account.
-     * @return - returns the created User object with the associated UserProfile.
-     */
-    public User register(String displayName, String email, String password) {
-        // TODO: Implement password hashing and salting in a future implementation. For now, we're storing passwords in plain text for initial testing.
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hashedPassword = encoder.encode(password);
+  /**
+   * Registers a new user account and creates an associated user profile.
+   *
+   * <p>The provided raw password is securely hashed using BCrypt before the user
+   * is saved to the database.
+   *
+   * @param displayName the display name for the user's profile
+   * @param email       the email address for the user's account, which must be unique
+   * @param password    the raw password for the user's account
+   * @return the created {@link User} object, complete with its associated {@link UserProfile}
+   */
+  public User register(String displayName, String email, String password) {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    String hashedPassword = encoder.encode(password);
 
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(hashedPassword);
-        user.setDeleted(false);
-        
-        UserProfile profile = new UserProfile();
-        profile.setDisplayName(displayName);
-        profile.setUser(user);
+    User user = new User();
+    user.setEmail(email);
+    user.setPasswordHash(hashedPassword);
+    user.setDeleted(false);
 
-        user.setUserProfile(profile);
+    UserProfile profile = new UserProfile();
+    profile.setDisplayName(displayName);
+    profile.setUser(user);
 
-        return userRepo.save(user);
-    }
+    user.setUserProfile(profile);
 
-    /****
-     * Login method - authenticates the user by checking if the provided email exists and if the password matches the stored password hash.
-     * Currently, since we're storing passwords in plain text for initial testing, it simply compares the provided password with the stored password hash. 
-     * In a future implementation, this will be updated to hash the provided password with the stored salt and compare it to the stored password hash.
-     * @param email - the email address provided by the user for authentication
-     * @param password - the password provided by the user for authentication
-     * @return - returns the authenticated User object if the email and password are valid, or throws an exception if the authentication fails
-     */
-    public User login(String email, String password) {
-        return userRepo.findByEmail(email)
-                .filter(user -> {
-                    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-                    return encoder.matches(password, user.getPasswordHash());
-                })
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
-    }
+    return userRepo.save(user);
+  }
+
+  /**
+   * Authenticates a user based on their email and password.
+   *
+   * <p>Retrieves the user by email and verifies the provided raw password against
+   * the stored BCrypt hash.
+   *
+   * @param email    the email address provided by the user for authentication
+   * @param password the raw password provided by the user for authentication
+   * @return the authenticated {@link User} object if the credentials are valid
+   * @throws RuntimeException if the user is not found or the password does not match
+   */
+  public User login(String email, String password) {
+    return userRepo.findByEmail(email)
+        .filter(user -> {
+          BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+          return encoder.matches(password, user.getPasswordHash());
+        })
+        .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+  }
 }
