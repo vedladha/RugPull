@@ -43,7 +43,9 @@ class ItemControllerTest {
   // Checks that a create request was made
   @Test
   void createItem_returnsCreatedItem_whenRequestIsValid() {
-    ItemCreateRequest request = buildCreateRequest(7, "New Item", "A new item", "25", 3);
+    ItemCreateRequest request = buildCreateRequest("New Item", "A new item", "25", 3);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
 
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> {
       Item saved = invocation.getArgument(0);
@@ -51,7 +53,7 @@ class ItemControllerTest {
       return saved;
     });
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -67,26 +69,29 @@ class ItemControllerTest {
     verify(itemRepository).save(any(Item.class));
   }
 
-  // Checks that missing userId is rejected and should return 400.
+  // Checks that creating an item without auth returns 401.
   @Test
-  void createItem_returnsBadRequest_whenUserIdMissing() {
-    ItemCreateRequest request = buildCreateRequest(null, "Name", "Description", "10.00", 1);
+  void createItem_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    ItemCreateRequest request = buildCreateRequest("Name", "Description", "10.00", 1);
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(null, request);
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
-    assertEquals("userId is required", body.get("error"));
+    assertEquals("Authentication required", body.get("error"));
     verify(itemRepository, never()).save(any(Item.class));
   }
 
   // Checks that blank name is rejected and should return 400.
   @Test
   void createItem_returnsBadRequest_whenNameIsBlank() {
-    ItemCreateRequest request = buildCreateRequest(1, "   ", "Description", "10.00", 1);
+    ItemCreateRequest request = buildCreateRequest("   ", "Description", "10.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -98,9 +103,11 @@ class ItemControllerTest {
   // Checks that negative price is rejected and returns 400 status
   @Test
   void createItem_returnsBadRequest_whenPriceIsNegative() {
-    ItemCreateRequest request = buildCreateRequest(1, "Name", "Description", "-1.00", 1);
+    ItemCreateRequest request = buildCreateRequest("Name", "Description", "-1.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -112,7 +119,10 @@ class ItemControllerTest {
   // Checks that a null request body is rejected
   @Test
   void createItem_returnsBadRequest_whenRequestBodyMissing() {
-    ResponseEntity<?> response = itemController.createItem(null);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
+
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -124,11 +134,13 @@ class ItemControllerTest {
   // Checks that name and description as typed matches the database naming conventions
   @Test
   void createItem_trimsStringFields_beforeSave() {
-    ItemCreateRequest request = buildCreateRequest(1, "  Hello  ", "  World  ", "1.00", 1);
+    ItemCreateRequest request = buildCreateRequest("  Hello  ", "  World  ", "1.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -409,10 +421,9 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
-  private ItemCreateRequest buildCreateRequest(Integer userId, String name, String description,
-                                               String price, Integer stock) {
+  private ItemCreateRequest buildCreateRequest(String name, String description, String price,
+                                               Integer stock) {
     ItemCreateRequest request = new ItemCreateRequest();
-    request.setUserId(userId);
     request.setName(name);
     request.setDescription(description);
     request.setPrice(new BigDecimal(price));

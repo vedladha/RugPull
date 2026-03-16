@@ -48,19 +48,27 @@ public class ItemController {
    * Creates a new item listing.
    * Requires all fields to be provided in the request body.
    *
+   * @param token the JWT token extracted from the HTTP-only cookie
    * @param request the data transfer object containing the new item details
    * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
    *        or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
-  public ResponseEntity<?> createItem(@RequestBody ItemCreateRequest request) {
+  public ResponseEntity<?> createItem(@CookieValue(name = "jwt", required = false) String token,
+                                      @RequestBody ItemCreateRequest request) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
     String validationError = validateCreate(request);
     if (validationError != null) {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
     Item item = new Item();
-    item.setUserId(request.getUserId());
+    item.setUserId(currentUser.get().getUserId());
     item.setName(request.getName().trim());
     item.setDescription(request.getDescription().trim());
     item.setPrice(request.getPrice());
@@ -189,9 +197,6 @@ public class ItemController {
   private String validateCreate(ItemCreateRequest request) {
     if (request == null) {
       return "Request body is required";
-    }
-    if (request.getUserId() == null) {
-      return "userId is required";
     }
     if (isBlank(request.getName())) {
       return "name is required";
