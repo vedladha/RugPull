@@ -6,13 +6,16 @@ import com.example.demo.repository.UserProfileRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserWalletRepository;
 import com.example.demo.services.AuthService;
+import com.example.demo.services.CurrentUserService;
 import com.example.demo.services.RpcWalletService;
-import jakarta.servlet.http.Cookie;
+import com.example.demo.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -25,11 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST controller for handling user authentication and registration.
  *
- * <p>TODO: Implement JWT token generation and validation.
+ * <p>TODO: Basic JWT flow is in place. Next, use it to protect routes.
  */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+  private static final String JWT_COOKIE_NAME = "jwt";
+  private static final long JWT_COOKIE_MAX_AGE_SECONDS = 86400;
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
   AuthService authService;
@@ -37,6 +42,8 @@ public class AuthController {
   UserRepository userRepository;
   UserProfileRepository userProfileRepository;
   UserWalletRepository userWalletRepository;
+  JwtUtil jwtUtil;
+  CurrentUserService currentUserService;
 
   /**
    * Constructs the AuthController with required dependencies.
@@ -46,21 +53,26 @@ public class AuthController {
    * @param userRepository        repository for User entity operations
    * @param userProfileRepository repository for UserProfile entity operations
    * @param userWalletRepository  repository for UserWallet entity operations
+   * @param jwtUtil               utility for generating JWT tokens
+   * @param currentUserService    service for resolving the authenticated user
    */
   public AuthController(AuthService authService, RpcWalletService walletService,
                         UserRepository userRepository, UserProfileRepository userProfileRepository,
-                        UserWalletRepository userWalletRepository) {
+                        UserWalletRepository userWalletRepository, JwtUtil jwtUtil,
+                        CurrentUserService currentUserService) {
     this.authService = authService;
     this.walletService = walletService;
     this.userRepository = userRepository;
     this.userProfileRepository = userProfileRepository;
     this.userWalletRepository = userWalletRepository;
+    this.jwtUtil = jwtUtil;
+    this.currentUserService = currentUserService;
   }
 
   /**
    * Registers a new user and provisions a new wallet.
    *
-   * <p><b>Warning:</b> Passwords are currently stored in plain text.
+   * <p>Passwords are stored as BCrypt hashes.
    *
    * @param body map containing displayName, email, and password
    * @return response containing the user's email and display name, or an error status
@@ -117,6 +129,10 @@ public class AuthController {
     String password = body.get("password");
     try {
       User user = authService.login(email, password);
+      String token = jwtUtil.generateToken(user.getEmail());
+
+      response.addHeader(HttpHeaders.SET_COOKIE,
+          buildJwtCookie(token, JWT_COOKIE_MAX_AGE_SECONDS).toString());
 
       return ResponseEntity.ok(Map.of(
           "email", user.getEmail(),
@@ -130,13 +146,17 @@ public class AuthController {
    * Retrieves the authenticated user's profile information.
    *
    * @param token the JWT token extracted from the HTTP-only cookie
-   * @return the user's profile information (currently a placeholder)
+   * @return the user's profile information when authenticated
    */
   @GetMapping("/profile")
-  public ResponseEntity<?> getProfile(@CookieValue(name = "jwt") String token) {
-    return ResponseEntity.ok(Map.of("message",
-        "This endpoint will return the user's profile information based on the JWT token "
-            + "in a future implementation."));
+  public ResponseEntity<?> getProfile(@CookieValue(name = "jwt", required = false) String token) {
+    return currentUserService.getAuthenticatedUser(token)
+        .<ResponseEntity<?>>map(user -> ResponseEntity.ok(Map.of(
+            "user", Map.of(
+                "email", user.getEmail(),
+                "displayName", user.getUserProfile().getDisplayName()))))
+        .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "Authentication required")));
   }
 
   /**
@@ -147,13 +167,18 @@ public class AuthController {
    */
   @PostMapping("/logout")
   public ResponseEntity<?> logout(HttpServletResponse response) {
-    Cookie cookie = new Cookie("jwt", null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(true);
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
+    response.addHeader(HttpHeaders.SET_COOKIE, buildJwtCookie("", 0).toString());
 
     return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+  }
+
+  private ResponseCookie buildJwtCookie(String token, long maxAgeSeconds) {
+    return ResponseCookie.from(JWT_COOKIE_NAME, token)
+        .httpOnly(true)
+        .secure(false)
+        .path("/")
+        .sameSite("Lax")
+        .maxAge(maxAgeSeconds)
+        .build();
   }
 }
