@@ -3,13 +3,16 @@ package com.example.demo.controller;
 import com.example.demo.dto.ItemCreateRequest;
 import com.example.demo.dto.ItemUpdateRequest;
 import com.example.demo.model.Item;
+import com.example.demo.model.User;
 import com.example.demo.repository.ItemRepository;
+import com.example.demo.services.CurrentUserService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,14 +31,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class ItemController {
 
   private final ItemRepository itemRepository;
+  private final CurrentUserService currentUserService;
 
   /**
    * Constructs an ItemController with the necessary repository dependency.
    *
-   * @param itemRepository the repository used for item database operations
+   * @param itemRepository     the repository used for item database operations
+   * @param currentUserService service used to resolve the authenticated user
    */
-  public ItemController(ItemRepository itemRepository) {
+  public ItemController(ItemRepository itemRepository, CurrentUserService currentUserService) {
     this.itemRepository = itemRepository;
+    this.currentUserService = currentUserService;
   }
 
   /**
@@ -103,12 +109,25 @@ public class ItemController {
    *         if validation fails,  or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
-  public ResponseEntity<?> updateItem(@PathVariable Integer itemId,
+  public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
+                                      @PathVariable Integer itemId,
                                       @RequestBody ItemUpdateRequest request) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
     if (existing.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
           "Item not found"));
+    }
+
+    Item item = existing.get();
+    if (!item.getUserId().equals(currentUser.get().getUserId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error",
+          "You do not own this item"));
     }
 
     String validationError = validate(request);
@@ -116,7 +135,6 @@ public class ItemController {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
-    Item item = existing.get();
     item.setName(request.getName().trim());
     item.setDescription(request.getDescription().trim());
     item.setPrice(request.getPrice());
@@ -136,7 +154,14 @@ public class ItemController {
    *        not exist
    */
   @DeleteMapping("/{itemId}")
-  public ResponseEntity<?> deleteItem(@PathVariable Integer itemId) {
+  public ResponseEntity<?> deleteItem(@CookieValue(name = "jwt", required = false) String token,
+                                      @PathVariable Integer itemId) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
     if (existing.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
@@ -144,6 +169,11 @@ public class ItemController {
     }
 
     Item item = existing.get();
+    if (!item.getUserId().equals(currentUser.get().getUserId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error",
+          "You do not own this item"));
+    }
+
     item.setDeleted(true);
     itemRepository.save(item);
     return ResponseEntity.ok(Map.of("message", "Item deleted", "itemId", itemId));
