@@ -8,11 +8,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/auth/profile/`, {
+    fetch(`${API}/auth/profile`, {
       credentials: "include",
     })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setUser(data.user ?? null))
+      .then((data) => setUser(data?.user ?? null))
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 

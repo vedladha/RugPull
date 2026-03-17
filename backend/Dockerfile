@@ -6,6 +6,7 @@ WORKDIR /app
 COPY gradlew .
 COPY gradle/ gradle/
 COPY build.gradle settings.gradle ./
+COPY config/ config/
 COPY libs/ libs/
 
 # Cache dependencies for faster rebuild
