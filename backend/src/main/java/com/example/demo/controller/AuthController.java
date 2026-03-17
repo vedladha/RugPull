@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -97,7 +98,9 @@ public class AuthController {
       walletCredentials = walletService.createWallet();
     } catch (IllegalStateException e) {
       LOGGER.error("Signup failed while creating wallet for {}", email, e);
-      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+      if (TransactionSynchronizationManager.isActualTransactionActive()) {
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+      }
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
           .body(
               Map.of(
