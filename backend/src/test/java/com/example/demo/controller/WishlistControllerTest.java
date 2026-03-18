@@ -45,10 +45,18 @@ class WishlistControllerTest {
 
   @Test
   void getWishlist_returnsWishlistEntries_whenAuthenticated() {
+    User user = new User();
+    user.setUserId(1);
+    Wishlist w1 = new Wishlist();
+    w1.setUserId(1);
+    w1.setItemId(10);
+    Wishlist w2 = new Wishlist();
+    w2.setUserId(1);
+    w2.setItemId(20);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
-    when(wishlistRepository.findByUserId(1)).thenReturn(
-        List.of(buildWishlist(1, 10), buildWishlist(1, 20)));
+        Optional.of(user));
+    when(wishlistRepository.findByUserId(1)).thenReturn(List.of(w1, w2));
 
     ResponseEntity<?> response = wishlistController.getWishlist(VALID_TOKEN);
 
@@ -61,8 +69,11 @@ class WishlistControllerTest {
 
   @Test
   void getWishlist_returnsEmptyList_whenNoItems() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(wishlistRepository.findByUserId(1)).thenReturn(List.of());
 
     ResponseEntity<?> response = wishlistController.getWishlist(VALID_TOKEN);
@@ -90,8 +101,11 @@ class WishlistControllerTest {
 
   @Test
   void addToWishlist_returnsCreated_whenValid() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(
         Optional.of(new Item()));
     when(wishlistRepository.existsById(new WishlistId(1, 10))).thenReturn(false);
@@ -124,8 +138,11 @@ class WishlistControllerTest {
 
   @Test
   void addToWishlist_returnsNotFound_whenItemDoesNotExist() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = wishlistController.addToWishlist(VALID_TOKEN, 99);
@@ -139,8 +156,11 @@ class WishlistControllerTest {
 
   @Test
   void addToWishlist_returnsConflict_whenAlreadyInWishlist() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(
         Optional.of(new Item()));
     when(wishlistRepository.existsById(new WishlistId(1, 10))).thenReturn(true);
@@ -158,8 +178,11 @@ class WishlistControllerTest {
 
   @Test
   void removeFromWishlist_returnsOk_whenItemInWishlist() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(wishlistRepository.existsById(new WishlistId(1, 10))).thenReturn(true);
 
     ResponseEntity<?> response = wishlistController.removeFromWishlist(VALID_TOKEN, 10);
@@ -187,8 +210,11 @@ class WishlistControllerTest {
 
   @Test
   void removeFromWishlist_returnsNotFound_whenItemNotInWishlist() {
+    User user = new User();
+    user.setUserId(1);
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
-        Optional.of(buildUser(1)));
+        Optional.of(user));
     when(wishlistRepository.existsById(new WishlistId(1, 99))).thenReturn(false);
 
     ResponseEntity<?> response = wishlistController.removeFromWishlist(VALID_TOKEN, 99);
@@ -200,18 +226,4 @@ class WishlistControllerTest {
     verify(wishlistRepository, never()).deleteById(any());
   }
 
-  // --- helpers ---
-
-  private User buildUser(Integer userId) {
-    User user = new User();
-    user.setUserId(userId);
-    return user;
-  }
-
-  private Wishlist buildWishlist(Integer userId, Integer itemId) {
-    Wishlist wishlist = new Wishlist();
-    wishlist.setUserId(userId);
-    wishlist.setItemId(itemId);
-    return wishlist;
-  }
 }
