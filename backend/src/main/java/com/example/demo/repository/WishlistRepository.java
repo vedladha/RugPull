@@ -5,6 +5,9 @@ import com.example.demo.model.WishlistId;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Spring Data JPA repository for managing {@link Wishlist} entities.
+ */
 public interface WishlistRepository extends JpaRepository<Wishlist, WishlistId> {
 
   /**

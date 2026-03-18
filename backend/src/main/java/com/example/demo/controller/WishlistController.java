@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for managing the authenticated user's wishlist.
+ */
 @RestController
 @RequestMapping("/wishlist")
 public class WishlistController {
@@ -28,9 +31,17 @@ public class WishlistController {
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
 
-  public WishlistController(WishlistRepository wishlistRepository,
-                            ItemRepository itemRepository,
-                            CurrentUserService currentUserService) {
+  /**
+   * Constructs a WishlistController with the dependencies needed for wishlist lookups.
+   *
+   * @param wishlistRepository repository used for wishlist rows
+   * @param itemRepository repository used to validate item existence
+   * @param currentUserService service used to resolve the authenticated user
+   */
+  public WishlistController(
+      WishlistRepository wishlistRepository,
+      ItemRepository itemRepository,
+      CurrentUserService currentUserService) {
     this.wishlistRepository = wishlistRepository;
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
@@ -59,10 +70,13 @@ public class WishlistController {
    *
    * @param token  the JWT token extracted from the HTTP-only cookie
    * @param itemId the ID of the item to add
-   * @return the created wishlist entry, or an error if the item doesn't exist or is already wishlisted
+   * @return the created wishlist entry, or an error if the item doesn't exist or is
+   *         already wishlisted
    */
   @PostMapping("/{itemId}")
-  public ResponseEntity<?> addToWishlist(@CookieValue(name = "jwt", required = false) String token, @PathVariable Integer itemId) {
+  public ResponseEntity<?> addToWishlist(
+      @CookieValue(name = "jwt", required = false) String token,
+      @PathVariable Integer itemId) {
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
