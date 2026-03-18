@@ -1,23 +1,31 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../Auth/auth-context";
+import { useAuth } from "../Auth/AuthContext.jsx";
 
 export default function Navbar({ onSignInClick, currentPage }) {
   const { user, signOut } = useAuth();
   return (
     <nav>
-      <div
-        className="logo"
-        style={{ cursor: "pointer" }}
-      >
-        <Link to="/" style={{ textDecoration: 'inherit', color: 'inherit' }}>$RPC Market</Link>
+      <div className="logo" style={{ cursor: "pointer" }}>
+        <Link to="/" style={{ textDecoration: "inherit", color: "inherit" }}>
+          $RPC Market
+        </Link>
       </div>
       <div className="nav-links">
         <button
           className={`nav-btn ${currentPage === "listings" ? "nav-btn-active" : ""}`}
         >
-          <Link to="/listings" style={{ textDecoration: 'none', color: 'inherit' }}>Marketplace</Link>
+          <Link
+            to="/listings"
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            Marketplace
+          </Link>
         </button>
-        <button className="nav-btn">Sell</button>
+        <button className="nav-btn">
+          <Link to="/sell" style={{ textDecoration: "none", color: "inherit" }}>
+            Sell
+          </Link>
+        </button>
         <button className="nav-btn">About</button>
       </div>
       {user && <Link to="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>

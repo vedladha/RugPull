@@ -9,6 +9,8 @@ export default function Listings() {
   const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [keywordFilter, setKeywordFilter] = useState("");
 
+  const API = "http://localhost:3001";
+
   useEffect(() => {
     fetchListings();
   }, []);
@@ -20,12 +22,12 @@ export default function Listings() {
   const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await fetch("API_ENDPOINT/listings");
+      const response = await fetch(`${API}/items`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setListings(data.listings || []);
+      setListings(data.items || []);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching listings:", err);
@@ -156,8 +158,8 @@ export default function Listings() {
           filteredListings.map((listing) => (
             <ListingCard
               key={listing.id}
-              title={listing.title}
-              bio={listing.bio}
+              name={listing.name}
+              description={listing.description}
               price={listing.price}
               seller={listing.seller}
             />

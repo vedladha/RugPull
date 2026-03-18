@@ -1,8 +1,8 @@
-export default function ListingCard({ title, bio, price, seller }) {
+export default function ListingCard({ name, description, price, seller }) {
   return (
     <div className="listing-card">
-      <div className="listing-title">{title}</div>
-      <div className="listing-bio">{bio}</div>
+      <div className="listing-title">{name}</div>
+      <div className="listing-bio">{description}</div>
       <div className="listing-price">{price}</div>
       <div className="listing-seller">Seller: {seller}</div>
     </div>
