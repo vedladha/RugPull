@@ -123,5 +123,9 @@ See `docker-compose_guide.md` for more detail.
 
 - **User authentication** — signup, login, and logout with BCrypt-hashed passwords (`/api/auth/signup`, `/api/auth/login`, `/api/auth/logout`)
 - **User profiles** — display name and bio, created automatically on registration
-- **React frontend** — landing page with sign-in and create-account modals wired to the backend
-- **Dockerized environment** — all three services (frontend, backend, database) run via Docker Compose
+- **Item listings (full CRUD)** — POST, GET, PUT, and DELETE endpoints for item listings with JUnit tests (`/api/items`, `/api/items/{itemId}`)
+- **Hedera wallet integration** — wallet automatically created on user signup via rpc_currency WalletService, private keys persisted in DB
+- **Wallet transactions** — API for crypto wallet transactions
+- **React frontend** — landing page with sign-in and create-account modals, marketplace browsing page, and sell page for adding listings
+- **Dockerized environment** — all services run via Docker Compose with multi-stage Dockerfiles for frontend, backend, and crypto service
+- **CI/CD pipeline** — GitLab CI pipeline running all available tests on push
