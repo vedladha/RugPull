@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { AuthContext } from "./auth-context";
 
-const AuthContext = createContext(null);
 const API = "http://localhost:3001";
 
 export function AuthProvider({ children }) {
@@ -70,8 +70,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }
