@@ -54,6 +54,7 @@
 | Column      | Type                     | Notes                                  |
 |------------|-------------------------|---------------------------------------|
 | image_id    | INT, primary key, auto-increment | Unique image identifier           |
+| user_id     | INT, foreign key → Users.user_id | Uploader |
 | item_id     | INT, foreign key → Items.item_id | Corresponding item                 |
 | image_url   | VARCHAR, not NULL        | Link to the image                     |
 | alt_text    | TEXT                     | Alt text for the image                |
