@@ -15,6 +15,7 @@ import com.example.demo.repository.ItemRepository;
 import com.example.demo.repository.OrderRepository;
 import com.example.demo.services.CurrentUserService;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -201,6 +202,117 @@ class OrderControllerTest {
     verify(orderRepository, never()).save(any(Order.class));
   }
 
+  // Checks that listing orders returns the authenticated user's orders.
+  @Test
+  void getOrders_returnsOrdersForAuthenticatedUser() {
+    Order order1 = buildOrder(1, 7, 4, 2, "pending");
+    Order order2 = buildOrder(2, 7, 6, 1, "completed");
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(buildUser(7)));
+    when(orderRepository.findByUserIdOrderByCreatedAtDesc(7)).thenReturn(List.of(order1, order2));
+
+    ResponseEntity<?> response = orderController.getOrders(VALID_TOKEN);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> orders = (List<?>) body.get("orders");
+    assertNotNull(orders);
+    assertEquals(2, orders.size());
+  }
+
+  // Checks that listing orders returns an empty list when the user has none.
+  @Test
+  void getOrders_returnsEmptyList_whenUserHasNoOrders() {
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(buildUser(7)));
+    when(orderRepository.findByUserIdOrderByCreatedAtDesc(7)).thenReturn(List.of());
+
+    ResponseEntity<?> response = orderController.getOrders(VALID_TOKEN);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> orders = (List<?>) body.get("orders");
+    assertNotNull(orders);
+    assertEquals(0, orders.size());
+  }
+
+  // Checks that listing orders without auth returns 401.
+  @Test
+  void getOrders_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = orderController.getOrders(null);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+  }
+
+  // Checks that getting one order returns the order when it belongs to the user.
+  @Test
+  void getOrder_returnsOrder_whenOrderExistsForUser() {
+    Order order = buildOrder(5, 7, 4, 2, "pending");
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(buildUser(7)));
+    when(orderRepository.findByOrderIdAndUserId(5, 7)).thenReturn(Optional.of(order));
+
+    ResponseEntity<?> response = orderController.getOrder(VALID_TOKEN, 5);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    Order returnedOrder = (Order) body.get("order");
+    assertNotNull(returnedOrder);
+    assertEquals(5, returnedOrder.getOrderId());
+    assertEquals(7, returnedOrder.getUserId());
+  }
+
+  // Checks that getting a missing order returns 404.
+  @Test
+  void getOrder_returnsNotFound_whenOrderDoesNotExist() {
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(buildUser(7)));
+    when(orderRepository.findByOrderIdAndUserId(9, 7)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = orderController.getOrder(VALID_TOKEN, 9);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Order not found", body.get("error"));
+  }
+
+  // Checks that getting another user's order returns 404.
+  @Test
+  void getOrder_returnsNotFound_whenOrderBelongsToAnotherUser() {
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(buildUser(7)));
+    when(orderRepository.findByOrderIdAndUserId(11, 7)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = orderController.getOrder(VALID_TOKEN, 11);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Order not found", body.get("error"));
+  }
+
+  // Checks that getting one order without auth returns 401.
+  @Test
+  void getOrder_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = orderController.getOrder(null, 5);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+  }
+
   private OrderCreateRequest buildRequest(Integer itemId, Integer quantity) {
     OrderCreateRequest request = new OrderCreateRequest();
     request.setItemId(itemId);
@@ -215,6 +327,23 @@ class OrderControllerTest {
     item.setStock(stock);
     item.setDeleted(false);
     return item;
+  }
+
+  private Order buildOrder(
+      Integer orderId,
+      Integer userId,
+      Integer itemId,
+      Integer quantity,
+      String orderStatus) {
+    Order order = new Order();
+    order.setOrderId(orderId);
+    order.setUserId(userId);
+    order.setItemId(itemId);
+    order.setQuantity(quantity);
+    order.setPrice(new BigDecimal("12.50"));
+    order.setFeePercentage(new BigDecimal("2.50"));
+    order.setOrderStatus(orderStatus);
+    return order;
   }
 
   private User buildUser(Integer userId) {

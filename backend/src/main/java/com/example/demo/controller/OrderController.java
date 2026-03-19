@@ -8,12 +8,15 @@ import com.example.demo.repository.ItemRepository;
 import com.example.demo.repository.OrderRepository;
 import com.example.demo.services.CurrentUserService;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -95,6 +98,51 @@ public class OrderController {
 
     Order saved = orderRepository.save(order);
     return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("order", saved));
+  }
+
+  /**
+   * Retrieves all orders for the authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @return the authenticated user's orders, or an auth error
+   */
+  @GetMapping
+  public ResponseEntity<?> getOrders(@CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+
+    List<Order> orders =
+        orderRepository.findByUserIdOrderByCreatedAtDesc(currentUser.get().getUserId());
+    return ResponseEntity.ok(Map.of("orders", orders));
+  }
+
+  /**
+   * Retrieves one order for the authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @param orderId the unique identifier of the order to retrieve
+   * @return the matching order, or an error if it is missing or not owned by the user
+   */
+  @GetMapping("/{orderId}")
+  public ResponseEntity<?> getOrder(
+      @CookieValue(name = "jwt", required = false) String token,
+      @PathVariable Integer orderId) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+
+    Optional<Order> existing =
+        orderRepository.findByOrderIdAndUserId(orderId, currentUser.get().getUserId());
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Order not found"));
+    }
+
+    return ResponseEntity.ok(Map.of("order", existing.get()));
   }
 
   /**
