@@ -4,17 +4,17 @@ SET time_zone = '+00:00';
 START TRANSACTION;
 
 -- Users
-CREATE TABLE Users (
+CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- UserProfiles
-CREATE TABLE UserProfiles (
+-- User Profiles
+CREATE TABLE user_profiles (
     user_id INT PRIMARY KEY,
     display_name VARCHAR(255) UNIQUE,
     bio TEXT,
@@ -22,12 +22,12 @@ CREATE TABLE UserProfiles (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_userprofiles_users
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    FOREIGN KEY (user_id) REFERENCES users (user_id)
+    ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- UserWallets
-CREATE TABLE IF NOT EXISTS UserWallets (
+-- User Wallets
+CREATE TABLE IF NOT EXISTS user_wallets (
     user_id INT PRIMARY KEY,
     wallet_address VARCHAR(255) UNIQUE NOT NULL,
     wallet_private_key VARCHAR(255) NOT NULL,
@@ -35,21 +35,25 @@ CREATE TABLE IF NOT EXISTS UserWallets (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_userwallets_users
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    FOREIGN KEY (user_id) REFERENCES users (user_id)
+    ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 SET @wallet_private_key_exists = (
     SELECT COUNT(*)
-    FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'UserWallets'
-      AND COLUMN_NAME = 'wallet_private_key'
+    FROM information_schema.columns
+    WHERE
+        table_schema = DATABASE()
+        AND table_name = 'user_wallets'
+        AND column_name = 'wallet_private_key'
 );
 
 SET @wallet_private_key_migration = IF(
     @wallet_private_key_exists = 0,
-    'ALTER TABLE UserWallets ADD COLUMN wallet_private_key VARCHAR(255) NOT NULL DEFAULT '''' AFTER wallet_address',
+    'ALTER TABLE UserWallets 
+     ADD COLUMN wallet_private_key VARCHAR(255) 
+     NOT NULL DEFAULT '''' 
+     AFTER wallet_address',
     'SELECT ''wallet_private_key already exists'' AS migration_status'
 );
 
@@ -57,28 +61,11 @@ PREPARE wallet_private_key_stmt FROM @wallet_private_key_migration;
 EXECUTE wallet_private_key_stmt;
 DEALLOCATE PREPARE wallet_private_key_stmt;
 
--- Items
-CREATE TABLE IF NOT EXISTS Items (
-    item_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    price DECIMAL(30, 8), -- Price in crypto amount
-    name VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    -- category_id INT, Will be added later with categories
-    stock INT DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted BOOLEAN DEFAULT FALSE,
-
-    CONSTRAINT fk_items_users
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 COMMIT;
 
 /*
 -- Categories
-CREATE TABLE IF NOT EXISTS Categories (
+CREATE TABLE IF NOT EXISTS categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) UNIQUE,
     parent_id INT,
@@ -89,7 +76,7 @@ CREATE TABLE IF NOT EXISTS Categories (
 );
 
 -- Items
-CREATE TABLE IF NOT EXISTS Items (
+CREATE TABLE IF NOT EXISTS items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     price DECIMAL(30, 8), -- Price in crypto amount
@@ -102,8 +89,8 @@ CREATE TABLE IF NOT EXISTS Items (
     deleted BOOLEAN DEFAULT FALSE,
 
     CONSTRAINT fk_items_users
-        FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+
     CONSTRAINT fk_items_categories
         FOREIGN KEY (category_id) REFERENCES Categories(category_id)
         ON DELETE SET NULL
@@ -133,7 +120,7 @@ CREATE TABLE IF NOT EXISTS Tags (
 
     CONSTRAINT fk_tags_users
         FOREIGN KEY (user_id) REFERENCES Users(user_id)
-        ON DELETE SET NULL 
+        ON DELETE SET NULL
 );
 
 -- ItemTags
@@ -147,7 +134,7 @@ CREATE TABLE IF NOT EXISTS ItemTags (
     CONSTRAINT fk_itemtags_items
         FOREIGN KEY (item_id) REFERENCES Items(item_id)
         ON DELETE CASCADE,
-    
+
     CONSTRAINT fk_itemtags_tags
         FOREIGN KEY (tag_id) REFERENCES Tags(tag_id)
         ON DELETE CASCADE
@@ -161,7 +148,9 @@ CREATE TABLE IF NOT EXISTS Orders (
     quantity INT DEFAULT 1,
     price DECIMAL(30, 8) NOT NULL, -- Price in crypto
     fee_percentage DECIMAL(5, 2) DEFAULT 2.5,
-    order_status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending' NOT NULL,
+    order_status ENUM('pending', 'completed', 'cancelled')
+      DEFAULT 'pending'
+      NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -171,7 +160,7 @@ CREATE TABLE IF NOT EXISTS Orders (
 
     CONSTRAINT fk_orders_items
         FOREIGN KEY (item_id) REFERENCES Items(item_id)
-        ON DELETE SET NULL 
+        ON DELETE SET NULL
 );
 
 -- Wishlists
@@ -197,16 +186,21 @@ CREATE TABLE IF NOT EXISTS CryptoTransactions (
     order_id INT,
     user_id INT,
     amount DECIMAL(30, 8), -- Amount in crypto
-    transaction_type ENUM('payment', 'refund', 'fee', 'deposit', 'withdrawal', 'gift', 'adjustment', 'other') NOT NULL,
+    transaction_type
+      ENUM('payment', 'refund', 'fee', 'deposit',
+        'withdrawal', 'gift', 'adjustment', 'other')
+      NOT NULL,
     transaction_hash VARCHAR(255) UNIQUE,
-    transaction_status ENUM('pending', 'confirmed', 'failed') DEFAULT 'pending' NOT NULL,
+    transaction_status ENUM('pending', 'confirmed', 'failed')
+      DEFAULT 'pending'
+      NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     confirmed_at DATETIME,
 
     CONSTRAINT fk_cryptotransactions_orders
         FOREIGN KEY (order_id) REFERENCES Orders(order_id)
         ON DELETE CASCADE,
-    
+
     CONSTRAINT fk_cryptotransactions_users
         FOREIGN KEY (user_id) REFERENCES Users(user_id)
         ON DELETE CASCADE
@@ -239,7 +233,7 @@ CREATE TABLE IF NOT EXISTS Reviews (
     CONSTRAINT fk_reviews_items
         FOREIGN KEY (item_id) REFERENCES Items(item_id)
         ON DELETE CASCADE,
-    
+
     CONSTRAINT fk_reviews_users
         FOREIGN KEY (user_id) REFERENCES Users(user_id)
         ON DELETE CASCADE

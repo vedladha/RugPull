@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 
 /**
  * Entity representing an item in the database.
- * Mapped to the "Items" table and includes fields for pricing, inventory,
+ * Mapped to the "items" table and includes fields for pricing, inventory,
  * auditing timestamps, and soft deletion tracking.
  */
 @Entity
-@Table(name = "Items")
+@Table(name = "items")
 public class Item {
 
   /**
