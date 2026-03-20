@@ -170,7 +170,7 @@ public class WalletServiceImpl implements WalletService {
   }
 
   @Override
-  public long getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException {
+  public float getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException {
     assertNotNull(wallet, "WalletServiceImpl", "wallet", "getBalance");
 
     final AccountId accountId = AccountId.fromString(wallet.getWalletId());
@@ -178,7 +178,12 @@ public class WalletServiceImpl implements WalletService {
     try {
       final var accountInfo = new AccountInfoQuery().setAccountId(accountId).execute(this.client);
       final var relationship = accountInfo.tokenRelationships.get(this.tokenId);
-      return relationship == null ? 0 : relationship.balance;
+      if (relationship == null) {
+        return 0;
+      }
+      long balance = relationship.balance;
+      BigDecimal decimalized = new BigDecimal(balance).movePointLeft(relationship.decimals);
+      return decimalized.floatValue();
     } catch (TimeoutException | PrecheckStatusException e) {
       throw new IllegalStateException(e);
     }

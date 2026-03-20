@@ -55,7 +55,7 @@ public interface WalletService extends AutoCloseable {
    * @throws IllegalArgumentException thrown if invalid parameters are passed
    * @throws IllegalStateException    thrown for network errors
    */
-  long getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException;
+  float getBalance(Wallet wallet) throws IllegalArgumentException, IllegalStateException;
 
   /**
    * Creates a new wallet service for the given token id.
