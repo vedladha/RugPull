@@ -66,8 +66,51 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  async function profileDetails() {
+    const response = await fetch(`${API}/profile/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+
+    if (!response.ok) {
+      throw new Error("Could not retrieve user data");
+    }
+
+    const data = await response.json();
+    return data;
+  }
+
+  async function updateProfile(displayName, bio) {
+    const payload = {};
+    if (displayName) payload.displayName = displayName;
+    if (bio) payload.bio = bio;
+
+    const response = await fetch(`${API}/profile/me`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to update profile");
+    }
+
+    const data = await response.json();
+
+    setUser((prevUser) => ({
+      ...prevUser,
+      displayName: data.profile.displayName,
+      userProfile: data.profile
+    }));
+
+    return data.profile;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, register, loading }}>
+    <AuthContext.Provider value={{ user, signIn, signOut, profileDetails, updateProfile, register, loading }}>
       {children}
     </AuthContext.Provider>
   );
