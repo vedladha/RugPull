@@ -8,29 +8,10 @@ import java.math.BigDecimal;
  */
 public class ItemCreateRequest {
 
-  private Integer userId;
   private String name;
   private String description;
   private BigDecimal price;
   private Integer stock;
-
-  /**
-   * Retrieves the ID of the user creating the item.
-   *
-   * @return the user ID
-   */
-  public Integer getUserId() {
-    return userId;
-  }
-
-  /**
-   * Sets the ID of the user creating the item.
-   *
-   * @param userId the user ID to set
-   */
-  public void setUserId(Integer userId) {
-    this.userId = userId;
-  }
 
   /**
    * Retrieves the name of the item.

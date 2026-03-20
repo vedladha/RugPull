@@ -11,7 +11,9 @@ import static org.mockito.Mockito.when;
 import com.example.demo.dto.ItemCreateRequest;
 import com.example.demo.dto.ItemUpdateRequest;
 import com.example.demo.model.Item;
+import com.example.demo.model.User;
 import com.example.demo.repository.ItemRepository;
+import com.example.demo.services.CurrentUserService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +29,13 @@ import org.springframework.http.ResponseEntity;
 
 @ExtendWith(MockitoExtension.class)
 class ItemControllerTest {
+  private static final String VALID_TOKEN = "valid-token";
 
   @Mock
   private ItemRepository itemRepository;
+
+  @Mock
+  private CurrentUserService currentUserService;
 
   @InjectMocks
   private ItemController itemController;
@@ -37,7 +43,9 @@ class ItemControllerTest {
   // Checks that a create request was made
   @Test
   void createItem_returnsCreatedItem_whenRequestIsValid() {
-    ItemCreateRequest request = buildCreateRequest(7, "New Item", "A new item", "25", 3);
+    ItemCreateRequest request = buildCreateRequest("New Item", "A new item", "25", 3);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
 
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> {
       Item saved = invocation.getArgument(0);
@@ -45,7 +53,7 @@ class ItemControllerTest {
       return saved;
     });
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -61,26 +69,29 @@ class ItemControllerTest {
     verify(itemRepository).save(any(Item.class));
   }
 
-  // Checks that missing userId is rejected and should return 400.
+  // Checks that creating an item without auth returns 401.
   @Test
-  void createItem_returnsBadRequest_whenUserIdMissing() {
-    ItemCreateRequest request = buildCreateRequest(null, "Name", "Description", "10.00", 1);
+  void createItem_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    ItemCreateRequest request = buildCreateRequest("Name", "Description", "10.00", 1);
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(null, request);
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
-    assertEquals("userId is required", body.get("error"));
+    assertEquals("Authentication required", body.get("error"));
     verify(itemRepository, never()).save(any(Item.class));
   }
 
   // Checks that blank name is rejected and should return 400.
   @Test
   void createItem_returnsBadRequest_whenNameIsBlank() {
-    ItemCreateRequest request = buildCreateRequest(1, "   ", "Description", "10.00", 1);
+    ItemCreateRequest request = buildCreateRequest("   ", "Description", "10.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -92,9 +103,11 @@ class ItemControllerTest {
   // Checks that negative price is rejected and returns 400 status
   @Test
   void createItem_returnsBadRequest_whenPriceIsNegative() {
-    ItemCreateRequest request = buildCreateRequest(1, "Name", "Description", "-1.00", 1);
+    ItemCreateRequest request = buildCreateRequest("Name", "Description", "-1.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -106,7 +119,10 @@ class ItemControllerTest {
   // Checks that a null request body is rejected
   @Test
   void createItem_returnsBadRequest_whenRequestBodyMissing() {
-    ResponseEntity<?> response = itemController.createItem(null);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
+
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -118,11 +134,13 @@ class ItemControllerTest {
   // Checks that name and description as typed matches the database naming conventions
   @Test
   void createItem_trimsStringFields_beforeSave() {
-    ItemCreateRequest request = buildCreateRequest(1, "  Hello  ", "  World  ", "1.00", 1);
+    ItemCreateRequest request = buildCreateRequest("  Hello  ", "  World  ", "1.00", 1);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(1)));
 
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.createItem(request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -201,10 +219,12 @@ class ItemControllerTest {
         buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
     ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
 
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.updateItem(1, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 1, request);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -227,9 +247,11 @@ class ItemControllerTest {
   @Test
   void updateItem_returnsNotFound_whenItemDoesNotExist() {
     ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.updateItem(99, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 99, request);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -243,9 +265,11 @@ class ItemControllerTest {
   void updateItem_returnsBadRequest_whenValidationFails() {
     Item existing = buildItem(5, 8, "Name", "Description", new BigDecimal("2.00"), 3, false);
     ItemUpdateRequest request = buildRequest("   ", "Updated description", "-1", -2);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(8)));
     when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.updateItem(5, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 5, request);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -260,10 +284,12 @@ class ItemControllerTest {
     Item existing = buildItem(6, 9, "Name", "Description", new BigDecimal("10.00"), 2, false);
     ItemUpdateRequest request = buildRequest("  Trim Me  ", "  Keep Tight  ", "1.00", 1);
 
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(9)));
     when(itemRepository.findByItemIdAndDeletedFalse(6)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.updateItem(6, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 6, request);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -278,9 +304,11 @@ class ItemControllerTest {
   @Test
   void updateItem_returnsBadRequest_whenRequestBodyMissing() {
     Item existing = buildItem(10, 4, "Name", "Description", new BigDecimal("3.50"), 1, false);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(4)));
     when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.updateItem(10, null);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 10, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -289,14 +317,50 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
+  // Checks that updating an item without auth returns 401.
+  @Test
+  void updateItem_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = itemController.updateItem(null, 1, request);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  // Checks that updating another user's item returns 403.
+  @Test
+  void updateItem_returnsForbidden_whenUserDoesNotOwnItem() {
+    Item existing = buildItem(12, 20, "Name", "Description", new BigDecimal("4.00"), 2, false);
+    ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(21)));
+    when(itemRepository.findByItemIdAndDeletedFalse(12)).thenReturn(Optional.of(existing));
+
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 12, request);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("You do not own this item", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
   // Checks that deleting an existing item marks it deleted and should return 200.
   @Test
   void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
     Item existing = buildItem(11, 2, "Name", "Description", new BigDecimal("2.00"), 5, false);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(2)));
     when(itemRepository.findByItemIdAndDeletedFalse(11)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.deleteItem(11);
+    ResponseEntity<?> response = itemController.deleteItem(VALID_TOKEN, 11);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -312,9 +376,11 @@ class ItemControllerTest {
   // Checks that deleting a missing item id is handled and should return 404.
   @Test
   void deleteItem_returnsNotFound_whenItemDoesNotExist() {
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(404)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.deleteItem(404);
+    ResponseEntity<?> response = itemController.deleteItem(VALID_TOKEN, 404);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -323,10 +389,41 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
-  private ItemCreateRequest buildCreateRequest(Integer userId, String name, String description,
-                                               String price, Integer stock) {
+  // Checks that deleting an item without auth returns 401.
+  @Test
+  void deleteItem_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = itemController.deleteItem(null, 1);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  // Checks that deleting another user's item returns 403.
+  @Test
+  void deleteItem_returnsForbidden_whenUserDoesNotOwnItem() {
+    Item existing = buildItem(13, 30, "Name", "Description", new BigDecimal("5.00"), 2, false);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(31)));
+    when(itemRepository.findByItemIdAndDeletedFalse(13)).thenReturn(Optional.of(existing));
+
+    ResponseEntity<?> response = itemController.deleteItem(VALID_TOKEN, 13);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("You do not own this item", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  private ItemCreateRequest buildCreateRequest(String name, String description, String price,
+                                               Integer stock) {
     ItemCreateRequest request = new ItemCreateRequest();
-    request.setUserId(userId);
     request.setName(name);
     request.setDescription(description);
     request.setPrice(new BigDecimal(price));
@@ -355,5 +452,11 @@ class ItemControllerTest {
     item.setStock(stock);
     item.setDeleted(deleted);
     return item;
+  }
+
+  private User buildUser(Integer userId) {
+    User user = new User();
+    user.setUserId(userId);
+    return user;
   }
 }

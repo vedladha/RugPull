@@ -19,6 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+/**
+ * Unit tests for {@link AuthService}.
+ */
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
   @Mock

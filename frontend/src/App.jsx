@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./index.css";
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
@@ -8,35 +9,34 @@ import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("home"); // "home" | "listings"
   const [modal, setModal] = useState(null); // null | "signin" | "signup"
+  const navigate = useNavigate();
 
   return (
     <>
       <Navbar
         onSignInClick={() => setModal("signin")}
-        onNavigate={setCurrentPage}
-        currentPage={currentPage}
       />
-
-      {currentPage === "home" ? (
-        <>
-          <Hero onCreateAccountClick={() => setModal("signup")} />
-          <PageCards
-            onCardClick={(action) => {
-              if (action === "marketplace") {
-                setCurrentPage("listings");
-              }
-
-            }}
-          />
-        </>
-      ) : currentPage === "listings" ? (
-        <Listings />
-      ) : null}
-
+      <Routes>
+        <Route path="/" element={
+            <>
+              <Hero onCreateAccountClick={() => setModal("signup")} />
+              <PageCards
+                onCardClick={(action) => {
+                  if (action === "marketplace") {
+                    navigate("/listings");
+                  }
+                }}
+              />
+            </>
+          }
+        />
+        <Route path="/listings" element={
+            <Listings />
+          }
+        />
+      </Routes>
       <Footer />
-
       {modal && (
         <AuthModal
           initialSignUp={modal === "signup"}
@@ -44,5 +44,5 @@ export default function App() {
         />
       )}
     </>
-  );
+  )
 }

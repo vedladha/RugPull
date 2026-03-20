@@ -54,6 +54,7 @@
 | Column      | Type                     | Notes                                  |
 |------------|-------------------------|---------------------------------------|
 | image_id    | INT, primary key, auto-increment | Unique image identifier           |
+| user_id     | INT, foreign key → Users.user_id | Uploader |
 | item_id     | INT, foreign key → Items.item_id | Corresponding item                 |
 | image_url   | VARCHAR, not NULL        | Link to the image                     |
 | alt_text    | TEXT                     | Alt text for the image                |
@@ -113,6 +114,18 @@
 | order_status   | ENUM('pending','completed','cancelled'), default 'pending' | Status of order completion |
 | created_at     | DATETIME, default current timestamp |                                 |
 | updated_at     | DATETIME, default current timestamp |                                 |
+
+---
+
+## Cart
+**Stores list of items for checkout**
+| Column | Type | Notes |
+|--------|------|-------|
+| cart_id | INT, primary key, auto-increment | Unique cart item identifier |
+| user_id | INT, foreign key → Users.user_id | User who has this item in their cart |
+| item_id | INT, foreign key → Items.item_id | Item in the cart |
+| quantity | INT, default 1 | Number of item in the cart |
+| created_at | DATETIME, default current timestamp |
 
 ---
 
