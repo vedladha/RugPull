@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context";
 
 export default function Navbar({ onSignInClick, onNavigate, currentPage }) {

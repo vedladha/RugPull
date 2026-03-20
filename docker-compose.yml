@@ -56,3 +56,4 @@ services:
 
 volumes:
   db_data:
+  item-images:
