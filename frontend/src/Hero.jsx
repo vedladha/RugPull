@@ -1,4 +1,4 @@
-import { useAuth } from "./Auth/useAuth";
+import { useAuth } from "./Auth/auth-context";
 
 export default function Hero({ onCreateAccountClick }) {
   const { user } = useAuth();

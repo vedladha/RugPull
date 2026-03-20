@@ -1,4 +1,4 @@
-import { useAuth } from "../Auth/useAuth";
+import { useAuth } from "../Auth/auth-context";
 
 export default function Navbar({ onSignInClick, onNavigate, currentPage }) {
   const { user, signOut } = useAuth();
