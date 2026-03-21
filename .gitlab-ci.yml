@@ -1,0 +1,82 @@
+image: docker:24.0.5
+services:
+  - docker:24.0.5-dind
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+  DB_NAME: marketplace
+  DB_USER: pipeline
+
+  HEDERA_NETWORK: testnet
+  HEDERA_NEW_ACCOUNT_INITIAL_HBAR: "100"
+
+stages:
+  - lint
+  - test
+
+# Frontend
+frontend-lint:
+  stage: lint
+  image: node:20-slim
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+
+frontend-test:
+  stage: test
+  image: node:20-slim
+  script:
+    - cd frontend
+    - npm ci
+    - npm run test:unit
+
+# Backend
+backend-lint:
+  stage: lint
+  image: eclipse-temurin:21-jdk
+  script:
+    - cd backend
+    - chmod +x gradlew
+    - ./gradlew checkstyleMain
+
+backend-test:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  services:
+    - name: mysql:8.0
+      alias: mysql
+  variables:
+    MYSQL_DATABASE: $DB_NAME
+    MYSQL_USER: $DB_USER
+    MYSQL_PASSWORD: $DB_PASSWORD
+    MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+  script:
+    - apt-get update && apt-get install -y mysql-client
+    - cat database/database_init/*.sql | mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE
+    - cd backend
+    - chmod +x gradlew
+    - ./gradlew test
+
+# Crypto
+crypto-lint:
+  stage: lint
+  image: eclipse-temurin:21-jdk
+  script:
+    - cd rpc_currency
+    - chmod +x gradlew
+    - ./gradlew checkstyleMain
+
+crypto-test:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  variables:
+    OPERATOR_ID: $HEDERA_OPERATOR_ID
+    OPERATOR_KEY: $HEDERA_OPERATOR_KEY
+    RPC_CURRENCY_ID: $RPC_CURRENCY_ID
+  script:
+    - cd rpc_currency
+    - chmod +x gradlew
+    - ./gradlew test
