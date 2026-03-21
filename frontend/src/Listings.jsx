@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ListingCard from "./Components/ListingCard.jsx";
 
 export default function Listings() {
@@ -14,8 +14,8 @@ export default function Listings() {
   }, []);
 
   useEffect(() => {
-    filterListings();
-  }, [listings, priceFilter]);
+    setFilteredListings(filterListings());
+  }, [filterListings]);
 
   const fetchListings = async () => {
     try {
@@ -34,7 +34,7 @@ export default function Listings() {
     }
   };
 
-  const filterListings = () => {
+  const filterListings = useCallback(() => {
     let filtered = listings;
 
     if (priceFilter.min !== "") {
@@ -52,16 +52,18 @@ export default function Listings() {
         return price <= maxPrice;
       });
     }
-    
-    if (keywordFilter !== "")
-    filtered = filtered.filter((listing) => {
-      const matchesKeyword = 
-        listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
-        listing.bio.toLowerCase().includes(keywordFilter.toLowerCase());
-    })
 
-    setFilteredListings(filtered);
-  };
+    if (keywordFilter !== "") {
+      filtered = filtered.filter((listing) => {
+        const matchesKeyword =
+          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase());
+        return matchesKeyword;
+      });
+    }
+
+    return filtered;
+  }, [listings, priceFilter, keywordFilter]);
 
   const handlePriceFilterChange = (type, value) => {
     setPriceFilter((prev) => ({
@@ -81,11 +83,8 @@ export default function Listings() {
     });
   };
 
-  const handleKeywordFilterChange = (type, value) => {
-    setKeywordFilter((prev) => ({
-      ...prev,
-      [type]: value === "" ? "" : value,
-    }));
+  const handleKeywordFilterChange = (value) => {
+    setKeywordFilter(value === "" ? "" : value);
   };
 
   if (loading) {
@@ -142,7 +141,7 @@ export default function Listings() {
             type="text"
             className="filter-input"
             value={keywordFilter}
-            onChange={(e) => setKeywordFilter(e.target.value)}
+            onChange={(e) => handleKeywordFilterChange(e.target.value)}
             placeholder="Search listings..."
           />
         </div>

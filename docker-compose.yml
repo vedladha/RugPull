@@ -48,6 +48,15 @@ services:
       timeout: 5s
       retries: 5
 
+  rpc_currency:
+    build: ./rpc_currency
+    profiles: ["tools"] # only ran when specified with "--profile tools"
+    restart: "no"
+    env_file:
+      - ./rpc_currency/.env
+    volumes:
+      - ./rpc_currency/app:/app
+
 volumes:
   db_data:
   item-images:
