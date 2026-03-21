@@ -5,6 +5,7 @@ import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
+import ProfilePage from "./ProfilePage.jsx"
 import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
 
@@ -19,22 +20,25 @@ export default function App() {
       />
       <Routes>
         <Route path="/" element={
-            <>
-              <Hero onCreateAccountClick={() => setModal("signup")} />
-              <PageCards
-                onCardClick={(action) => {
-                  if (action === "marketplace") {
-                    navigate("/listings");
-                  }
-                }}
-              />
-            </>
-          }
+          <>
+            <Hero onCreateAccountClick={() => setModal("signup")} />
+            <PageCards
+              onCardClick={(action) => {
+                if (action === "marketplace") {
+                  navigate("/listings");
+                }
+              }}
+            />
+          </>
+        }
         />
         <Route path="/listings" element={
-            <Listings />
-          }
+          <Listings />
+        }
         />
+        <Route path="/profile" element={
+          <ProfilePage />
+        } />
       </Routes>
       <Footer />
       {modal && (
