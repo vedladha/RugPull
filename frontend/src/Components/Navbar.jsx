@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context";
+import { useEffect, useState } from "react";
 
 export default function Navbar({ onSignInClick, currentPage }) {
   const { user, walletBalance, signOut } = useAuth();
   const [balance, setBalance] = useState(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     if (user) {
@@ -47,7 +50,10 @@ export default function Navbar({ onSignInClick, currentPage }) {
       </Link>
       }
       {user ? (
-        <button className="nav-signin" onClick={signOut}>
+        <button className="nav-signin" onClick={() => {
+          navigate("/");
+          signOut();
+        }}>
           Sign Out
         </button>
       ) : (
