@@ -8,8 +8,8 @@ CREATE TABLE items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     price DECIMAL(30, 8), -- Price in crypto amount
-    `Name` VARCHAR(255) NOT NULL,
-    `Description` TEXT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT NOT NULL,
     -- category_id INT, Will be added later with categories
     stock INT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
