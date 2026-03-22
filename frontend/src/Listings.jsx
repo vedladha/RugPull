@@ -58,7 +58,7 @@ export default function Listings() {
     if (keywordFilter !== "")
       filtered = filtered.filter((listing) =>
           listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
-          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase());
+          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase())
       );
 
     setFilteredListings(filtered);
@@ -163,7 +163,7 @@ export default function Listings() {
               name={listing.name}
               description={listing.description}
               price={listing.price}
-              seller={listing.seller}
+              seller={listing.sellerName}
             />
           ))
         )}
