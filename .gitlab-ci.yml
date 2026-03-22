@@ -59,6 +59,11 @@ backend-test:
     - cd backend
     - chmod +x gradlew
     - ./gradlew test
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: jacoco
+        path: backend/build/reports/jacoco/test/jacocoTestReport.xml
 
 # Crypto
 crypto-lint:
