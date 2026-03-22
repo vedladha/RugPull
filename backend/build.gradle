@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'jacoco'
     id 'checkstyle'
 	id 'org.springframework.boot' version '4.0.3'
 	id 'io.spring.dependency-management' version '1.1.7'
@@ -8,6 +9,10 @@ plugins {
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
+
+jacoco {
+	toolVersion = "0.8.14"
+}
 
 java {
 	toolchain {
@@ -44,4 +49,14 @@ checkstyle {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy tasks.jacocoTestReport
+}
+
+tasks.jacocoTestReport {
+	dependsOn tasks.test
+
+	reports {
+		xml.required = true
+		html.outputLocation = file("build/jacocoHtml")
+	}
 }

@@ -1,4 +1,5 @@
 plugins {
+    jacoco
     checkstyle
     application
     alias(libs.plugins.shadow)
@@ -20,6 +21,10 @@ dependencies {
     testRuntimeOnly(libs.junit.launcher)
 }
 
+jacoco {
+    toolVersion = "0.8.14"
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -38,6 +43,7 @@ checkstyle {
 tasks.named<Test>("test") {
     environment(env.allVariables())
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.named<JavaExec>("run") {
@@ -46,6 +52,15 @@ tasks.named<JavaExec>("run") {
 
 tasks.named<JavaExec>("runShadow") {
     environment(env.allVariables())
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required = true
+        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
 }
 
 val copyJars by tasks.registering(Copy::class) {
