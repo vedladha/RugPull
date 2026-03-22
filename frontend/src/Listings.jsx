@@ -16,8 +16,8 @@ export default function Listings() {
   }, []);
 
   useEffect(() => {
-    setFilteredListings(filterListings());
-  }, [filterListings]);
+    filterListings();
+  }, [listings, priceFilter]);
 
   const fetchListings = async () => {
     try {
@@ -36,13 +36,13 @@ export default function Listings() {
     }
   };
 
-  const filterListings = useCallback(() => {
+  const filterListings = () => {
     let filtered = listings;
 
     if (priceFilter.min !== "") {
       const minPrice = parseFloat(priceFilter.min);
       filtered = filtered.filter((listing) => {
-        const price = parseFloat(listing.price.replace(/[^\d.]/g, ""));
+        const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
         return price >= minPrice;
       });
     }
@@ -50,22 +50,19 @@ export default function Listings() {
     if (priceFilter.max !== "") {
       const maxPrice = parseFloat(priceFilter.max);
       filtered = filtered.filter((listing) => {
-        const price = parseFloat(listing.price.replace(/[^\d.]/g, ""));
+        const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
         return price <= maxPrice;
       });
     }
 
-    if (keywordFilter !== "") {
-      filtered = filtered.filter((listing) => {
-        const matchesKeyword =
+    if (keywordFilter !== "")
+      filtered = filtered.filter((listing) =>
           listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
           listing.bio.toLowerCase().includes(keywordFilter.toLowerCase());
-        return matchesKeyword;
-      });
-    }
+      );
 
-    return filtered;
-  }, [listings, priceFilter, keywordFilter]);
+    setFilteredListings(filtered);
+  };
 
   const handlePriceFilterChange = (type, value) => {
     setPriceFilter((prev) => ({
@@ -78,15 +75,20 @@ export default function Listings() {
     setPriceFilter((prev) => {
       const updated = { ...prev };
       if (updated.min !== "" && updated.max !== "") {
-        if (type === "min" && updated.min > updated.max) updated.max = updated.min;
-        if (type === "max" && updated.max < updated.min) updated.min = updated.max;
+        if (type === "min" && updated.min > updated.max)
+          updated.max = updated.min;
+        if (type === "max" && updated.max < updated.min)
+          updated.min = updated.max;
       }
       return updated;
     });
   };
 
-  const handleKeywordFilterChange = (value) => {
-    setKeywordFilter(value === "" ? "" : value);
+  const handleKeywordFilterChange = (type, value) => {
+    setKeywordFilter((prev) => ({
+      ...prev,
+      [type]: value === "" ? "" : value,
+    }));
   };
 
   if (loading) {
@@ -143,7 +145,7 @@ export default function Listings() {
             type="text"
             className="filter-input"
             value={keywordFilter}
-            onChange={(e) => handleKeywordFilterChange(e.target.value)}
+            onChange={(e) => setKeywordFilter(e.target.value)}
             placeholder="Search listings..."
           />
         </div>
