@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { useAuth } from "./Auth/AuthContext.jsx";
+import { useAuth } from "./Auth/auth-context";
 
 export default function SellPage() {
   const { user } = useAuth();
   const API = "http://localhost:3001";
+
+  // State variables for form data, validation errors, submission status, and loading state
+  const [form, setForm] = useState({ title: "", bio: "", price: "" });
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   // If no user is signed in, display a message prompting them to sign in
   if (!user) {
     return (
@@ -16,13 +23,6 @@ export default function SellPage() {
       </div>
     );
   }
-
-  // State variables for form data, validation errors, submission status, and loading state
-  const [form, setForm] = useState({ title: "", bio: "", price: "" });
-  const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   // validates that all fields are filled out and that price is a valid number greater than 0.
   // Returns an object with error messages for any invalid fields
   const validate = () => {

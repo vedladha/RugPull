@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import ListingCard from "./Components/ListingCard.jsx";
 
 export default function Listings() {
@@ -16,8 +16,36 @@ export default function Listings() {
   }, []);
 
   useEffect(() => {
+    const filterListings = () => {
+      let filtered = listings;
+
+      if (priceFilter.min !== "") {
+        const minPrice = parseFloat(priceFilter.min);
+        filtered = filtered.filter((listing) => {
+          const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
+          return price >= minPrice;
+        });
+      }
+
+      if (priceFilter.max !== "") {
+        const maxPrice = parseFloat(priceFilter.max);
+        filtered = filtered.filter((listing) => {
+          const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
+          return price <= maxPrice;
+        });
+      }
+
+      if (keywordFilter !== "")
+        filtered = filtered.filter((listing) =>
+          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase())
+        );
+
+      setFilteredListings(filtered);
+    };
+
     filterListings();
-  }, [listings, priceFilter]);
+  });
 
   const fetchListings = async () => {
     try {
@@ -34,34 +62,6 @@ export default function Listings() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterListings = () => {
-    let filtered = listings;
-
-    if (priceFilter.min !== "") {
-      const minPrice = parseFloat(priceFilter.min);
-      filtered = filtered.filter((listing) => {
-        const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
-        return price >= minPrice;
-      });
-    }
-
-    if (priceFilter.max !== "") {
-      const maxPrice = parseFloat(priceFilter.max);
-      filtered = filtered.filter((listing) => {
-        const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
-        return price <= maxPrice;
-      });
-    }
-
-    if (keywordFilter !== "")
-      filtered = filtered.filter((listing) =>
-          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
-          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase())
-      );
-
-    setFilteredListings(filtered);
   };
 
   const handlePriceFilterChange = (type, value) => {
@@ -82,13 +82,6 @@ export default function Listings() {
       }
       return updated;
     });
-  };
-
-  const handleKeywordFilterChange = (type, value) => {
-    setKeywordFilter((prev) => ({
-      ...prev,
-      [type]: value === "" ? "" : value,
-    }));
   };
 
   if (loading) {
