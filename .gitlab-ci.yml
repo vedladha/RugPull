@@ -107,3 +107,10 @@ crypto-test:
       coverage_report:
         coverage_format: jacoco
         path: rpc_currency/app/build/reports/jacoco/test/jacocoTestReport.xml
+
+# Database
+database-lint:
+  stage: lint
+  image: mysql:8.1
+  script:
+    - sqlfluff lint database/database_init
