@@ -1,5 +1,9 @@
 # Team 32 Crypto Marketplace
 
+[![pipeline status](https://git.doit.wisc.edu/cdis/cs/courses/cs506/sp2026/team/t_32/Project_32/badges/main/pipeline.svg)](https://git.doit.wisc.edu/cdis/cs/courses/cs506/sp2026/team/t_32/Project_32/-/commits/main)
+
+[![coverage report](https://git.doit.wisc.edu/cdis/cs/courses/cs506/sp2026/team/t_32/Project_32/badges/main/coverage.svg)](https://git.doit.wisc.edu/cdis/cs/courses/cs506/sp2026/team/t_32/Project_32/-/commits/main)
+
 ![Team 32 logo](logo.png)
 
 This document is the living specification for Team 32's CS506 project.
