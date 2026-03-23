@@ -19,4 +19,12 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, Intege
    * @return an {@link Optional} containing the user profile if found, or empty otherwise
    */
   Optional<UserProfile> findByDisplayName(String displayName);
+
+  /**
+   * Retrieves a user profile by its unique user ID.
+   * 
+   * @param userId the exact id to search for
+   * @return an UserProfile containing the user profile if found, or empty otherwise
+   */
+  UserProfile findByUserId(Integer userId);
 }

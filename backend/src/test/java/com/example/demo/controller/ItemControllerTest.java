@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,7 +13,9 @@ import com.example.demo.dto.ItemCreateRequest;
 import com.example.demo.dto.ItemUpdateRequest;
 import com.example.demo.model.Item;
 import com.example.demo.model.User;
+import com.example.demo.model.UserProfile;
 import com.example.demo.repository.ItemRepository;
+import com.example.demo.repository.UserProfileRepository;
 import com.example.demo.services.CurrentUserService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -36,6 +39,9 @@ class ItemControllerTest {
 
   @Mock
   private CurrentUserService currentUserService;
+
+  @Mock
+  private UserProfileRepository userProfileRepository;
 
   @InjectMocks
   private ItemController itemController;
@@ -157,7 +163,15 @@ class ItemControllerTest {
     Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
     Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
 
+    UserProfile profile1 = mock(UserProfile.class);
+    when(profile1.getDisplayName()).thenReturn("Seller One");
+
+    UserProfile profile2 = mock(UserProfile.class);
+    when(profile2.getDisplayName()).thenReturn("Seller Two");
+
     when(itemRepository.findByDeletedFalse()).thenReturn(List.of(item1, item2));
+    when(userProfileRepository.findByUserId(7)).thenReturn(profile1);
+    when(userProfileRepository.findByUserId(8)).thenReturn(profile2);
 
     ResponseEntity<?> response = itemController.getAllItems();
 

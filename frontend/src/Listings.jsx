@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import ListingCard from "./Components/ListingCard.jsx";
 
 export default function Listings() {
@@ -9,23 +9,53 @@ export default function Listings() {
   const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [keywordFilter, setKeywordFilter] = useState("");
 
+  const API = "http://localhost:3001";
+
   useEffect(() => {
     fetchListings();
   }, []);
 
   useEffect(() => {
-    setFilteredListings(filterListings());
-  }, [filterListings]);
+    const filterListings = () => {
+      let filtered = listings;
+
+      if (priceFilter.min !== "") {
+        const minPrice = parseFloat(priceFilter.min);
+        filtered = filtered.filter((listing) => {
+          const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
+          return price >= minPrice;
+        });
+      }
+
+      if (priceFilter.max !== "") {
+        const maxPrice = parseFloat(priceFilter.max);
+        filtered = filtered.filter((listing) => {
+          const price = parseFloat(String(listing.price).replace(/[^\d.]/g, ""));
+          return price <= maxPrice;
+        });
+      }
+
+      if (keywordFilter !== "")
+        filtered = filtered.filter((listing) =>
+          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase())
+        );
+
+      setFilteredListings(filtered);
+    };
+
+    filterListings();
+  });
 
   const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await fetch("API_ENDPOINT/listings");
+      const response = await fetch(`${API}/items`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setListings(data.listings || []);
+      setListings(data.items || []);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching listings:", err);
@@ -33,37 +63,6 @@ export default function Listings() {
       setLoading(false);
     }
   };
-
-  const filterListings = useCallback(() => {
-    let filtered = listings;
-
-    if (priceFilter.min !== "") {
-      const minPrice = parseFloat(priceFilter.min);
-      filtered = filtered.filter((listing) => {
-        const price = parseFloat(listing.price.replace(/[^\d.]/g, ""));
-        return price >= minPrice;
-      });
-    }
-
-    if (priceFilter.max !== "") {
-      const maxPrice = parseFloat(priceFilter.max);
-      filtered = filtered.filter((listing) => {
-        const price = parseFloat(listing.price.replace(/[^\d.]/g, ""));
-        return price <= maxPrice;
-      });
-    }
-
-    if (keywordFilter !== "") {
-      filtered = filtered.filter((listing) => {
-        const matchesKeyword =
-          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
-          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase());
-        return matchesKeyword;
-      });
-    }
-
-    return filtered;
-  }, [listings, priceFilter, keywordFilter]);
 
   const handlePriceFilterChange = (type, value) => {
     setPriceFilter((prev) => ({
@@ -76,15 +75,13 @@ export default function Listings() {
     setPriceFilter((prev) => {
       const updated = { ...prev };
       if (updated.min !== "" && updated.max !== "") {
-        if (type === "min" && updated.min > updated.max) updated.max = updated.min;
-        if (type === "max" && updated.max < updated.min) updated.min = updated.max;
+        if (type === "min" && updated.min > updated.max)
+          updated.max = updated.min;
+        if (type === "max" && updated.max < updated.min)
+          updated.min = updated.max;
       }
       return updated;
     });
-  };
-
-  const handleKeywordFilterChange = (value) => {
-    setKeywordFilter(value === "" ? "" : value);
   };
 
   if (loading) {
@@ -141,7 +138,7 @@ export default function Listings() {
             type="text"
             className="filter-input"
             value={keywordFilter}
-            onChange={(e) => handleKeywordFilterChange(e.target.value)}
+            onChange={(e) => setKeywordFilter(e.target.value)}
             placeholder="Search listings..."
           />
         </div>
@@ -156,10 +153,10 @@ export default function Listings() {
           filteredListings.map((listing) => (
             <ListingCard
               key={listing.id}
-              title={listing.title}
-              bio={listing.bio}
+              name={listing.name}
+              description={listing.description}
               price={listing.price}
-              seller={listing.seller}
+              seller={listing.sellerName}
             />
           ))
         )}
