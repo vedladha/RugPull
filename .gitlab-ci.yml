@@ -111,6 +111,7 @@ crypto-test:
 # Database
 database-lint:
   stage: lint
-  image: mysql:8.1
+  image: python:3.11-slim
   script:
-    - sqlfluff lint database/database_init
+    - pip install sqlfluff
+    - sqlfluff lint database/database_init --dialect mysql
