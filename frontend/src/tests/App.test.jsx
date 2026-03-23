@@ -11,7 +11,9 @@ vi.mock("../Auth/auth-context", () => ({
 }));
 
 beforeEach(() => {
-    mockUseAuth.mockReturnValue({ user: null, signOut: vi.fn() });
+    mockUseAuth.mockReturnValue({
+        user: null, signOut: vi.fn(), walletBalance: vi.fn().mockResolvedValue(-999.99)
+    });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ items: [] }),
@@ -95,6 +97,7 @@ describe("App", () => {
             }),
             updateProfile: vi.fn(),
             signOut: vi.fn(),
+            walletBalance: vi.fn().mockResolvedValue(-999.99)
         });
 
         renderApp("/profile");

@@ -14,11 +14,11 @@ CREATE TABLE ItemImages (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_itemimages_items
-        FOREIGN KEY (item_id) REFERENCES Items(item_id)
+        FOREIGN KEY (item_id) REFERENCES items(item_id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_itemimages_users
-        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
 );
 

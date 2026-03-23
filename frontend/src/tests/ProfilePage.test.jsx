@@ -17,6 +17,7 @@ describe("ProfilePage", () => {
             user: { email: "test@example.com" },
             profileDetails: mockProfileDetails,
             updateProfile: mockUpdateProfile,
+            walletBalance: vi.fn().mockResolvedValue(-999.99)
         });
 
         mockProfileDetails.mockResolvedValue({

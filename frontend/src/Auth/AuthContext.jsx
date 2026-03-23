@@ -58,6 +58,23 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+async function walletBalance() {
+    const response = await fetch(
+      `${API}/wallets`,
+      {
+        method: "GET",
+        credentials: "include"
+      });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch balance");
+    }
+
+    const balance = await response.text();
+    return Number(balance);
+  }
+
   async function signOut() {
     await fetch(`${API}/auth/logout`, {
       method: "POST",
@@ -110,7 +127,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, profileDetails, updateProfile, register, loading }}>
+    <AuthContext.Provider value={{ user, signIn, signOut, walletBalance, profileDetails, updateProfile, register, loading }}>
       {children}
     </AuthContext.Provider>
   );

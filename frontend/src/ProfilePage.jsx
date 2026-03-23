@@ -3,7 +3,7 @@ import "./style/profile-page.css";
 import { useAuth } from "./Auth/auth-context";
 
 export default function ProfilePage() {
-    const { user, profileDetails, updateProfile } = useAuth();
+    const { user, walletBalance, profileDetails, updateProfile } = useAuth();
     const [displayName, setDisplayName] = useState("")
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
@@ -23,9 +23,12 @@ export default function ProfilePage() {
                 setEmail(user.email)
                 setDisplayName(profileData.displayName)
                 setBio(profileData.bio)
-                setBalance(-999.99)
             })
-    }, [user, profileDetails]);
+
+        walletBalance().then((balance) => {
+            setBalance(balance)
+        })
+    }, [user, walletBalance, profileDetails]);
 
     const handleSave = async (e) => {
         e.preventDefault();

@@ -7,7 +7,7 @@ describe("ListingCard", () => {
     name: "Guitar",
     description: "Great condition, barely used",
     price: "5.2 RPC",
-    sellerName: "john",
+    seller: "john",
   };
 
   it("renders the title", () => {

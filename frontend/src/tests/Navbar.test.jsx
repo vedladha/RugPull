@@ -17,7 +17,7 @@ const LocationDisplay = () => {
 
 describe("Navbar", () => {
   beforeEach(() => {
-    mockUseAuth.mockReturnValue({ user: null, signOut: vi.fn() });
+    mockUseAuth.mockReturnValue({ user: null, signOut: vi.fn(), walletBalance: vi.fn().mockResolvedValue(-999.99) });
   });
 
   it("calls onSignInClick when Sign In button is clicked", async () => {
@@ -35,7 +35,7 @@ describe("Navbar", () => {
 
   it("calls signOut when Sign Out button is clicked", async () => {
     const signOut = vi.fn();
-    mockUseAuth.mockReturnValue({ user: { displayName: "Test User" }, signOut });
+    mockUseAuth.mockReturnValue({ user: { displayName: "Test User" }, signOut, walletBalance: vi.fn().mockResolvedValue(-999.99) });
 
     render(
       <MemoryRouter initialEntries={["/"]}>
@@ -73,7 +73,7 @@ describe("Navbar", () => {
   });
 
   it("navigates to /profile when user name is clicked", async () => {
-    mockUseAuth.mockReturnValue({ user: {displayName: "Test User" }, signOut: vi.fn() });
+    mockUseAuth.mockReturnValue({ user: {displayName: "Test User" }, signOut: vi.fn(), walletBalance: vi.fn().mockResolvedValue(-999.99) });
     render(
       <MemoryRouter initialEntries={["/"]}>
         <Navbar />

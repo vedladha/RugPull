@@ -35,7 +35,6 @@ export default function App() {
             </>
           }
         />
-        <Route path="/listings" element={<Listings />} />
         <Route path="/sell" element={<SellPage />} />
         <Route path="/listings" element={
           <Listings />
