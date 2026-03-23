@@ -19,6 +19,8 @@ RUN rm -rf ./*
 # Get the app build from the Build Stage
 COPY --from=build /app/dist .
 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
