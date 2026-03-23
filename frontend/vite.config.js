@@ -8,9 +8,13 @@ export default defineConfig({
         setupFiles: "./src/tests/setupTests.js",
         globals: true,
         watch: false,
+        reporters: ['default', 'junit'],
+        outputFile: {
+            junit: './coverage/junit.xml',
+        },
         coverage: {
             provider: "v8",
-            reporter: ["text", "html"],
+            reporter: ["text", "html", "cobertura"],
             threshold: {
                 lines: 80,
                 branches: 80,
@@ -21,6 +25,8 @@ export default defineConfig({
                 "node_modules/**",
                 "src/main.jsx",
                 "src/**/*.test.jsx",
+                "eslint.config.js",
+                "vite.config.js",
             ]
         }
     }
