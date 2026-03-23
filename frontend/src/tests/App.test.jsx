@@ -12,10 +12,10 @@ vi.mock("../Auth/auth-context", () => ({
 
 beforeEach(() => {
     mockUseAuth.mockReturnValue({ user: null, signOut: vi.fn() });
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ items: [] }),
-    });
+    }));
 });
 
 // App needs to be wrapped in MemoryRouter since it uses useNavigate

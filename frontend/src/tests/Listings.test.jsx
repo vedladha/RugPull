@@ -9,14 +9,14 @@ const mockListings = [
 ];
 
 beforeEach(() => {
-    global.fetch = vi.fn();
+    vi.stubGlobal("fetch", vi.fn());
 });
 
 describe("Listings", () => {
     // Tests that loading state is shown initially
     it("shows loading state initially", async () => {
         let resolve;
-        global.fetch = vi.fn(() => new Promise((r) => { resolve = r; })); // never resolves
+        vi.stubGlobal("fetch", vi.fn(() => new Promise((r) => { resolve = r; }))); // never resolves
         render(<Listings />);
         expect(screen.getByText("Loading listings...")).toBeInTheDocument();
 
@@ -26,10 +26,10 @@ describe("Listings", () => {
 
     // Tests that listings are displayed after fetch
     it("displays listings after fetch", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: mockListings }),
-        });
+        }));
 
         render(<Listings />);
 
@@ -42,10 +42,10 @@ describe("Listings", () => {
 
     // Tests that error state is shown when fetch fails
     it("shows error state when fetch fails", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: false,
             status: 500,
-        });
+        }));
 
         render(<Listings />);
 
@@ -56,10 +56,10 @@ describe("Listings", () => {
 
     // Tests that no listings message is shown when list is empty
     it("shows no listings message when list is empty", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: [] }),
-        });
+        }));
 
         render(<Listings />);
 
@@ -70,10 +70,10 @@ describe("Listings", () => {
 
     // Tests that min price filter works
     it("filters listings by min price", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: mockListings }),
-        });
+        }));
 
         render(<Listings />);
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
@@ -88,10 +88,10 @@ describe("Listings", () => {
 
     // Tests that max price filter works
     it("filters listings by max price", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: mockListings }),
-        });
+        }));
 
         render(<Listings />);
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
@@ -106,10 +106,10 @@ describe("Listings", () => {
 
     // Tests that keyword filter works
     it("filters listings by keyword", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: mockListings }),
-        });
+        }));
 
         render(<Listings />);
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());

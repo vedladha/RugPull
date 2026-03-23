@@ -13,7 +13,7 @@ const loggedInUser = { email: "test@example.com", displayName: "TestUser" };
 
 beforeEach(() => {
     mockUseAuth.mockReturnValue({ user: loggedInUser });
-    global.fetch = vi.fn();
+    vi.stubGlobal("fetch", vi.fn());
 });
 
 describe("SellPage", () => {
@@ -65,7 +65,7 @@ describe("SellPage", () => {
 
     // Tests that a successful submission shows the success screen
     it("shows success screen after successful submission", async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: true });
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
         render(<SellPage />);
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
@@ -81,7 +81,7 @@ describe("SellPage", () => {
 
     // Tests that fetch is called with the correct data
     it("calls fetch with correct data on submit", async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: true });
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
         render(<SellPage />);
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
@@ -90,7 +90,7 @@ describe("SellPage", () => {
         await userEvent.click(screen.getByText("Post Listing"));
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(vi.mocked(fetch)).toHaveBeenCalledWith(
                 "http://localhost:3001/items",
                 expect.objectContaining({
                     method: "POST",
@@ -107,7 +107,7 @@ describe("SellPage", () => {
 
     // Tests that error banner is shown when fetch throws
     it("shows error banner when fetch fails", async () => {
-        global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+        vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
         render(<SellPage />);
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
@@ -122,7 +122,7 @@ describe("SellPage", () => {
 
     // Tests that clicking Post Another resets the form
     it("resets form when Post Another is clicked", async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: true });
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
         render(<SellPage />);
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");

@@ -4,7 +4,7 @@ import { AuthProvider } from "../Auth/AuthContext.jsx";
 import { useAuth } from "../Auth/auth-context";
 
 beforeEach(() => {
-    global.fetch = vi.fn();
+    vi.stubGlobal("fetch", vi.fn());
 });
 
 // Helper component to expose auth context values
@@ -23,7 +23,7 @@ const renderWithAuth = (ui) => render(<AuthProvider>{ui}</AuthProvider>);
 describe("AuthProvider", () => {
     // Tests that loading is true initially then false after profile fetch
     it("sets loading to false after profile fetch", async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: false });
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
         renderWithAuth(<AuthConsumer />);
 
         expect(screen.getByTestId("loading").textContent).toBe("loading");
@@ -35,10 +35,10 @@ describe("AuthProvider", () => {
 
     // Tests that user is set when profile fetch succeeds
     it("sets user when profile fetch succeeds", async () => {
-        global.fetch = vi.fn().mockResolvedValue({
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ user: { email: "test@example.com" } }),
-        });
+        }));
 
         renderWithAuth(<AuthConsumer />);
 
@@ -49,7 +49,7 @@ describe("AuthProvider", () => {
 
     // Tests that user is null when profile fetch fails
     it("sets user to null when profile fetch fails", async () => {
-        global.fetch = vi.fn().mockResolvedValue({ ok: false });
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
 
         renderWithAuth(<AuthConsumer />);
 
@@ -60,7 +60,7 @@ describe("AuthProvider", () => {
 
     // Tests that user is null when profile fetch throws
     it("sets user to null when profile fetch throws", async () => {
-        global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+        vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
 
         renderWithAuth(<AuthConsumer />);
 
@@ -73,12 +73,12 @@ describe("AuthProvider", () => {
 describe("AuthProvider - signIn", () => {
     // Tests that signIn sets the user on success
     it("sets user after successful signIn", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false }) // initial profile fetch
             .mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve({ email: "test@example.com" }),
-            });
+            }));
 
         const SignInConsumer = () => {
             const { user, signIn } = useAuth();
@@ -104,9 +104,9 @@ describe("AuthProvider - signIn", () => {
 
     // Tests that signIn throws on failure
     it("throws error when signIn fails", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false }) // initial profile fetch
-            .mockResolvedValueOnce({ ok: false }); // login fetch
+            .mockResolvedValueOnce({ ok: false })); // login fetch
 
         let error = null;
         const SignInConsumer = () => {
@@ -130,12 +130,12 @@ describe("AuthProvider - signIn", () => {
 describe("AuthProvider - signOut", () => {
     // Tests that signOut clears the user
     it("clears user after signOut", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve({ user: { email: "test@example.com" } }),
             })
-            .mockResolvedValueOnce({ ok: true }); // logout fetch
+            .mockResolvedValueOnce({ ok: true })); // logout fetch
 
         const SignOutConsumer = () => {
             const { user, signOut } = useAuth();
@@ -158,12 +158,12 @@ describe("AuthProvider - signOut", () => {
 describe("AuthProvider - register", () => {
     // Tests that register sets the user on success
     it("sets user after successful register", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false }) // initial profile fetch
             .mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve({ email: "new@example.com", displayName: "NewUser" }),
-            });
+            }));
 
         const RegisterConsumer = () => {
             const { user, register } = useAuth();
@@ -184,12 +184,12 @@ describe("AuthProvider - register", () => {
 
     // Tests that register throws on failure
     it("throws error when register fails", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false }) // initial profile fetch
             .mockResolvedValueOnce({
                 ok: false,
                 json: () => Promise.resolve({ message: "Email already in use" }),
-            });
+            }));
 
         let error = null;
         const RegisterConsumer = () => {
@@ -213,7 +213,7 @@ describe("AuthProvider - register", () => {
 describe("AuthProvider - updateProfile", () => {
     // Tests that updateProfile updates the user
     it("updates user after successful updateProfile", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve({ user: { email: "test@example.com", displayName: "OldName" } }),
@@ -221,7 +221,7 @@ describe("AuthProvider - updateProfile", () => {
             .mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve({ profile: { displayName: "NewName" } }),
-            });
+            }));
 
         const UpdateConsumer = () => {
             const { user, updateProfile } = useAuth();
@@ -242,12 +242,12 @@ describe("AuthProvider - updateProfile", () => {
 
     // Tests that updateProfile throws on failure
     it("throws error when updateProfile fails", async () => {
-        global.fetch = vi.fn()
+        vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false })
             .mockResolvedValueOnce({
                 ok: false,
                 json: () => Promise.resolve({ error: "Update failed" }),
-            });
+            }));
 
         let error = null;
         const UpdateConsumer = () => {
