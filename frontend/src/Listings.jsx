@@ -37,15 +37,15 @@ export default function Listings() {
 
       if (keywordFilter !== "")
         filtered = filtered.filter((listing) =>
-          listing.title.toLowerCase().includes(keywordFilter.toLowerCase()) ||
-          listing.bio.toLowerCase().includes(keywordFilter.toLowerCase())
+          listing.name.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+          listing.description.toLowerCase().includes(keywordFilter.toLowerCase())
         );
 
       setFilteredListings(filtered);
     };
 
     filterListings();
-  });
+  }, [listings, priceFilter, keywordFilter]);
 
   const fetchListings = async () => {
     try {
