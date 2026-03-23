@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 /**
  * Represents a user entity within the system.
  *
- * <p>This class maps to the "Users" table in the database and manages core user authentication
+ * <p>This class maps to the "users" table in the database and manages core user authentication
  * details, audit timestamps, and the relationship to the user's detailed profile.
  */
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
 public class User {
 
   @Id
