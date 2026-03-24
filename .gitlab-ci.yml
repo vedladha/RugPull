@@ -20,6 +20,13 @@ stages:
 frontend-lint:
   stage: lint
   image: node:20-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - frontend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   script:
     - cd frontend
     - npm ci
@@ -28,6 +35,13 @@ frontend-lint:
 frontend-test:
   stage: test
   image: node:20-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - frontend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   script:
     - cd frontend
     - npm ci
@@ -46,6 +60,13 @@ frontend-test:
 backend-lint:
   stage: lint
   image: eclipse-temurin:21-jdk
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - backend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   script:
     - cd backend
     - chmod +x gradlew
@@ -54,6 +75,13 @@ backend-lint:
 backend-test:
   stage: test
   image: eclipse-temurin:21-jdk
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - backend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   services:
     - name: mysql:8.0
       alias: mysql
@@ -82,6 +110,13 @@ backend-test:
 crypto-lint:
   stage: lint
   image: eclipse-temurin:21-jdk
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - rpc_currency/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   script:
     - cd rpc_currency
     - chmod +x gradlew
@@ -90,6 +125,13 @@ crypto-lint:
 crypto-test:
   stage: test
   image: eclipse-temurin:21-jdk
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - rpc_currency/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   variables:
     OPERATOR_ID: $HEDERA_OPERATOR_ID
     OPERATOR_KEY: $HEDERA_OPERATOR_KEY
