@@ -24,6 +24,8 @@ frontend-lint:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - frontend/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -39,6 +41,8 @@ frontend-test:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - frontend/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -64,6 +68,8 @@ backend-lint:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - backend/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -79,6 +85,8 @@ backend-test:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - backend/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -114,6 +122,8 @@ crypto-lint:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - rpc_currency/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -129,6 +139,8 @@ crypto-test:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - rpc_currency/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
@@ -158,6 +170,8 @@ database-lint:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - database/**/*
+        - .gitlab-ci.yml
+        - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: on_success
