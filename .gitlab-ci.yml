@@ -154,6 +154,13 @@ crypto-test:
 database-lint:
   stage: lint
   image: python:3.11-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - database/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: on_success
   script:
     - pip install sqlfluff
     - sqlfluff lint database/database_init --dialect mysql
