@@ -68,6 +68,7 @@ backend-lint:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - backend/**/*
+        - database/database_init/**/*
         - .gitlab-ci.yml
         - .env
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
