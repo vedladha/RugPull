@@ -340,6 +340,111 @@ nav {
   font-size: 0.7rem;
   color: var(--muted);
 }
+.listing-card-button {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+
+.listing-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 240;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.listing-modal {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  position: relative;
+}
+.listing-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.listing-modal-close:hover {
+  color: var(--white);
+}
+.listing-modal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+.listing-modal-description {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  margin-bottom: 1.4rem;
+}
+.listing-modal-meta {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+.listing-modal-price {
+  color: var(--amber);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.listing-modal-seller {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.listing-modal-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+.listing-action-btn {
+  flex: 1;
+  border-radius: 3px;
+  padding: 0.8rem 1rem;
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.listing-action-btn-primary {
+  background: var(--amber);
+  color: var(--black);
+  border: 1px solid var(--amber);
+}
+.listing-action-btn-secondary {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--border);
+}
+.listing-action-btn-primary:hover {
+  opacity: 0.9;
+}
+.listing-action-btn-secondary:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
 
 /* FILTERS */
 .filters-section {
@@ -696,4 +801,19 @@ footer {
   gap: 0.5rem;
   text-align: left;
   margin: 0.5rem 0;
+}
+
+@media (max-width: 640px) {
+  .listing-modal {
+    padding: 1.4rem;
+  }
+
+  .listing-modal-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .listing-modal-actions {
+    flex-direction: column;
+  }
 }
