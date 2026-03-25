@@ -8,7 +8,6 @@ import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.services.OrderService;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,14 +68,8 @@ public class OrderController {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
-    try {
-      Order saved = orderService.createOrder(currentUser.get(), request);
-      return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("order", saved));
-    } catch (NoSuchElementException exception) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
-    } catch (IllegalStateException exception) {
-      return ResponseEntity.badRequest().body(Map.of("error", "insufficient stock"));
-    }
+    Order saved = orderService.createOrder(currentUser.get(), request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("order", saved));
   }
 
   /**

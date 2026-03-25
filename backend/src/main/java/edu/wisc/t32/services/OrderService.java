@@ -1,5 +1,7 @@
 package edu.wisc.t32.services;
 
+import com.example.demo.exception.InsufficientStockException;
+import com.example.demo.exception.OrderItemNotFoundException;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
@@ -7,7 +9,6 @@ import edu.wisc.t32.model.User;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import java.math.BigDecimal;
-import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,16 +43,16 @@ public class OrderService {
    * @param currentUser the authenticated user placing the order
    * @param request the validated order request payload
    * @return the saved order
-   * @throws NoSuchElementException when the item does not exist
-   * @throws IllegalStateException when there is not enough stock left to fulfill the request
+   * @throws OrderItemNotFoundException when the item does not exist
+   * @throws InsufficientStockException when there is not enough stock left to fulfill the request
    */
   @Transactional
   public Order createOrder(User currentUser, OrderCreateRequest request) {
     Item item = itemRepository.findByItemIdAndDeletedFalseForUpdate(request.getItemId())
-        .orElseThrow(() -> new NoSuchElementException("Item not found"));
+        .orElseThrow(() -> new OrderItemNotFoundException("Item not found"));
 
     if (item.getStock() == null || item.getStock() < request.getQuantity()) {
-      throw new IllegalStateException("insufficient stock");
+      throw new InsufficientStockException("insufficient stock");
     }
 
     item.setStock(item.getStock() - request.getQuantity());

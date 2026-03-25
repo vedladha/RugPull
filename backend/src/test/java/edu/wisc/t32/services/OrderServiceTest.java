@@ -8,6 +8,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.demo.exception.InsufficientStockException;
+import com.example.demo.exception.OrderItemNotFoundException;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
@@ -15,7 +17,6 @@ import edu.wisc.t32.model.User;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import java.math.BigDecimal;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +89,7 @@ class OrderServiceTest {
 
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(99)).thenReturn(Optional.empty());
 
-    NoSuchElementException error = assertThrows(NoSuchElementException.class,
+    OrderItemNotFoundException error = assertThrows(OrderItemNotFoundException.class,
         () -> orderService.createOrder(user, request));
 
     assertEquals("Item not found", error.getMessage());
@@ -104,7 +105,7 @@ class OrderServiceTest {
 
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(4)).thenReturn(Optional.of(item));
 
-    IllegalStateException error = assertThrows(IllegalStateException.class,
+    InsufficientStockException error = assertThrows(InsufficientStockException.class,
         () -> orderService.createOrder(user, request));
 
     assertEquals("insufficient stock", error.getMessage());

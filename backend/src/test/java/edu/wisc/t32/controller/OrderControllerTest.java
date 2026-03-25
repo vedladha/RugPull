@@ -3,10 +3,17 @@ package edu.wisc.t32.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.demo.exception.InsufficientStockException;
+import com.example.demo.exception.OrderItemNotFoundException;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
@@ -16,15 +23,18 @@ import edu.wisc.t32.services.OrderService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
@@ -42,148 +52,151 @@ class OrderControllerTest {
   @InjectMocks
   private OrderController orderController;
 
+  private MockMvc mockMvc;
+
+  @BeforeEach
+  void setUp() {
+    mockMvc = MockMvcBuilders.standaloneSetup(orderController)
+        .setControllerAdvice(new OrderExceptionHandler())
+        .build();
+  }
+
   // Checks that a valid order request creates the order and reduces stock.
   @Test
-  void createOrder_returnsCreatedOrder_whenRequestIsValid() {
-    OrderCreateRequest request = buildRequest(4, 2);
+  void createOrder_returnsCreatedOrder_whenRequestIsValid() throws Exception {
     User currentUser = buildUser(7);
     Order savedOrder = buildOrder(1, 7, 4, 2, "pending");
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
-    when(orderService.createOrder(currentUser, request)).thenReturn(savedOrder);
+    when(orderService.createOrder(any(User.class), argThat(request ->
+        request.getItemId().equals(4) && request.getQuantity().equals(2)))).thenReturn(savedOrder);
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    Order saved = (Order) body.get("order");
-    assertNotNull(saved);
-    assertEquals(1, saved.getOrderId());
-    assertEquals(7, saved.getUserId());
-    assertEquals(4, saved.getItemId());
-    assertEquals(2, saved.getQuantity());
-    assertEquals(0, new BigDecimal("12.50").compareTo(saved.getPrice()));
-    assertEquals(0, new BigDecimal("2.50").compareTo(saved.getFeePercentage()));
-    assertEquals("pending", saved.getOrderStatus());
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(4, 2)))
+        .andExpect(status().isCreated())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.order.orderId").value(1))
+        .andExpect(jsonPath("$.order.userId").value(7))
+        .andExpect(jsonPath("$.order.itemId").value(4))
+        .andExpect(jsonPath("$.order.quantity").value(2))
+        .andExpect(jsonPath("$.order.price").value(12.5))
+        .andExpect(jsonPath("$.order.feePercentage").value(2.5))
+        .andExpect(jsonPath("$.order.orderStatus").value("pending"));
   }
 
   // Checks that creating an order without auth returns 401.
   @Test
-  void createOrder_returnsUnauthorized_whenUserIsNotAuthenticated() {
-    OrderCreateRequest request = buildRequest(4, 2);
+  void createOrder_returnsUnauthorized_whenUserIsNotAuthenticated() throws Exception {
     when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = orderController.createOrder(null, request);
-
-    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("Authentication required", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(4, 2)))
+        .andExpect(status().isUnauthorized())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("Authentication required"));
     verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing request body returns 400.
   @Test
-  void createOrder_returnsBadRequest_whenRequestBodyMissing() {
-    User currentUser = buildUser(7);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(currentUser));
-
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, null);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("Request body is required", body.get("error"));
+  void createOrder_returnsBadRequest_whenRequestBodyMissing() throws Exception {
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
     verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing item id returns 400.
   @Test
-  void createOrder_returnsBadRequest_whenItemIdIsMissing() {
-    OrderCreateRequest request = buildRequest(null, 2);
+  void createOrder_returnsBadRequest_whenItemIdIsMissing() throws Exception {
     User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("itemId is required", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"quantity\":2}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("itemId is required"));
     verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing quantity returns 400.
   @Test
-  void createOrder_returnsBadRequest_whenQuantityIsMissing() {
-    OrderCreateRequest request = buildRequest(4, null);
+  void createOrder_returnsBadRequest_whenQuantityIsMissing() throws Exception {
     User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("quantity is required", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"itemId\":4}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("quantity is required"));
     verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a non-positive quantity returns 400.
   @Test
-  void createOrder_returnsBadRequest_whenQuantityIsNotPositive() {
-    OrderCreateRequest request = buildRequest(4, 0);
+  void createOrder_returnsBadRequest_whenQuantityIsNotPositive() throws Exception {
     User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("quantity must be greater than 0", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(4, 0)))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("quantity must be greater than 0"));
     verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that ordering a missing item returns 404.
   @Test
-  void createOrder_returnsNotFound_whenItemDoesNotExist() {
-    OrderCreateRequest request = buildRequest(99, 2);
+  void createOrder_returnsNotFound_whenItemDoesNotExist() throws Exception {
     User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
-    when(orderService.createOrder(currentUser, request))
-        .thenThrow(new NoSuchElementException("Item not found"));
+    when(orderService.createOrder(any(User.class), argThat(request ->
+        request.getItemId().equals(99) && request.getQuantity().equals(2))))
+        .thenThrow(new OrderItemNotFoundException("Item not found"));
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("Item not found", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(99, 2)))
+        .andExpect(status().isNotFound())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("Item not found"));
   }
 
   // Checks that ordering more than the available stock returns 400.
   @Test
-  void createOrder_returnsBadRequest_whenStockIsInsufficient() {
-    OrderCreateRequest request = buildRequest(4, 6);
+  void createOrder_returnsBadRequest_whenStockIsInsufficient() throws Exception {
     User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
         .thenReturn(Optional.of(currentUser));
-    when(orderService.createOrder(currentUser, request))
-        .thenThrow(new IllegalStateException("insufficient stock"));
+    when(orderService.createOrder(any(User.class), argThat(request ->
+        request.getItemId().equals(4) && request.getQuantity().equals(6))))
+        .thenThrow(new InsufficientStockException("insufficient stock"));
 
-    ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
-
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("insufficient stock", body.get("error"));
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(4, 6)))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("insufficient stock"));
   }
 
   // Checks that listing orders returns the authenticated user's orders.
@@ -325,5 +338,9 @@ class OrderControllerTest {
     User user = new User();
     user.setUserId(userId);
     return user;
+  }
+
+  private String orderRequestJson(Integer itemId, Integer quantity) {
+    return "{\"itemId\":" + itemId + ",\"quantity\":" + quantity + "}";
   }
 }
