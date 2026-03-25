@@ -28,3 +28,4 @@ public interface UserRepository extends JpaRepository<User, Integer> {
    */
   Optional<User> findByEmailAndDeletedFalse(String email);
 }
+

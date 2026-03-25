@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.demo.enums.UserStatus;
 import com.example.demo.model.User;
 import com.example.demo.model.UserProfile;
 import com.example.demo.repository.UserRepository;
@@ -55,7 +56,7 @@ public class AuthServiceTest {
     String hashedPassword = encoder.encode("password");
     user.setPasswordHash(hashedPassword);
 
-    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepo.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(user));
 
     User result = authService.login("test@example.com", "password");
 
@@ -70,7 +71,7 @@ public class AuthServiceTest {
     String hashedPassword = encoder.encode("goodPassword");
     user.setPasswordHash(hashedPassword);
 
-    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepo.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(user));
 
     assertThrows(RuntimeException.class, () -> {
       authService.login("test@example.com", "badPassword");
@@ -79,7 +80,7 @@ public class AuthServiceTest {
 
   @Test
   void invalidEmail() {
-    when(userRepo.findByEmail("fake@example.com")).thenReturn(Optional.empty());
+    when(userRepo.findByEmailAndDeletedFalse("fake@example.com")).thenReturn(Optional.empty());
 
     assertThrows(RuntimeException.class, () -> {
       authService.login("fake@example.com", "password");
