@@ -32,7 +32,7 @@ class FileServiceTest {
     // Create a 6MB file (Limit is 5MB)
     byte[] content = new byte[6 * 1024 * 1024];
     MockMultipartFile largeFile = new MockMultipartFile(
-      "file", "too_big.jpg", "image/jpeg", content
+        "file", "too_big.jpg", "image/jpeg", content
     );
 
     RuntimeException ex = assertThrows(RuntimeException.class, () -> {
@@ -45,7 +45,7 @@ class FileServiceTest {
   @Test
   void whenValidFile_thenSaveSuccessfully() {
     MockMultipartFile validFile = new MockMultipartFile(
-      "file", "test.png", "image/png", "fake-image-content".getBytes()
+        "file", "test.png", "image/png", "fake-image-content".getBytes()
     );
 
     String resultPath = fileService.save(validFile);
@@ -60,11 +60,11 @@ class FileServiceTest {
 
   @Test
   void whenFileIsInvalidImage_thenThrowException() {
-      // Plain text labeled as an image
-      MockMultipartFile fakeImage = new MockMultipartFile(
-            "file", "malicious.jpg", "image/jpeg", "not-an-image-content".getBytes()
-      );
+    // Plain text labeled as an image
+    MockMultipartFile fakeImage = new MockMultipartFile(
+        "file", "malicious.jpg", "image/jpeg", "not-an-image-content".getBytes()
+    );
 
-      assertThrows(RuntimeException.class, () -> fileService.validate(fakeImage));
-    }
+    assertThrows(RuntimeException.class, () -> fileService.validate(fakeImage));
+  }
 }

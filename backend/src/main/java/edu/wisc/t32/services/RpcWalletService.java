@@ -1,8 +1,8 @@
 package edu.wisc.t32.services;
 
-import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
+import edu.wisc.t32.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
