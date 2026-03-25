@@ -8,19 +8,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import edu.wisc.t32.dto.OrderCreateRequest;
-import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
-import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.OrderService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,7 +34,7 @@ class OrderControllerTest {
   private OrderRepository orderRepository;
 
   @Mock
-  private ItemRepository itemRepository;
+  private OrderService orderService;
 
   @Mock
   private CurrentUserService currentUserService;
@@ -47,16 +46,11 @@ class OrderControllerTest {
   @Test
   void createOrder_returnsCreatedOrder_whenRequestIsValid() {
     OrderCreateRequest request = buildRequest(4, 2);
-    Item item = buildItem(4, new BigDecimal("12.50"), 5);
+    User currentUser = buildUser(7);
+    Order savedOrder = buildOrder(1, 7, 4, 2, "pending");
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
-    when(itemRepository.findByItemIdAndDeletedFalse(4)).thenReturn(Optional.of(item));
-    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
-      Order saved = invocation.getArgument(0);
-      saved.setOrderId(1);
-      return saved;
-    });
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(currentUser, request)).thenReturn(savedOrder);
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -72,14 +66,6 @@ class OrderControllerTest {
     assertEquals(0, new BigDecimal("12.50").compareTo(saved.getPrice()));
     assertEquals(0, new BigDecimal("2.50").compareTo(saved.getFeePercentage()));
     assertEquals("pending", saved.getOrderStatus());
-
-    ArgumentCaptor<Item> itemCaptor = ArgumentCaptor.forClass(Item.class);
-    verify(itemRepository).save(itemCaptor.capture());
-    assertEquals(3, itemCaptor.getValue().getStock());
-
-    ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
-    verify(orderRepository).save(orderCaptor.capture());
-    assertEquals(7, orderCaptor.getValue().getUserId());
   }
 
   // Checks that creating an order without auth returns 401.
@@ -94,15 +80,15 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("Authentication required", body.get("error"));
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
-    verify(orderRepository, never()).save(any(Order.class));
+    verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing request body returns 400.
   @Test
   void createOrder_returnsBadRequest_whenRequestBodyMissing() {
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
+        .thenReturn(Optional.of(currentUser));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, null);
 
@@ -110,16 +96,16 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("Request body is required", body.get("error"));
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
-    verify(orderRepository, never()).save(any(Order.class));
+    verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing item id returns 400.
   @Test
   void createOrder_returnsBadRequest_whenItemIdIsMissing() {
     OrderCreateRequest request = buildRequest(null, 2);
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
+        .thenReturn(Optional.of(currentUser));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -127,16 +113,16 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("itemId is required", body.get("error"));
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
-    verify(orderRepository, never()).save(any(Order.class));
+    verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a missing quantity returns 400.
   @Test
   void createOrder_returnsBadRequest_whenQuantityIsMissing() {
     OrderCreateRequest request = buildRequest(4, null);
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
+        .thenReturn(Optional.of(currentUser));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -144,16 +130,16 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("quantity is required", body.get("error"));
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
-    verify(orderRepository, never()).save(any(Order.class));
+    verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that a non-positive quantity returns 400.
   @Test
   void createOrder_returnsBadRequest_whenQuantityIsNotPositive() {
     OrderCreateRequest request = buildRequest(4, 0);
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
+        .thenReturn(Optional.of(currentUser));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -161,17 +147,18 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("quantity must be greater than 0", body.get("error"));
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
-    verify(orderRepository, never()).save(any(Order.class));
+    verify(orderService, never()).createOrder(any(User.class), any(OrderCreateRequest.class));
   }
 
   // Checks that ordering a missing item returns 404.
   @Test
   void createOrder_returnsNotFound_whenItemDoesNotExist() {
     OrderCreateRequest request = buildRequest(99, 2);
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
-    when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(currentUser, request))
+        .thenThrow(new NoSuchElementException("Item not found"));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -179,18 +166,17 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("Item not found", body.get("error"));
-    verify(itemRepository, never()).save(any(Item.class));
-    verify(orderRepository, never()).save(any(Order.class));
   }
 
   // Checks that ordering more than the available stock returns 400.
   @Test
   void createOrder_returnsBadRequest_whenStockIsInsufficient() {
     OrderCreateRequest request = buildRequest(4, 6);
-    Item item = buildItem(4, new BigDecimal("12.50"), 5);
+    User currentUser = buildUser(7);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(buildUser(7)));
-    when(itemRepository.findByItemIdAndDeletedFalse(4)).thenReturn(Optional.of(item));
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(currentUser, request))
+        .thenThrow(new IllegalStateException("insufficient stock"));
 
     ResponseEntity<?> response = orderController.createOrder(VALID_TOKEN, request);
 
@@ -198,8 +184,6 @@ class OrderControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("insufficient stock", body.get("error"));
-    verify(itemRepository, never()).save(any(Item.class));
-    verify(orderRepository, never()).save(any(Order.class));
   }
 
   // Checks that listing orders returns the authenticated user's orders.
@@ -318,15 +302,6 @@ class OrderControllerTest {
     request.setItemId(itemId);
     request.setQuantity(quantity);
     return request;
-  }
-
-  private Item buildItem(Integer itemId, BigDecimal price, Integer stock) {
-    Item item = new Item();
-    item.setItemId(itemId);
-    item.setPrice(price);
-    item.setStock(stock);
-    item.setDeleted(false);
-    return item;
   }
 
   private Order buildOrder(
