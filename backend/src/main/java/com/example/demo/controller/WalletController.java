@@ -56,7 +56,8 @@ public class WalletController {
    *        <ul>
    *        <li>{@code 200 OK} with the balance (float) if successful</li>
    *        <li>{@code 401 UNAUTHORIZED} with an error map if the token is invalid or missing</li>
-   *        <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if the user has no associated wallet</li>
+   *        <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if 
+   *            the user has no associated wallet</li>
    *        </ul>
    */
   @GetMapping

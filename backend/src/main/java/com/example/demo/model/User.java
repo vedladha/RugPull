@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -111,7 +111,8 @@ public class User {
   }
 
   /**
-   * Retrieves the user's status in relation to their wallet creation ('PENDING', 'ACTIVE', 'FAILED').
+   * Retrieves the user's status in relation
+   * to their wallet creation ('PENDING', 'ACTIVE', 'FAILED').
    *
    * @return the user status
    */
