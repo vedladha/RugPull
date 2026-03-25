@@ -19,4 +19,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
    * @return an {@link Optional} containing the user if found, or empty otherwise
    */
   Optional<User> findByEmail(String email);
+
+  /**
+   * Retrieves a non-deleted user by their unique email address.
+   *
+   * @param email the exact email address to search for
+   * @return an {@link Optional} containing the user if found, or empty otherwise
+   */
+  Optional<User> findByEmailAndDeletedFalse(String email);
 }
+

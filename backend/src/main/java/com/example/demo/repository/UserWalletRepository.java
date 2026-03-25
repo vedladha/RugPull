@@ -20,7 +20,7 @@ public interface UserWalletRepository extends JpaRepository<UserWallet, Integer>
    *
    * @param user the {@link User} whose wallet is being requested
    * @return an {@link Optional} containing the {@link UserWallet} if one exists,
-   * or an empty {@code Optional} if no wallet is found
+   *     or an empty {@code Optional} if no wallet is found
    */
   Optional<UserWallet> findUserWalletByUser(User user);
 }

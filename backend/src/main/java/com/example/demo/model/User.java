@@ -1,9 +1,12 @@
 package com.example.demo.model;
 
+import com.example.demo.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +36,10 @@ public class User {
   @JsonIgnore
   @Column(name = "password_hash", nullable = false)
   private String passwordHash;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private UserStatus status = UserStatus.PENDING;
 
   @Column(name = "created_at", insertable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -101,6 +108,25 @@ public class User {
    */
   public void setPasswordHash(String passwordHash) {
     this.passwordHash = passwordHash;
+  }
+
+  /**
+   * Retrieves the user's status in relation
+   * to their wallet creation ('PENDING', 'ACTIVE', 'FAILED').
+   *
+   * @return the user status
+   */
+  public UserStatus getStatus() {
+    return status;
+  }
+
+  /**
+   * Sets the status for this user.
+   *
+   * @param status the new status for this user
+   */
+  public void setStatus(UserStatus status) {
+    this.status = status;
   }
 
   /**
