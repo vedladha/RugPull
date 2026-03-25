@@ -11,6 +11,7 @@
 | email           | VARCHAR, unique, not NULL | Login email                               |
 | password_hash   | VARCHAR, not NULL        | Hashed password                            |
 | password_salt   | VARCHAR, not NULL        | Salt for hashing                           |
+| status          | ENUM('PENDING', 'ACTIVE', 'FAILED'), not NULL, default 'PENDING' | Tells status of associated wallet creation |
 | created_at      | DATETIME, default current time |                                         |
 | updated_at      | DATETIME, default current time |                                         |
 | deleted         | BOOLEAN, default FALSE | Soft deletion for users |
