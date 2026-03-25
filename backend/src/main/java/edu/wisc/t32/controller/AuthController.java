@@ -6,8 +6,6 @@ import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
   private static final String JWT_COOKIE_NAME = "jwt";
   private static final long JWT_COOKIE_MAX_AGE_SECONDS = 86400;
-  private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
   AuthService authService;
   JwtUtil jwtUtil;
@@ -60,23 +57,11 @@ public class AuthController {
   @PostMapping("/register")
   public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
     String displayName = body.get("displayName");
-    String email = body.get("email");
     String password = body.get("password");
 
-    try {
-      User user = authService.registerWithWallet(displayName, email, password);
-      return ResponseEntity.ok(
-          Map.of("email", user.getEmail(), "displayName", user.getUserProfile().getDisplayName()));
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-    } catch (IllegalStateException e) {
-      LOGGER.error("Signup failed while creating wallet for {}", email, e);
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-          .body(
-              Map.of(
-                  "error", "Could not create wallet for new user",
-                  "details", e.getMessage()));
-    }
+    User user = authService.registerWithWallet(displayName, body.get("email"), password);
+    return ResponseEntity.ok(
+        Map.of("email", user.getEmail(), "displayName", user.getUserProfile().getDisplayName()));
   }
 
   /**

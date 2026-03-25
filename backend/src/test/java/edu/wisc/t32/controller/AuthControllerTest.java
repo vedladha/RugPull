@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.demo.exception.DuplicateDisplayNameException;
+import com.example.demo.exception.DuplicateEmailException;
+import com.example.demo.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.services.AuthService;
@@ -51,7 +54,9 @@ class AuthControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(authController)
+        .setControllerAdvice(new com.example.demo.controller.AuthExceptionHandler())
+        .build();
   }
 
   // Checks that register returns the new user's basic info.
@@ -75,7 +80,7 @@ class AuthControllerTest {
   @Test
   void register_returnsBadRequest_whenEmailExists() throws Exception {
     when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
-        .thenThrow(new IllegalArgumentException("Email already exists"));
+        .thenThrow(new DuplicateEmailException("Email already exists"));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +94,7 @@ class AuthControllerTest {
   @Test
   void register_returnsBadRequest_whenDisplayNameExists() throws Exception {
     when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
-        .thenThrow(new IllegalArgumentException("Display name already in use"));
+        .thenThrow(new DuplicateDisplayNameException("Display name already in use"));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +108,8 @@ class AuthControllerTest {
   @Test
   void register_returnsServiceUnavailable_whenWalletCreationFails() throws Exception {
     when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
-        .thenThrow(new IllegalStateException("wallet failed"));
+        .thenThrow(new WalletProvisioningException("wallet failed",
+            new IllegalStateException("wallet failed")));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)

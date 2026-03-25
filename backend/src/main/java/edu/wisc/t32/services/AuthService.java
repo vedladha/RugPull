@@ -1,13 +1,18 @@
 package edu.wisc.t32.services;
 
+import com.example.demo.exception.DuplicateDisplayNameException;
+import com.example.demo.exception.DuplicateEmailException;
+import com.example.demo.exception.WalletProvisioningException;
 import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.UserRepository;
 import edu.wisc.t32.repository.UserWalletRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service class for handling user authentication and registration logic.
@@ -51,21 +56,27 @@ public class AuthService {
    * @param email       the email address for the user's account
    * @param password    the raw password for the user's account
    * @return the created {@link User} object
-   * @throws IllegalArgumentException if the email or display name is already taken
-   * @throws IllegalStateException if wallet provisioning fails
+   * @throws DuplicateEmailException if the email is already taken
+   * @throws DuplicateDisplayNameException if the display name is already taken
+   * @throws WalletProvisioningException if wallet provisioning fails
    */
   @Transactional
   public User registerWithWallet(String displayName, String email, String password) {
     if (userRepo.findByEmail(email).isPresent()) {
-      throw new IllegalArgumentException("Email already exists");
+      throw new DuplicateEmailException("Email already exists");
     }
 
     if (userProfileRepo.findByDisplayName(displayName).isPresent()) {
-      throw new IllegalArgumentException("Display name already in use");
+      throw new DuplicateDisplayNameException("Display name already in use");
     }
 
     User user = register(displayName, email, password);
-    RpcWalletService.WalletCredentials walletCredentials = walletService.createWallet();
+    final RpcWalletService.WalletCredentials walletCredentials;
+    try {
+      walletCredentials = walletService.createWallet();
+    } catch (RuntimeException exception) {
+      throw new WalletProvisioningException(exception.getMessage(), exception);
+    }
 
     UserWallet wallet = new UserWallet();
     wallet.setUser(user);

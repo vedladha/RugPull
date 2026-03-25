@@ -8,6 +8,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.demo.exception.DuplicateDisplayNameException;
+import com.example.demo.exception.DuplicateEmailException;
+import com.example.demo.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.UserProfileRepository;
@@ -85,7 +88,7 @@ public class AuthServiceTest {
   void registerWithWallet_rejectsDuplicateEmail() {
     when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(new User()));
 
-    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+    DuplicateEmailException error = assertThrows(DuplicateEmailException.class,
         () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
 
     assertEquals("Email already exists", error.getMessage());
@@ -101,7 +104,7 @@ public class AuthServiceTest {
     when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.empty());
     when(userProfileRepo.findByDisplayName("testuser")).thenReturn(Optional.of(profile));
 
-    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+    DuplicateDisplayNameException error = assertThrows(DuplicateDisplayNameException.class,
         () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
 
     assertEquals("Display name already in use", error.getMessage());
@@ -122,7 +125,7 @@ public class AuthServiceTest {
     when(userRepo.save(any(User.class))).thenReturn(user);
     when(walletService.createWallet()).thenThrow(new IllegalStateException("wallet failed"));
 
-    IllegalStateException error = assertThrows(IllegalStateException.class,
+    WalletProvisioningException error = assertThrows(WalletProvisioningException.class,
         () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
 
     assertEquals("wallet failed", error.getMessage());
