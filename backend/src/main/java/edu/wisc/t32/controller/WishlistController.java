@@ -134,3 +134,4 @@ public class WishlistController {
     return ResponseEntity.ok(Map.of("message", "Item removed from wishlist", "itemId", itemId));
   }
 }
+

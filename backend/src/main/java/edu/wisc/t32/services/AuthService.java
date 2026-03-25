@@ -1,5 +1,6 @@
 package edu.wisc.t32.services;
 
+import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.UserRepository;
@@ -43,6 +44,7 @@ public class AuthService {
 
     User user = new User();
     user.setEmail(email);
+    user.setStatus(UserStatus.ACTIVE);
     user.setPasswordHash(hashedPassword);
     user.setDeleted(false);
 
@@ -67,7 +69,7 @@ public class AuthService {
    * @throws RuntimeException if the user is not found or the password does not match
    */
   public User login(String email, String password) {
-    return userRepo.findByEmail(email)
+    return userRepo.findByEmailAndDeletedFalse(email)
         .filter(user -> {
           BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
           return encoder.matches(password, user.getPasswordHash());

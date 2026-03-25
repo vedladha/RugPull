@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 /**
  * Represents a user's digital wallet within the system.
  *
- * <p>This entity maps to the "UserWallets" table and shares its primary key with the
+ * <p>This entity maps to the "user_wallets" table and shares its primary key with the
  * associated {@link User} entity through a one-to-one relationship.
  */
 @Entity
-@Table(name = "UserWallets")
+@Table(name = "user_wallets")
 public class UserWallet {
 
   @Id

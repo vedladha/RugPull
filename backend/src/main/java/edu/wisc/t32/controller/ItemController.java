@@ -4,12 +4,16 @@ import edu.wisc.t32.dto.ItemCreateRequest;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.ItemRepository;
+import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -32,16 +36,21 @@ public class ItemController {
 
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
+  private final UserProfileRepository userProfileRepository;
 
   /**
    * Constructs an ItemController with the necessary repository dependency.
    *
-   * @param itemRepository     the repository used for item database operations
-   * @param currentUserService service used to resolve the authenticated user
+   * @param itemRepository          the repository used for item database operations
+   * @param currentUserService      service used to resolve the authenticated user
+   * @param userProfileRepository   the reposiroty used for user profile operations
    */
-  public ItemController(ItemRepository itemRepository, CurrentUserService currentUserService) {
+  public ItemController(ItemRepository itemRepository, 
+                        CurrentUserService currentUserService, 
+                        UserProfileRepository userProfileRepository) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
+    this.userProfileRepository = userProfileRepository;
   }
 
   /**
@@ -87,7 +96,20 @@ public class ItemController {
   @GetMapping
   public ResponseEntity<?> getAllItems() {
     List<Item> items = itemRepository.findByDeletedFalse();
-    return ResponseEntity.ok(Map.of("items", items));
+    List<Map<String, Object>> response = items.stream()
+        .map(item -> {
+          Map<String, Object> map = new HashMap<>();
+          map.put("itemId", item.getItemId());
+          map.put("name", item.getName());
+          map.put("description", item.getDescription());
+          map.put("price", item.getPrice());
+          map.put("stock", item.getStock());
+          UserProfile seller = userProfileRepository.findByUserId(item.getUserId());
+          map.put("sellerName", seller.getDisplayName());
+          return map;
+        })
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(Map.of("items", response));
   }
 
   /**

@@ -7,9 +7,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.UserRepository;
+import edu.wisc.t32.services.AuthService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +56,7 @@ public class AuthServiceTest {
     String hashedPassword = encoder.encode("password");
     user.setPasswordHash(hashedPassword);
 
-    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepo.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(user));
 
     User result = authService.login("test@example.com", "password");
 
@@ -69,7 +71,7 @@ public class AuthServiceTest {
     String hashedPassword = encoder.encode("goodPassword");
     user.setPasswordHash(hashedPassword);
 
-    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+    when(userRepo.findByEmailAndDeletedFalse("test@example.com")).thenReturn(Optional.of(user));
 
     assertThrows(RuntimeException.class, () -> {
       authService.login("test@example.com", "badPassword");
@@ -78,7 +80,7 @@ public class AuthServiceTest {
 
   @Test
   void invalidEmail() {
-    when(userRepo.findByEmail("fake@example.com")).thenReturn(Optional.empty());
+    when(userRepo.findByEmailAndDeletedFalse("fake@example.com")).thenReturn(Optional.empty());
 
     assertThrows(RuntimeException.class, () -> {
       authService.login("fake@example.com", "password");

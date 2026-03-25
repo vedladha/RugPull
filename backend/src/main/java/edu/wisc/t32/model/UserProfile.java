@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 /**
  * Represents a user's detailed profile within the system.
  *
- * <p>This entity maps to the "UserProfiles" table and shares its primary key with the
+ * <p>This entity maps to the "user_profiles" table and shares its primary key with the
  * associated {@link User} entity through a one-to-one relationship.
  */
 @Entity
-@Table(name = "UserProfiles")
+@Table(name = "user_profiles")
 public class UserProfile {
 
   @Id
