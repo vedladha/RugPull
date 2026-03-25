@@ -1,4 +1,4 @@
-package com.example.demo.exception;
+package edu.wisc.t32.exception;
 
 /**
  * Thrown when an order references an item that does not exist or is unavailable.

@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.demo.exception.InsufficientStockException;
-import com.example.demo.exception.OrderItemNotFoundException;
+import edu.wisc.t32.exception.InsufficientStockException;
+import edu.wisc.t32.exception.OrderItemNotFoundException;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;

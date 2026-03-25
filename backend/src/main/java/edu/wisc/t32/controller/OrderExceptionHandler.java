@@ -1,7 +1,7 @@
 package edu.wisc.t32.controller;
 
-import com.example.demo.exception.InsufficientStockException;
-import com.example.demo.exception.OrderItemNotFoundException;
+import edu.wisc.t32.exception.InsufficientStockException;
+import edu.wisc.t32.exception.OrderItemNotFoundException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
