@@ -3,15 +3,16 @@ package edu.wisc.t32.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.UserRepository;
-import edu.wisc.t32.services.AuthService;
+import edu.wisc.t32.repository.UserWalletRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class AuthServiceTest {
   @Mock
   UserRepository userRepo;
+
+  @Mock
+  UserProfileRepository userProfileRepo;
+
+  @Mock
+  UserWalletRepository userWalletRepo;
+
+  @Mock
+  RpcWalletService walletService;
 
   @InjectMocks
   AuthService authService;
@@ -46,6 +56,77 @@ public class AuthServiceTest {
     assertEquals("test@example.com", registeredUser.getEmail());
     assertEquals("testuser", registeredUser.getUserProfile().getDisplayName());
     verify(userRepo, times(1)).save(any(User.class));
+  }
+
+  @Test
+  void registerWithWallet_savesUserAndWallet_whenRequestIsValid() {
+    User user = new User();
+    user.setEmail("test@example.com");
+    UserProfile profile = new UserProfile();
+    profile.setDisplayName("testuser");
+    user.setUserProfile(profile);
+
+    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.empty());
+    when(userProfileRepo.findByDisplayName("testuser")).thenReturn(Optional.empty());
+    when(userRepo.save(any(User.class))).thenReturn(user);
+    when(walletService.createWallet()).thenReturn(
+        new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
+
+    User registeredUser = authService.registerWithWallet("testuser", "test@example.com",
+        "password");
+
+    assertEquals("test@example.com", registeredUser.getEmail());
+    assertEquals("testuser", registeredUser.getUserProfile().getDisplayName());
+    verify(userRepo, times(1)).save(any(User.class));
+    verify(userWalletRepo, times(1)).save(any());
+  }
+
+  @Test
+  void registerWithWallet_rejectsDuplicateEmail() {
+    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(new User()));
+
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
+
+    assertEquals("Email already exists", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
+    verify(userWalletRepo, never()).save(any());
+  }
+
+  @Test
+  void registerWithWallet_rejectsDuplicateDisplayName() {
+    UserProfile profile = new UserProfile();
+    profile.setDisplayName("testuser");
+
+    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.empty());
+    when(userProfileRepo.findByDisplayName("testuser")).thenReturn(Optional.of(profile));
+
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
+
+    assertEquals("Display name already in use", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
+    verify(userWalletRepo, never()).save(any());
+  }
+
+  @Test
+  void registerWithWallet_propagatesWalletFailure() {
+    User user = new User();
+    user.setEmail("test@example.com");
+    UserProfile profile = new UserProfile();
+    profile.setDisplayName("testuser");
+    user.setUserProfile(profile);
+
+    when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.empty());
+    when(userProfileRepo.findByDisplayName("testuser")).thenReturn(Optional.empty());
+    when(userRepo.save(any(User.class))).thenReturn(user);
+    when(walletService.createWallet()).thenThrow(new IllegalStateException("wallet failed"));
+
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> authService.registerWithWallet("testuser", "test@example.com", "password"));
+
+    assertEquals("wallet failed", error.getMessage());
+    verify(userWalletRepo, never()).save(any());
   }
 
   @Test
