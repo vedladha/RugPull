@@ -1,5 +1,6 @@
 package edu.wisc.t32.services;
 
+import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
 import org.slf4j.Logger;
@@ -72,6 +73,36 @@ public class RpcWalletService {
           e);
     } catch (Exception e) {
       throw new IllegalStateException("Failed to create wallet: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Retrieves the current balance for the specified user wallet.
+   *
+   * <p>This method initializes a {@link WalletService} using the configured operator
+   * credentials and currency ID, connects to the specified user wallet, and fetches
+   * its current balance.
+   *
+   * @param userWallet the {@link UserWallet} containing the target wallet's address and private key
+   * @return the current balance of the wallet as a {@code float}
+   * @throws IllegalStateException if the balance cannot be fetched due to invalid arguments,
+   *                               state issues, or underlying network/service exceptions
+   */
+  public float getWalletBalance(UserWallet userWallet) {
+    try (WalletService walletService = WalletService.getService(operatorId, operatorKey,
+        currencyId)) {
+      Wallet wallet =
+          walletService.createWallet(userWallet.getWalletAddress(),
+              userWallet.getWalletPrivateKey());
+
+      return walletService.getBalance(wallet);
+    } catch (IllegalStateException | IllegalArgumentException e) {
+      throw new IllegalStateException("Failed to fetch wallet balance: "
+          + e.getClass().getSimpleName()
+          + ": "
+          + e.getMessage());
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to fetch wallet balance: " + e.getMessage(), e);
     }
   }
 
