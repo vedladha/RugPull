@@ -1,5 +1,6 @@
 package edu.wisc.t32.services;
 
+import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
@@ -10,6 +11,7 @@ import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.UserRepository;
 import edu.wisc.t32.repository.UserWalletRepository;
+import java.time.LocalDateTime;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +63,7 @@ public class AuthService {
    * @throws WalletProvisioningException if wallet provisioning fails
    */
   @Transactional
-  public User registerWithWallet(String displayName, String email, String password) {
+  public UserRegisteredEvent registerWithWallet(String displayName, String email, String password) {
     if (userRepo.findByEmail(email).isPresent()) {
       throw new DuplicateEmailException("Email already exists");
     }
@@ -79,12 +81,18 @@ public class AuthService {
     }
 
     UserWallet wallet = new UserWallet();
-    wallet.setUser(user);
+    wallet.setUserId(user.getUserId());
     wallet.setWalletAddress(walletCredentials.walletId());
     wallet.setWalletPrivateKey(walletCredentials.walletPrivateKey());
     userWalletRepo.save(wallet);
 
-    return user;
+    return new UserRegisteredEvent(
+      user.getUserId(),
+      user.getEmail(),
+      user.getStatus(),
+      user.getUserProfile(),
+      LocalDateTime.now()
+    );
   }
 
   /**

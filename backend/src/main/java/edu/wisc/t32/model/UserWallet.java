@@ -25,12 +25,6 @@ public class UserWallet {
   @Column(name = "user_id")
   private Integer userId;
 
-  @JsonIgnore
-  @OneToOne(fetch = FetchType.LAZY)
-  @MapsId
-  @JoinColumn(name = "user_id")
-  private User user;
-
   @Column(name = "wallet_address", nullable = false, unique = true)
   private String walletAddress;
 
@@ -62,26 +56,6 @@ public class UserWallet {
    */
   public void setUserId(Integer userId) {
     this.userId = userId;
-  }
-
-  /**
-   * Retrieves the user associated with this wallet.
-   *
-   * <p>This relationship is ignored during JSON serialization to prevent infinite recursion.
-   *
-   * @return the associated {@link User}
-   */
-  public User getUser() {
-    return user;
-  }
-
-  /**
-   * Sets the user associated with this wallet.
-   *
-   * @param user the {@link User} to associate
-   */
-  public void setUser(User user) {
-    this.user = user;
   }
 
   /**

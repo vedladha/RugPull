@@ -1,8 +1,14 @@
 package edu.wisc.t32.controller;
 
+import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserWallet;
+import edu.wisc.t32.repository.UserProfileRepository;
+import edu.wisc.t32.repository.UserRepository;
+import edu.wisc.t32.repository.UserWalletRepository;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.RpcWalletService;
 import edu.wisc.t32.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -49,19 +55,26 @@ public class AuthController {
   /**
    * Registers a new user and provisions a new wallet.
    *
-   * <p>Passwords are stored as BCrypt hashes.
-   *
    * @param body map containing displayName, email, and password
    * @return response containing the user's email and display name, or an error status
    */
   @PostMapping("/register")
   public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
     String displayName = body.get("displayName");
+    String email = body.get("email");
     String password = body.get("password");
 
-    User user = authService.registerWithWallet(displayName, body.get("email"), password);
-    return ResponseEntity.ok(
-        Map.of("email", user.getEmail(), "displayName", user.getUserProfile().getDisplayName()));
+    try {
+      UserRegisteredEvent user = authService.registerWithWallet(displayName, email, password);
+      return ResponseEntity.ok(
+          Map.of("email", user.email(), "displayName", user.userProfile().getDisplayName()));
+    } catch (edu.wisc.t32.exception.WalletProvisioningException e) {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(Map.of(
+              "error", e.getMessage(),
+              "details", e.getCause() != null ? e.getCause().getMessage() : "No details"
+          ));
+    }
   }
 
   /**

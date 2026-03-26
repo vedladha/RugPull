@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
@@ -75,10 +76,10 @@ class AuthServiceIntegrationTest {
     when(walletService.createWallet()).thenReturn(
         new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
 
-    User registeredUser = authService.registerWithWallet("testuser", "test@example.com",
+    UserRegisteredEvent registeredUser = authService.registerWithWallet("testuser", "test@example.com",
         "password");
 
-    assertNotNull(registeredUser.getUserId());
+    assertNotNull(registeredUser.userId());
     assertEquals(1, userRepo.count());
     assertEquals(1, userProfileRepo.count());
     assertEquals(1, userWalletRepo.count());

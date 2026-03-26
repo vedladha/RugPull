@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
 import edu.wisc.t32.exception.WalletProvisioningException;
@@ -75,11 +76,11 @@ public class AuthServiceTest {
     when(walletService.createWallet()).thenReturn(
         new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
 
-    User registeredUser = authService.registerWithWallet("testuser", "test@example.com",
+    UserRegisteredEvent registeredUser = authService.registerWithWallet("testuser", "test@example.com",
         "password");
 
-    assertEquals("test@example.com", registeredUser.getEmail());
-    assertEquals("testuser", registeredUser.getUserProfile().getDisplayName());
+    assertEquals("test@example.com", registeredUser.email());
+    assertEquals("testuser", registeredUser.userProfile().getDisplayName());
     verify(userRepo, times(1)).save(any(User.class));
     verify(userWalletRepo, times(1)).save(any());
   }
