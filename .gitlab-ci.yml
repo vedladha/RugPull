@@ -113,5 +113,5 @@ database-lint:
   stage: lint
   image: python:3.11-slim
   script:
-    - pip install sqlfluff
+    - pip install sqlfluff==4.0.4
     - sqlfluff lint database/database_init --dialect mysql
