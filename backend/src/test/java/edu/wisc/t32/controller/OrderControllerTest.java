@@ -12,9 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.exception.OrderItemNotFoundException;
-import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.repository.OrderRepository;

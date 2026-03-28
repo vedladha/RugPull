@@ -3,9 +3,9 @@ package edu.wisc.t32.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.enums.UserStatus;
+import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
