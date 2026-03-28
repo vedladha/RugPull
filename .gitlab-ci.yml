@@ -161,7 +161,7 @@ crypto-test:
       junit: "**/build/test-results/test/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
+        path: rpc_currency/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
 
 # Database
 database-lint:
