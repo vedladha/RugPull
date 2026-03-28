@@ -8,4 +8,4 @@ gradle.rootProject {
     version = "1.0.0-SNAPSHOT"
 }
 
-include("app")
+include("app", "api")
