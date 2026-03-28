@@ -153,15 +153,15 @@ crypto-test:
     - cd rpc_currency
     - chmod +x gradlew
     - ./gradlew test jacocoTestReport
-    - awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print covered, "/", instructions, " instructions covered"; print 100*covered/instructions, " % covered" }' app/build/reports/jacoco/test/jacocoTestReport.csv
+    - awk -F"," '{ instructions += $4 + $5; covered += $5 } END { print covered, "/", instructions, " instructions covered"; print 100*covered/instructions, " % covered" }' build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.csv
   coverage: '/(\d+\.\d+) \% covered/'
   artifacts:
     when: always
     reports:
-      junit: rpc_currency/app/build/test-results/test/TEST-*.xml
+      junit: "**/build/test-results/test/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: rpc_currency/app/build/reports/jacoco/test/jacocoTestReport.xml
+        path: build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
 
 # Database
 database-lint:
