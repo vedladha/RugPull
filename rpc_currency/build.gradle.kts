@@ -13,6 +13,10 @@ dependencies {
     jacocoAggregation(project(":api"))
 }
 
+tasks.jar {
+    enabled = false
+}
+
 tasks.testCodeCoverageReport {
     reports {
         html.required = true
