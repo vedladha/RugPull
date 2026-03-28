@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.demo.exception.DuplicateDisplayNameException;
-import com.example.demo.exception.DuplicateEmailException;
-import com.example.demo.exception.WalletProvisioningException;
+import edu.wisc.t32.exception.DuplicateDisplayNameException;
+import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.services.AuthService;
@@ -55,7 +55,7 @@ class AuthControllerTest {
   @BeforeEach
   void setUp() {
     mockMvc = MockMvcBuilders.standaloneSetup(authController)
-        .setControllerAdvice(new com.example.demo.controller.AuthExceptionHandler())
+        .setControllerAdvice(new AuthExceptionHandler())
         .build();
   }
 

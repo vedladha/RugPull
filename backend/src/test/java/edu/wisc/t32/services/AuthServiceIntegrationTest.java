@@ -1,4 +1,4 @@
-package com.example.demo.services;
+package edu.wisc.t32.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.example.demo.exception.WalletProvisioningException;
-import com.example.demo.model.User;
-import com.example.demo.model.UserProfile;
-import com.example.demo.model.UserWallet;
-import com.example.demo.repository.UserProfileRepository;
-import com.example.demo.repository.UserRepository;
-import com.example.demo.repository.UserWalletRepository;
+import edu.wisc.t32.exception.WalletProvisioningException;
+import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.model.UserWallet;
+import edu.wisc.t32.repository.UserProfileRepository;
+import edu.wisc.t32.repository.UserRepository;
+import edu.wisc.t32.repository.UserWalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

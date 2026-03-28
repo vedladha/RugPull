@@ -1,8 +1,8 @@
 package edu.wisc.t32.services;
 
-import com.example.demo.exception.DuplicateDisplayNameException;
-import com.example.demo.exception.DuplicateEmailException;
-import com.example.demo.exception.WalletProvisioningException;
+import edu.wisc.t32.exception.DuplicateDisplayNameException;
+import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;

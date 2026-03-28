@@ -1,4 +1,4 @@
-package com.example.demo.exception;
+package edu.wisc.t32.exception;
 
 /**
  * Thrown when a registration request uses an email address that already exists.
