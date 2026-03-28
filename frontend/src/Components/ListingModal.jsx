@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import "../style/listing-modal.css"
 
 export default function ListingModal({ listing, onClose }) {
   useEffect(() => {
