@@ -1,0 +1,27 @@
+[versions]
+jwt = "0.12.6"
+mockito = "5.0.0"
+spring-boot-framework = "4.0.3"
+spring-dependency-management = "1.1.7"
+
+[libraries]
+junit-platform = { module = "org.junit.platform:junit-platform-launcher" }
+jwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jwt" }
+jwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jwt" }
+jwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jwt" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+mysql-connector = { module = "com.mysql:mysql-connector-j" }
+spring-boot-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-data = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-security-test = { module = "org.springframework.security:spring-security-test" }
+spring-boot-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+spring-boot-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+
+
+
+[plugins]
+spring-boot-framework = { id = "org.springframework.boot", version.ref = "spring-boot-framework" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
