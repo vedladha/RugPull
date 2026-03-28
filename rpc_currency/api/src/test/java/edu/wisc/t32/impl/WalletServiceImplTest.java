@@ -75,12 +75,14 @@ public class WalletServiceImplTest extends AbstractCryptoTest {
   void testGetBalance() {
     final long initialFunding = 7_50;
     final float initalFundingFloat = 7.50f;
-    final Wallet wallet = assertDoesNotThrow(() -> this.walletService.createWallet((int) initialFunding),
-        "Wallet creation with funding should not throw");
+    final Wallet wallet =
+        assertDoesNotThrow(() -> this.walletService.createWallet((int) initialFunding),
+            "Wallet creation with funding should not throw");
 
     final float balance = assertDoesNotThrow(() -> this.walletService.getBalance(wallet),
         "Wallet balance query should not throw");
-    assertEquals(initalFundingFloat, balance, "getBalance should return the wallet's initial funded balance");
+    assertEquals(initalFundingFloat, balance,
+        "getBalance should return the wallet's initial funded balance");
 
     teardownWallet(wallet);
   }
@@ -123,8 +125,9 @@ public class WalletServiceImplTest extends AbstractCryptoTest {
     final Wallet receiver = assertDoesNotThrow(() -> this.walletService.createWallet(0),
         "Receiver wallet should be created");
 
-    final float senderBalanceBefore = assertDoesNotThrow(() -> this.walletService.getBalance(sender),
-        "Wallet balance query should not throw");
+    final float senderBalanceBefore =
+        assertDoesNotThrow(() -> this.walletService.getBalance(sender),
+            "Wallet balance query should not throw");
     final float receiverBalanceBefore =
         assertDoesNotThrow(() -> this.walletService.getBalance(receiver),
             "Wallet balance query should not throw");
@@ -137,8 +140,9 @@ public class WalletServiceImplTest extends AbstractCryptoTest {
 
     final float senderBalanceAfter = assertDoesNotThrow(() -> this.walletService.getBalance(sender),
         "Wallet balance query should not throw");
-    final float receiverBalanceAfter = assertDoesNotThrow(() -> this.walletService.getBalance(receiver),
-        "Wallet balance query should not throw");
+    final float receiverBalanceAfter =
+        assertDoesNotThrow(() -> this.walletService.getBalance(receiver),
+            "Wallet balance query should not throw");
 
     assertEquals(senderBalanceBefore - transferAmount, senderBalanceAfter,
         "Sender balance should decrease by transfer amount");

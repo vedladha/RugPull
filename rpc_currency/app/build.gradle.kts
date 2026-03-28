@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.hedera.hashgraph)
     implementation(libs.slf4j)
+    implementation(libs.slf4j.simple)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.launcher)
