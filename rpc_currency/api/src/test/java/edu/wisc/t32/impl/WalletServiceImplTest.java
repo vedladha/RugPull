@@ -72,6 +72,39 @@ public class WalletServiceImplTest extends AbstractCryptoTest {
   }
 
   @Test
+  void testFundWalletValidTransaction() {
+    final Wallet wallet = assertDoesNotThrow(() -> this.walletService.createWallet(0),
+        "Wallet creation should succeed");
+    final float fundAmount = 25.50f;
+    assertDoesNotThrow(() -> this.walletService.fundWallet(wallet, fundAmount),
+        "Funding the wallet should not throw an exception");
+    final float walletBalance = assertDoesNotThrow(() -> this.walletService.getBalance(wallet),
+        "Wallet balance query should not throw");
+    assertEquals(fundAmount, walletBalance,
+        "The wallet balance should exactly match the funded amount");
+    teardownWallet(wallet);
+  }
+
+  @Test
+  void testFundWalletArgumentValidation() {
+    final Wallet validWallet = assertDoesNotThrow(() -> this.walletService.createWallet(0),
+        "Wallet creation should succeed");
+    assertThrows(IllegalArgumentException.class,
+        () -> this.walletService.fundWallet(null, 10f),
+        "Should throw IllegalArgumentException when attempting to fund a null wallet");
+    assertThrows(IllegalArgumentException.class,
+        () -> this.walletService.fundWallet(validWallet, 0.0f),
+        "Should throw IllegalArgumentException when attempting to fund 0 tokens");
+    assertThrows(IllegalArgumentException.class,
+        () -> this.walletService.fundWallet(validWallet, -5.50f),
+        "Should throw IllegalArgumentException when attempting to fund a negative amount");
+    assertThrows(IllegalArgumentException.class,
+        () -> this.walletService.fundWallet(validWallet, 10.123f),
+        "Should throw IllegalArgumentException when amount exceeds maximum allowed decimal places");
+    teardownWallet(validWallet);
+  }
+
+  @Test
   void testGetBalance() {
     final long initialFunding = 7_50;
     final float initalFundingFloat = 7.50f;
