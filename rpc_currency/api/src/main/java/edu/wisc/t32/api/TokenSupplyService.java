@@ -19,35 +19,6 @@ public interface TokenSupplyService {
   void mint(float amount) throws IllegalArgumentException;
 
   /**
-   * Exchanges the token defined by this supply service for the provided amount of hbar.
-   *
-   * <p>HBar is the default Hedera currency type. There is a pinned exchange rate used by any
-   * exchange method see {@link #exchange(Wallet, String, float)} for definition information.
-   *
-   * @param exchanger  the wallet who is exchanging hbar for some amount of token.
-   * @param hbarAmount the amount of hbar to exchange
-   * @return the amount of this token received. A non-zero float.
-   * @throws IllegalArgumentException thrown for invalid wallet or negative or 0 hbar amount. Also
-   *                                  thrown if hbarAmount exceeds 8 decimals.
-   */
-  float exchangeHbar(Wallet exchanger, float hbarAmount) throws IllegalArgumentException;
-
-  /**
-   * Exchanges the provided tokenId from this exchanger account to this token.
-   *
-   * <p>The formula is defined as Price of A = Reserve B / Reserve A
-   *
-   * @param exchanger   the exchanger trading provided tokenId for this token.
-   * @param tokenId     the tokenId
-   * @param tokenAmount the amount of token to transact
-   * @return the amount of this token received. A non-zero float.
-   * @throws IllegalArgumentException thrown for invalid wallet, negative 0 token amount. Also
-   *                                  thrown if tokenAmount exceeds maximum allowe ddecimals.
-   */
-  float exchange(Wallet exchanger, String tokenId, float tokenAmount)
-      throws IllegalArgumentException;
-
-  /**
    * Creates a new token supply service with the given parameters.
    *
    * @param operatorId  the operator account id used by the client
