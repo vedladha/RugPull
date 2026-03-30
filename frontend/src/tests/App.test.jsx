@@ -3,17 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App.jsx";
+import { useAuth } from "../Auth/auth-context.js";
 
-const mockUseAuth = vi.fn();
-
-vi.mock("../Auth/auth-context", () => ({
-    useAuth: () => mockUseAuth(),
-}));
+vi.mock("../Auth/auth-context");
 
 beforeEach(() => {
-    mockUseAuth.mockReturnValue({
-        user: null, signOut: vi.fn(), walletBalance: vi.fn().mockResolvedValue(-999.99)
+    vi.mocked(useAuth).mockReturnValue({
+        user: null, 
+        signOut: vi.fn(), 
+        walletBalance: vi.fn().mockResolvedValue(-999.99),
+        // Providing default mocks for profile functions to prevent undefined errors
+        profileDetails: vi.fn().mockResolvedValue({ profile: {} }),
+        updateProfile: vi.fn()
     });
+
+    // Stub window.scrollTo since JSDOM doesn't implement a real window
+    window.scrollTo = vi.fn();
+
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ items: [] }),
@@ -30,19 +36,16 @@ const renderApp = (initialPath = "/") => {
 };
 
 describe("App", () => {
-    // Tests that the home page renders by default
     it("renders home page by default", () => {
         renderApp();
         expect(screen.getByText("Where do you want to go?")).toBeInTheDocument();
     });
 
-    // Tests that the navbar is always rendered
     it("renders navbar on all pages", () => {
         renderApp();
         expect(screen.getAllByText("$RPC Market").length).toBeGreaterThan(0);
     });
 
-    // Tests that the footer is always rendered
     it("renders footer on all pages", async () => {
         renderApp();
         await waitFor(() => {
@@ -50,31 +53,28 @@ describe("App", () => {
         });
     });
 
-    // Tests that sign in modal opens when Sign In is clicked
-    it("opens sign in modal when Sign In is clicked", async () => {
+    // MODIFIED: We now test that the router loads the AuthPage in Login mode
+    it("navigates to login page when Sign In is clicked", async () => {
         renderApp();
         await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
-        expect(screen.getByText("Welcome back")).toBeInTheDocument();
+        
+        // AuthPage renders an h1 with "Welcome Back" for the login route
+        expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeInTheDocument();
     });
 
-    // Tests that sign up modal opens when Create Account is clicked on hero
-    it("opens sign up modal when Create Account is clicked", async () => {
+    // MODIFIED: We now test that the router loads the AuthPage in Signup mode
+    it("navigates to signup page when Create Account is clicked", async () => {
         renderApp();
         await userEvent.click(screen.getByText("Create Account"));
-        expect(screen.getByText("Create account")).toBeInTheDocument();
+        
+        // AuthPage renders an h1 with "Create Account" for the signup route
+        expect(await screen.findByRole("heading", { name: "Create Account" })).toBeInTheDocument();
     });
 
-    // Tests that modal closes when close button is clicked
-    it("closes modal when close button is clicked", async () => {
-        renderApp();
-        await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
-        expect(screen.getByText("Welcome back")).toBeInTheDocument();
+    // DELETED: "closes modal when close button is clicked" 
+    // (This test was removed entirely because there is no modal 'X' button anymore. 
+    // Users just use the browser back button or the navbar logo to leave the AuthPage.)
 
-        await userEvent.click(screen.getByText("✕"));
-        expect(screen.queryByText("Welcome back")).toBeNull();
-    });
-
-    // Tests that navigating to /listings renders the listings page
     it("renders listings page at /listings", async () => {
         renderApp("/listings");
         await waitFor(() => {
@@ -82,15 +82,14 @@ describe("App", () => {
         });
     });
 
-    // Tests that navigating to /sell renders the sell page
     it("renders sell page at /sell", () => {
         renderApp("/sell");
         expect(screen.getByText("List an Item")).toBeInTheDocument();
     });
 
-    // Tests that navigating to /profile renders the profile page
     it("renders profile page at /profile", async () => {
-        mockUseAuth.mockReturnValue({
+        // Override the default mock specifically for the profile test
+        vi.mocked(useAuth).mockReturnValue({
             user: { email: "test@example.com" },
             profileDetails: vi.fn().mockResolvedValue({
                 profile: { displayName: "TestUser", bio: "Bio" }
