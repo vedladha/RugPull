@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy dpeendency files
 COPY gradlew .
 COPY gradle/ gradle/
-COPY build.gradle settings.gradle ./
+COPY build.gradle.kts settings.gradle.kts ./
 COPY config/ config/
 COPY libs/ libs/
 
