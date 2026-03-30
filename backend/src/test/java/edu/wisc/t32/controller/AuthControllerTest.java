@@ -4,8 +4,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -13,14 +11,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import edu.wisc.t32.exception.DuplicateDisplayNameException;
+import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
-import edu.wisc.t32.repository.UserProfileRepository;
-import edu.wisc.t32.repository.UserRepository;
-import edu.wisc.t32.repository.UserWalletRepository;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
-import edu.wisc.t32.services.RpcWalletService;
 import edu.wisc.t32.util.JwtUtil;
 import java.util.Map;
 import java.util.Optional;
@@ -45,18 +42,6 @@ class AuthControllerTest {
   private AuthService authService;
 
   @Mock
-  private RpcWalletService walletService;
-
-  @Mock
-  private UserRepository userRepository;
-
-  @Mock
-  private UserProfileRepository userProfileRepository;
-
-  @Mock
-  private UserWalletRepository userWalletRepository;
-
-  @Mock
   private JwtUtil jwtUtil;
 
   @Mock
@@ -69,7 +54,9 @@ class AuthControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(authController)
+        .setControllerAdvice(new AuthExceptionHandler())
+        .build();
   }
 
   // Checks that register returns the new user's basic info.
@@ -77,11 +64,8 @@ class AuthControllerTest {
   void register_returnsUser_whenRequestIsValid() throws Exception {
     User user = buildUser("test@example.com", "TestUser");
 
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
-    when(userProfileRepository.findByDisplayName("TestUser")).thenReturn(Optional.empty());
-    when(authService.register("TestUser", "test@example.com", "password")).thenReturn(user);
-    when(walletService.createWallet()).thenReturn(
-        new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
+    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
+        .thenReturn(user);
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +79,8 @@ class AuthControllerTest {
   // Checks that register rejects an email that already exists.
   @Test
   void register_returnsBadRequest_whenEmailExists() throws Exception {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(new User()));
+    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
+        .thenThrow(new DuplicateEmailException("Email already exists"));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -108,11 +93,8 @@ class AuthControllerTest {
   // Checks that register rejects a display name that is already in use.
   @Test
   void register_returnsBadRequest_whenDisplayNameExists() throws Exception {
-    UserProfile profile = new UserProfile();
-    profile.setDisplayName("TestUser");
-
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
-    when(userProfileRepository.findByDisplayName("TestUser")).thenReturn(Optional.of(profile));
+    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
+        .thenThrow(new DuplicateDisplayNameException("Display name already in use"));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -125,12 +107,9 @@ class AuthControllerTest {
   // Checks that register returns 503 when wallet creation fails.
   @Test
   void register_returnsServiceUnavailable_whenWalletCreationFails() throws Exception {
-    User user = buildUser("test@example.com", "TestUser");
-
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
-    when(userProfileRepository.findByDisplayName("TestUser")).thenReturn(Optional.empty());
-    when(authService.register("TestUser", "test@example.com", "password")).thenReturn(user);
-    when(walletService.createWallet()).thenThrow(new IllegalStateException("wallet failed"));
+    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
+        .thenThrow(new WalletProvisioningException("wallet failed",
+            new IllegalStateException("wallet failed")));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
@@ -139,8 +118,6 @@ class AuthControllerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.error").value("Could not create wallet for new user"))
         .andExpect(jsonPath("$.details").value("wallet failed"));
-
-    verify(userWalletRepository, never()).save(org.mockito.ArgumentMatchers.any());
   }
 
   // Checks that login returns the user info and sets the JWT cookie.
