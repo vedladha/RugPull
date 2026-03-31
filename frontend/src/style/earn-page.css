@@ -1,0 +1,190 @@
+/* style/earn-page.css */
+
+.earn-page {
+  padding: 5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.earn-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.earn-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.earn-header p, 
+.earn-auth-msg {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Daily Claim Banner */
+.earn-banner {
+  width: 100%;
+  background: var(--amber-glow);
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  box-shadow: 0 10px 30px rgba(245, 166, 35, 0.05);
+}
+
+.earn-banner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.earn-banner-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--amber);
+}
+
+.earn-banner-desc {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--white);
+  line-height: 1.5;
+}
+
+.earn-claim-btn {
+  background: var(--amber);
+  color: var(--black);
+  border: none;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 1rem 2.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.earn-claim-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.earn-claim-btn:disabled {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Expandable Tasks Grid */
+.earn-tasks-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.earn-tasks-section h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.earn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.earn-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.earn-card:hover {
+  border-color: rgba(245, 166, 35, 0.5);
+  background: rgba(245, 166, 35, 0.02);
+}
+
+.earn-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.earn-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.earn-reward-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--amber);
+  background: var(--amber-glow);
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.earn-card-desc {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.earn-card-action {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--border);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  text-align: center;
+}
+
+.earn-card-action:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .earn-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
+  }
+  .earn-claim-btn {
+    width: 100%;
+  }
+}
