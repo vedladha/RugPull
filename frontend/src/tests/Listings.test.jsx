@@ -121,4 +121,26 @@ describe("Listings", () => {
             expect(screen.queryByText("Bike")).toBeNull();
         });
     });
+
+    it("opens and closes a listing details modal when a listing is clicked", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({ items: mockListings }),
+        }));
+
+        render(<Listings />);
+        await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
+
+        await userEvent.click(screen.getByRole("button", { name: /view details for guitar/i }));
+
+        expect(screen.getByRole("dialog", { name: "Guitar" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Buy" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: /close listing details/i }));
+
+        await waitFor(() => {
+            expect(screen.queryByRole("dialog")).toBeNull();
+        });
+    });
 });

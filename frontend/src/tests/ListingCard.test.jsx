@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi } from "vitest";
 import ListingCard from "../Components/ListingCard.jsx";
 
 describe("ListingCard", () => {
@@ -40,5 +41,16 @@ describe("ListingCard", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("5.2 RPC")).toBeInTheDocument();
     expect(screen.getByText("Seller: john")).toBeInTheDocument();
+  });
+
+  it("calls onClick when card is clicked", async () => {
+    const onClick = vi.fn();
+    render(<ListingCard {...defaultProps} onClick={onClick} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /view details for guitar/i }),
+    );
+
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

@@ -340,6 +340,12 @@ nav {
   font-size: 0.7rem;
   color: var(--muted);
 }
+.listing-card-button {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
 
 /* FILTERS */
 .filters-section {
