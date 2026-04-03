@@ -1,19 +1,16 @@
 package edu.wisc.t32.controller;
 
 import edu.wisc.t32.dto.OrderCreateRequest;
-import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
-import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import edu.wisc.t32.services.CurrentUserService;
-import java.math.BigDecimal;
+import edu.wisc.t32.services.OrderService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,26 +26,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
-  private static final BigDecimal DEFAULT_FEE_PERCENTAGE = new BigDecimal("2.50");
-  private static final String PENDING_STATUS = "pending";
-
   private final OrderRepository orderRepository;
-  private final ItemRepository itemRepository;
+  private final OrderService orderService;
   private final CurrentUserService currentUserService;
 
   /**
    * Constructs an OrderController with the dependencies needed to place orders.
    *
    * @param orderRepository repository used for saving orders
-   * @param itemRepository repository used for item lookups and stock updates
+   * @param orderService service used for locked purchase processing
    * @param currentUserService service used to resolve the authenticated user
    */
   public OrderController(
       OrderRepository orderRepository,
-      ItemRepository itemRepository,
+      OrderService orderService,
       CurrentUserService currentUserService) {
     this.orderRepository = orderRepository;
-    this.itemRepository = itemRepository;
+    this.orderService = orderService;
     this.currentUserService = currentUserService;
   }
 
@@ -60,7 +54,6 @@ public class OrderController {
    * @return the created order, or an error if auth or validation fails
    */
   @PostMapping
-  @Transactional
   public ResponseEntity<?> createOrder(
       @CookieValue(name = "jwt", required = false) String token,
       @RequestBody OrderCreateRequest request) {
@@ -75,28 +68,7 @@ public class OrderController {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
-    Optional<Item> existingItem = itemRepository.findByItemIdAndDeletedFalse(request.getItemId());
-    if (existingItem.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Item not found"));
-    }
-
-    Item item = existingItem.get();
-    if (item.getStock() == null || item.getStock() < request.getQuantity()) {
-      return ResponseEntity.badRequest().body(Map.of("error", "insufficient stock"));
-    }
-
-    item.setStock(item.getStock() - request.getQuantity());
-    itemRepository.save(item);
-
-    Order order = new Order();
-    order.setUserId(currentUser.get().getUserId());
-    order.setItemId(item.getItemId());
-    order.setQuantity(request.getQuantity());
-    order.setPrice(item.getPrice());
-    order.setFeePercentage(DEFAULT_FEE_PERCENTAGE);
-    order.setOrderStatus(PENDING_STATUS);
-
-    Order saved = orderRepository.save(order);
+    Order saved = orderService.createOrder(currentUser.get(), request);
     return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("order", saved));
   }
 
