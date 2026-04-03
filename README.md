@@ -120,16 +120,19 @@ sequenceDiagram
    docker compose up --build
    ```
 3. Open `http://localhost:3000` in your browser.
+   The backend API is exposed at `http://localhost:3001`.
 
 See `docker-compose_guide.md` for more detail.
 
 ## What's Implemented
 
-- **User authentication** — signup, login, and logout with BCrypt-hashed passwords (`/api/auth/signup`, `/api/auth/login`, `/api/auth/logout`)
-- **User profiles** — display name and bio, created automatically on registration
-- **Item listings (full CRUD)** — POST, GET, PUT, and DELETE endpoints for item listings with JUnit tests (`/api/items`, `/api/items/{itemId}`)
+- **User authentication** — signup, login, logout, and auth-profile lookup with BCrypt-hashed passwords and a JWT cookie flow (`/auth/register`, `/auth/login`, `/auth/logout`, `/auth/profile`)
+- **User profiles** — public profile lookup plus authenticated profile view/update (`/profile/{userId}`, `/profile/me`)
+- **Item listings (full CRUD)** — POST, GET, PUT, and DELETE endpoints for item listings with JUnit tests (`/items`, `/items/{itemId}`)
+- **Wishlist support** — authenticated wishlist list/add/remove endpoints (`/wishlist`, `/wishlist/{itemId}`)
+- **Orders** — authenticated order creation and lookup endpoints (`/orders`, `/orders/{orderId}`)
+- **Cart** — authenticated cart list/add/update/remove endpoints (`/cart`, `/cart/{itemId}`)
 - **Hedera wallet integration** — wallet automatically created on user signup via rpc_currency WalletService, private keys persisted in DB
-- **Wallet transactions** — API for crypto wallet transactions
-- **React frontend** — landing page with sign-in and create-account modals, marketplace browsing page, and sell page for adding listings
+- **React frontend** — landing page with sign-in and create-account modals, marketplace browsing page, profile page, and sell page for adding listings
 - **Dockerized environment** — all services run via Docker Compose with multi-stage Dockerfiles for frontend, backend, and crypto service
-- **CI/CD pipeline** — GitLab CI pipeline running all available tests on push
+- **CI/CD pipeline** — GitLab CI pipeline running frontend, backend, crypto, and SQL lint/test jobs on push

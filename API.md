@@ -15,22 +15,21 @@ This document outlines the main API endpoints for the $RPC marketplace.
 
 ### 1. Users & Authentication
 
-Handles signup, login, and account management.
+Handles signup, login, logout, and authenticated user lookup.
 
-Current frontend-backed auth flow uses `/api/auth/*` endpoints.
-Legacy `/auth/*` auth routes still exist in a separate controller, but frontend signup/login/logout uses `/api/auth/*`.
+Current frontend-backed auth flow uses `/auth/*` endpoints.
+Successful login sets an HTTP-only `jwt` cookie.
+Legacy `/api/users*` routes still exist in a separate controller, but they are not the primary
+frontend-backed API.
 
 
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth/signup` | POST | Create a new user and wallet (`walletAddress` returned in `user`) |
-| `/api/auth/login` | POST | Authenticate user |
-| `/api/auth/logout` | POST | Logout |
-| `/auth/refresh` | POST | Refresh the JWT/session token |
-| `/users/me` | GET | Fetch the logged in user account info |
-| `/users/me` | PUT/PATCH | Update logged in user account info |
-| `/users/me` | DELETE | Soft delete logged in user |
+| `/auth/register` | POST | Create a new user, profile, and wallet |
+| `/auth/login` | POST | Authenticate user and set the `jwt` cookie |
+| `/auth/profile` | GET | Fetch the logged in user's auth profile |
+| `/auth/logout` | POST | Logout and clear the `jwt` cookie |
 
 
 
@@ -46,9 +45,9 @@ Manages display information for users.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/profiles/{user_id}` | GET | Fetch profile info (`display_name`, `bio`) |
-| `/profiles/me` | GET | Fetch profile info for current user |
-| `/profiles/me` | PUT/PATCH | Update profile info for current user |
+| `/profile/{userId}` | GET | Fetch profile info (`displayName`, `bio`) |
+| `/profile/me` | GET | Fetch profile info for current user |
+| `/profile/me` | PUT/PATCH | Update profile info for current user |
 
 
 
@@ -64,15 +63,11 @@ Marketplace listings management.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/items` | GET | List all items (filter by category, tag, price) |
-| `/items/{item_id}` | GET | Fetch single item details |
+| `/items` | GET | List all non-deleted items |
+| `/items/{itemId}` | GET | Fetch single item details |
 | `/items` | POST | Create a new item listing |
-| `/items/{item_id}` | PUT | Update item info (name, description, price, stock) |
-| `/items/{item_id}` | DELETE | Soft delete an item |
-| `/items/{item_id}/images` | POST | Upload images for item |
-| `/items/{item_id}/images/{image_id}` | DELETE | Remove item image |
-| `/items/{item_id}/tags` | POST | Attach a tag to an item |
-| `/items/{item_id}/tags/{tag_id}` | DELETE | Remove tag from item |
+| `/items/{itemId}` | PUT | Update item info (name, description, price, stock) |
+| `/items/{itemId}` | DELETE | Soft delete an item |
 
 
 
@@ -82,15 +77,7 @@ Marketplace listings management.
 
 ### 4. Categories
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/categories` | GET | List all categories |
-| `/categories/{category_id}` | GET | Get category details (including parent/children) |
-| `/categories` | POST | Create a new category |
-| `/categories/{category_id}` | PUT/PATCH | Update category info |
-| `/categories/{category_id}` | DELETE | Soft delete category |
+No category endpoints are currently implemented in the backend controllers.
 
 
 
@@ -100,14 +87,7 @@ Marketplace listings management.
 
 ### 5. Tags
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/tags` | GET | List all tags |
-| `/tags/{tag_id}` | GET | Get tag info |
-| `/tags` | POST | Create a new tag |
-| `/tags/{tag_id}` | DELETE | Delete tag |
+No tag endpoints are currently implemented in the backend controllers.
 
 
 
@@ -123,10 +103,9 @@ Buying and selling workflow.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/orders` | GET | List user orders |
-| `/orders/{order_id}` | GET | Get order details |
+| `/orders` | GET | List authenticated user's orders |
+| `/orders/{orderId}` | GET | Get one authenticated user's order |
 | `/orders` | POST | Place a new order |
-| `/orders/{order_id}` | PUT/PATCH | Update order info (cancel, etc.) |
 
 
 
@@ -140,9 +119,9 @@ Buying and selling workflow.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/wishlist` | GET | List items in user’s wishlist |
-| `/wishlist` | POST | Add item to wishlist |
-| `/wishlist/{item_id}` | DELETE | Remove item from wishlist |
+| `/wishlist` | GET | List items in the authenticated user's wishlist |
+| `/wishlist/{itemId}` | POST | Add item to wishlist |
+| `/wishlist/{itemId}` | DELETE | Remove item from wishlist |
 
 
 
@@ -156,12 +135,10 @@ Buying and selling workflow.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/wallets` | GET | Fetch wallet balance |
-| `/wallets/deposit` | POST | Deposit crypto to wallet |
-| `/wallets/withdraw` | POST | Withdraw crypto from wallet |
-| `/wallets/transfer` | POST | Transfer crypto from wallet to a different wallet |
-| `/transactions` | GET | List user transactions |
-| `/transactions/{transaction_id}` | GET | Get transaction details |
+| `/wallets` | GET | Fetch authenticated user's wallet balance |
+
+Deposit, withdraw, transfer, and transaction history endpoints are not currently implemented in
+the backend controllers.
 
 
 
@@ -171,15 +148,7 @@ Buying and selling workflow.
 
 ### 9. Reviews
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/reviews` | GET | List all reviews (filter by item/user) |
-| `/reviews/{review_id}` | GET | Fetch single review |
-| `/reviews` | POST | Create a new review for an item |
-| `/reviews/{review_id}` | PUT/PATCH | Update review |
-| `/reviews/{review_id}` | DELETE | Soft delete review |
+No review endpoints are currently implemented in the backend controllers.
 
 
 
@@ -189,13 +158,31 @@ Buying and selling workflow.
 
 ### 10. Notifications
 
+No notification endpoints are currently implemented in the backend controllers.
 
+---
+
+### 11. Cart
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/notifications` | GET | List notifications for user |
-| `/notifications/{notification_id}` | GET | Fetch notification details |
-| `/notifications/{notification_id}/read` | PATCH | Mark notification as read |
+| `/cart` | GET | List items in the authenticated user's cart |
+| `/cart/{itemId}` | POST | Add item to cart |
+| `/cart/{itemId}` | PUT | Update item quantity in cart |
+| `/cart/{itemId}` | DELETE | Remove item from cart |
+
+---
+
+### 12. Legacy `/api` User Endpoints
+
+These routes still exist in `UserController`, but they are older/testing endpoints.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/users` | GET | Return all users as raw `User` entities |
+| `/api/users/addUser` | POST | Create a user from query parameters |
+| `/api/users/{userId}/profile` | PUT | Create or update a profile from query parameters |
+| `/api/users/{userId}/profile` | GET | Return a raw `UserProfile` entity |
 
 
 
@@ -206,44 +193,40 @@ Buying and selling workflow.
 
 ---
 
-### POST /api/auth/signup
+Protected endpoints now use the HTTP-only `jwt` cookie set by `POST /auth/login`.
+Older `Authorization: Bearer` references in untouched legacy sections below are not authoritative.
+
+### POST /auth/register
 
 #### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| displayName | String | N | Optional user display name |
 | email | String | Y | User email |
 | password | String | Y | Password |
-| displayName | String | N | Optional user display name |
 
 
 #### Request Example
 ```json
 {
+  "displayName": "User",
   "email": "user@example.com",
-  "password": "password123",
-  "displayName": "User"
+  "password": "password123"
 }
 ```
 
 #### Response Example
 ```json
 {
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "displayName": "User",
-    "walletAddress": "0.0.1234567"
-  },
-  "access_token": "{jwt access token}",
-  "refresh_token": "{jwt refresh token}",
-  "expires_in": 3600
+  "email": "user@example.com",
+  "displayName": "User"
 }
 ```
 
 ---
 
-### POST /api/auth/login
+### POST /auth/login
 
 #### Request Body
 
@@ -263,57 +246,44 @@ Buying and selling workflow.
 #### Response Example
 ```json
 {
+  "email": "user@example.com",
+  "displayName": "User"
+}
+```
+
+---
+
+### POST /auth/logout
+
+#### Response Example
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+### GET /auth/profile
+
+Returns the authenticated user's basic auth profile.
+
+#### Response Example
+```json
+{
   "user": {
-    "id": 1,
     "email": "user@example.com",
-    "displayName": "User",
-    "walletAddress": "0.0.1234567"
-  },
-  "access_token": "{jwt access token}",
-  "refresh_token": "{jwt refresh token}",
-  "expires_in": 3600
-}
-```
-
----
-
-### POST /api/auth/logout
-
-#### Response Example
-```json
-{
-  "message": "Logged out"
-}
-```
-
----
-
-### POST /auth/refresh
-
-#### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| refresh_token | String | Y | The refresh token issued at login or signup |
-
-#### Request Example
-```json
-{
-  "refresh_token": "{jwt refresh token}"
-}
-```
-
-#### Response Example
-```json
-{
-  "access_token": "{jwt access token}",
-  "expires_in": 3600
+    "displayName": "User"
+  }
 }
 ```
 
 ---
 
 ### GET /users/me
+
+This route is not implemented in the current backend.
+Use `/auth/profile` for auth details or `/profile/me` for the full profile.
 
 #### Headers
 
@@ -333,7 +303,9 @@ Buying and selling workflow.
 
 ---
 
-###  PUT/PATCH /users/me
+### PUT/PATCH /users/me
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -370,6 +342,8 @@ Buying and selling workflow.
 
 ### DELETE /users/me
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -386,26 +360,28 @@ Buying and selling workflow.
 
 ---
 
-### GET /profiles/{user_id}
+### GET /profile/{userId}
 
 #### Path Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| user_id | String | Y | ID of the user whose profile to fetch |
+| userId | String | Y | ID of the user whose profile to fetch |
 
 #### Response Example
 ```json
 {
-  "id": 1,
-  "display_name": "User",
-  "bio": "A really cool user"
+  "profile": {
+    "userId": 1,
+    "displayName": "User",
+    "bio": "A really cool user"
+  }
 }
 ```
 
 ---
 
-### GET /profiles/me
+### GET /profile/me
 
 #### Headers
 
@@ -416,15 +392,17 @@ Buying and selling workflow.
 #### Response Example
 ```json
 {
-  "id": 1,
-  "display_name": "User",
-  "bio": "A really cool user"
+  "profile": {
+    "userId": 1,
+    "displayName": "User",
+    "bio": "A really cool user"
+  }
 }
 ```
 
 ---
 
-### PUT/PATCH /profiles/me
+### PUT/PATCH /profile/me
 
 #### Headers
 
@@ -436,13 +414,13 @@ Buying and selling workflow.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| display_name | String | N | Update display name |
+| displayName | String | N | Update display name |
 | bio | String | N | Update bio |
 
 #### Request Example
 ```json
 {
-  "display_name": "NewUser",
+  "displayName": "NewUser",
   "bio": "New bio"
 }
 ```
@@ -450,9 +428,11 @@ Buying and selling workflow.
 #### Response Example
 ```json
 {
-  "id": 1,
-  "display_name": "NewUser",
-  "bio": "New bio"
+  "profile": {
+    "userId": 1,
+    "displayName": "NewUser",
+    "bio": "New bio"
+  }
 }
 ```
 
@@ -466,46 +446,37 @@ Buying and selling workflow.
 |--------|-------|
 | Authorization | Bearer `<access_token>` |
 
-#### Query Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| category | String | N | Filter items by category ID or name |
-| tag | String | N | Filter items by tag ID or name |
-| price_min | Number | N | Minimum price for filtering |
-| price_max | Number | N | Maximum price for filtering |
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of items per page |
+Returns all non-deleted items.
+The filtering query parameters listed below were part of an older draft and are not currently
+implemented in the backend controller.
 
 #### Response Example
 ```json
 {
-  {
-    "id": 1,
-    "title": "Painting",
-    "description": "Limited edition painting",
-    "price": 2,
-    "stock": 10,
-    "category": "Art",
-    "tags": ["Painting", "Art"],
-    "images": ["image1.png", "image2.png"]
-  },
-  {
-    "id": 2,
-    "title": "Pokémon Card",
-    "description": "Limited edition Pokémon card",
-    "price": 5.12,
-    "stock": 2,
-    "category": "Collectibles",
-    "tags": ["Pokémon", "Rare"],
-    "images": []
-  }
+  "items": [
+    {
+      "itemId": 1,
+      "name": "Painting",
+      "description": "Limited edition painting",
+      "price": 2.0,
+      "stock": 10,
+      "sellerName": "artist1"
+    },
+    {
+      "itemId": 2,
+      "name": "Pokemon Card",
+      "description": "Limited edition Pokemon card",
+      "price": 5.12,
+      "stock": 2,
+      "sellerName": "collector7"
+    }
+  ]
 }
 ```
 
 ---
 
-### GET /items/{item_id}
+### GET /items/{itemId}
 
 #### Headers
 
@@ -517,19 +488,20 @@ Buying and selling workflow.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
+| itemId | String | Y | ID of the item |
 
 #### Response Example
 ```json
 {
-  "id": 1,
-  "title": "Painting",
-  "description": "Limited edition painting",
-  "price": 2,
-  "stock": 10,
-  "category": "Art",
-  "tags": ["Painting", "Art"],
-  "images": ["image1.png", "image2.png"]
+  "item": {
+    "itemId": 1,
+    "userId": 7,
+    "name": "Painting",
+    "description": "Limited edition painting",
+    "price": 2.0,
+    "stock": 10,
+    "deleted": false
+  }
 }
 ```
 
@@ -547,41 +519,39 @@ Buying and selling workflow.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| title | String | Y | Item title |
+| name | String | Y | Item name |
 | description | String | Y | Item description |
 | price | Number | Y | Price in crypto |
-| stock | Number | Y | Number of item available |
-| category | String | Y | Category for the item |
-| tags | Array | N | Array of tags |
+| stock | Number | Y | Number of items available |
 
 #### Request Example
 ```json
 {
-  "title": "Cool Box",
+  "name": "Cool Box",
   "description": "A super cool box",
   "price": 10000,
-  "stock": 1,
-  "category": "Trinkets",
-  "tags": ["Box", "Awesome", "Cool"]
+  "stock": 1
 }
 ```
 
 #### Response Example
 ```json
 {
-  "id": 3,
-  "title": "Cool Box",
-  "description": "A super cool box",
-  "price": 10000,
-  "stock": 2,
-  "category": "Trinkets",
-  "tags": ["Box", "Awesome", "Cool"]
+  "item": {
+    "itemId": 3,
+    "userId": 34,
+    "name": "Cool Box",
+    "description": "A super cool box",
+    "price": 10000,
+    "stock": 1,
+    "deleted": false
+  }
 }
 ```
 
 ---
 
-### PUT /items/{item_id}
+### PUT /items/{itemId}
 
 #### Headers
 
@@ -592,7 +562,7 @@ Buying and selling workflow.
 #### Path Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item|
+| itemId | String | Y | ID of the item |
 
 #### Request Body
 | Field | Type | Required | Description |
@@ -642,7 +612,7 @@ Buying and selling workflow.
 
 ---
 
-### DELETE /items/{item_id}
+### DELETE /items/{itemId}
 
 #### Headers
 
@@ -654,7 +624,7 @@ Buying and selling workflow.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
+| itemId | String | Y | ID of the item |
 
 #### Response Example
 ```json
@@ -674,6 +644,8 @@ Buying and selling workflow.
 ---
 
 ### POST /items/{item_id}/images
+
+This route is not implemented in the current backend.
 
 #### Headers
 | Header | Value |
@@ -697,6 +669,8 @@ Buying and selling workflow.
 
 ### DELETE /items/{item_id}/images/{image_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 | Header | Value |
 |--------|-------|
@@ -718,6 +692,8 @@ Buying and selling workflow.
 ---
 
 ### POST /items/{item_id}/tags
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -755,6 +731,8 @@ Buying and selling workflow.
 
 ### DELETE /items/{item_id}/tags/{tag}
 
+This route is not implemented in the current backend.
+
 #### Headers
 | Header | Value |
 |--------|-------|
@@ -776,6 +754,8 @@ Buying and selling workflow.
 ---
 
 ### GET /categories
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -810,6 +790,8 @@ Buying and selling workflow.
 
 ### GET /categories/{category_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -835,6 +817,8 @@ Buying and selling workflow.
 ---
 
 ### POST /categories
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -870,6 +854,8 @@ Buying and selling workflow.
 ---
 
 ### PUT/PATCH /categories/{category_id}
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -912,6 +898,8 @@ Buying and selling workflow.
 
 ### DELETE /categories/{category_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -935,6 +923,8 @@ Buying and selling workflow.
 ---
 
 ### GET /tags
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -967,6 +957,8 @@ Buying and selling workflow.
 
 ### GET /tags/{tag_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -989,6 +981,8 @@ Buying and selling workflow.
 ---
 
 ### POST /tags
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1021,6 +1015,8 @@ Buying and selling workflow.
 
 ### DELETE /tags/{tag_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1052,6 +1048,9 @@ Buying and selling workflow.
 
 #### Query Parameters
 
+The query parameters listed below were part of an older draft and are not currently implemented in
+the backend controller.
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | status | String | N | Filter by status |
@@ -1060,27 +1059,26 @@ Buying and selling workflow.
 
 #### Response Example
 ```json
-[
-  {
-    "id": 5001,
-    "user_id": 123,
-    "status": "pending",
-    "total_amount": 4.7,
-    "created_at": "2026-02-18T17:00:00Z"
-  },
-  {
-    "id": 5002,
-    "user_id": 123,
-    "status": "completed",
-    "total_amount": 1.2,
-    "created_at": "2026-02-17T14:30:00Z"
-  }
-]
+{
+  "orders": [
+    {
+      "orderId": 5001,
+      "userId": 123,
+      "itemId": 101,
+      "quantity": 1,
+      "price": 2.5,
+      "feePercentage": 2.5,
+      "orderStatus": "pending",
+      "createdAt": "2026-02-18T17:00:00",
+      "updatedAt": "2026-02-18T17:00:00"
+    }
+  ]
+}
 ```
 
 ---
 
-### GET /orders/{order_id}
+### GET /orders/{orderId}
 
 #### Headers
 
@@ -1092,30 +1090,22 @@ Buying and selling workflow.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| order_id | Number | Y | ID of the order |
+| orderId | Number | Y | ID of the order |
 
 #### Response Example
 ```json
 {
-  "id": 5001,
-  "user_id": 123,
-  "status": "pending",
-  "items": [
-    {
-      "item_id": 101,
-      "title": "Crypto Art #1",
-      "quantity": 1,
-      "price": 2.5
-    },
-    {
-      "item_id": 102,
-      "title": "Crypto Collectible #2",
-      "quantity": 2,
-      "price": 1.1
-    }
-  ],
-  "total_amount": 4.7,
-  "created_at": "2026-02-18T17:00:00Z"
+  "order": {
+    "orderId": 5001,
+    "userId": 123,
+    "itemId": 101,
+    "quantity": 1,
+    "price": 2.5,
+    "feePercentage": 2.5,
+    "orderStatus": "pending",
+    "createdAt": "2026-02-18T17:00:00",
+    "updatedAt": "2026-02-18T17:00:00"
+  }
 }
 ```
 
@@ -1133,38 +1123,37 @@ Buying and selling workflow.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| items | array | Y | Array of items to purchase |
-
-#### Items Object
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| item_id | Number | Y | ID of the item |
+| itemId | Number | Y | ID of the item to purchase |
 | quantity | Number | Y | Quantity to purchase |
 
 #### Request Example
 ```json
 {
-  "items": [
-    { "item_id": 100, "quantity": 1 },
-    { "item_id": 234, "quantity": 3 }
-  ]
+  "itemId": 100,
+  "quantity": 3
 }
 ```
 
 #### Response Example
 ```json
 {
-  "id": 5003,
-  "user_id": 1,
-  "status": "pending",
-  "total_amount": 67
+  "order": {
+    "orderId": 5003,
+    "userId": 1,
+    "itemId": 100,
+    "quantity": 3,
+    "price": 22.33,
+    "feePercentage": 2.5,
+    "orderStatus": "pending"
+  }
 }
 ```
 
 ---
 
 ### PUT/PATCH /orders/{order_id}
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1201,7 +1190,7 @@ Buying and selling workflow.
 
 ---
 
-### GET /widhlist
+### GET /wishlist
 
 #### Headers
 
@@ -1209,67 +1198,49 @@ Buying and selling workflow.
 |--------|-------|
 | Authorization | Bearer `<access_token>` |
 
-#### Query Parameters
+#### Response Example
+```json
+{
+  "wishlist": [
+    {
+      "userId": 1,
+      "itemId": 101,
+      "createdAt": "2026-02-18T19:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### POST /wishlist/{itemId}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of orders per page |
+| itemId | Number | Y | ID of the item to add |
 
 #### Response Example
 ```json
-[
-  {
-    "item_id": 101,
-    "title": "Crypto Art #1",
-    "price": 2.5,
-    "thumbnail": "image1.png",
-    "added_at": "2026-02-18T19:00:00Z"
-  },
-  {
-    "item_id": 205,
-    "title": "Rare Collectible #7",
-    "price": 5.0,
-    "thumbnail": "image7.png",
-    "added_at": "2026-02-17T15:22:00Z"
+{
+  "wishlist": {
+    "userId": 1,
+    "itemId": 69,
+    "createdAt": null
   }
-]
-```
-
----
-
-### POST /wishlist
-
-#### Headers
-
-| Header | Value |
-|--------|-------|
-| Authorization | Bearer `<access_token>` |
-
-#### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| item_id | Number | Y | ID of the item to add |
-
-#### Request Example
-```json
-{
-  "item_id": 69
-}
-```
-
-#### Response Example
-```json
-{
-  "message": "Item added to wishlist",
-  "item_id": 69
 }
 ```
 
 ---
 
-### DELETE /wishlist/{item_id}
+### DELETE /wishlist/{itemId}
 
 #### Headers
 
@@ -1281,13 +1252,13 @@ Buying and selling workflow.
 
 | Parameter | Type | Required | Description |
 |-------|------|----------|-------------|
-| item_id | Number | Y | ID of the item to remove |
+| itemId | Number | Y | ID of the item to remove |
 
 #### Response Example
 ```json
 {
   "message": "Item removed from wishlist",
-  "item_id": 101
+  "itemId": 101
 }
 ```
 
@@ -1303,22 +1274,14 @@ Buying and selling workflow.
 
 #### Response Example
 ```json
-{
-  "user_id": 123,
-  "balances": [
-    {
-      "currency": "RPC",
-      "available": 0.75,
-      "locked": 0.05
-    }
-  ],
-  "updated_at": "2026-02-18T20:00:00Z"
-}
+250.75
 ```
 
 ---
 
 ### POST /wallets/deposit
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1352,6 +1315,8 @@ Buying and selling workflow.
 
 ### POST /wallets/withdraw
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1383,6 +1348,8 @@ Buying and selling workflow.
 ---
 
 ### POST /wallets/transfer
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1419,6 +1386,8 @@ Buying and selling workflow.
 ---
 
 ### GET /transactions
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1459,6 +1428,8 @@ Buying and selling workflow.
 
 ### GET /transactions/{transaction_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1489,6 +1460,8 @@ Buying and selling workflow.
 ---
 
 ### GET /reviews
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1532,6 +1505,8 @@ Buying and selling workflow.
 
 ### GET /reviews/{review_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1560,6 +1535,8 @@ Buying and selling workflow.
 ---
 
 ### POST /reviews
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1599,6 +1576,8 @@ Buying and selling workflow.
 ---
 
 ### PUT/PATCH /reviews/{review_id}
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1641,6 +1620,8 @@ Buying and selling workflow.
 
 ### DELETE /reviews/{review_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1664,6 +1645,8 @@ Buying and selling workflow.
 ---
 
 ### GET /notifications
+
+This route is not implemented in the current backend.
 
 #### Headers
 
@@ -1704,6 +1687,8 @@ Buying and selling workflow.
 
 ### GET /notifications/{notification_id}
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1735,6 +1720,8 @@ Buying and selling workflow.
 
 ### PATCH /notifications/{notification_id}/read
 
+This route is not implemented in the current backend.
+
 #### Headers
 
 | Header | Value |
@@ -1754,5 +1741,214 @@ Buying and selling workflow.
   "id": 8001,
   "read": true,
   "updated_at": "2026-02-18T22:10:00Z"
+}
+```
+
+---
+
+### GET /cart
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+```json
+{
+  "cart": [
+    {
+      "cartId": 1,
+      "userId": 1,
+      "itemId": 10,
+      "quantity": 2,
+      "createdAt": "2026-02-18T19:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### POST /cart/{itemId}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| itemId | Number | Y | ID of the item to add |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| quantity | Number | N | Quantity to add; defaults to `1` |
+
+#### Response Example
+```json
+{
+  "cart": {
+    "cartId": 1,
+    "userId": 1,
+    "itemId": 10,
+    "quantity": 2,
+    "createdAt": null
+  }
+}
+```
+
+---
+
+### PUT /cart/{itemId}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| itemId | Number | Y | ID of the item to update |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| quantity | Number | Y | New quantity |
+
+#### Response Example
+```json
+{
+  "cart": {
+    "cartId": 1,
+    "userId": 1,
+    "itemId": 10,
+    "quantity": 3,
+    "createdAt": "2026-02-18T19:00:00"
+  }
+}
+```
+
+---
+
+### DELETE /cart/{itemId}
+
+#### Headers
+
+| Header | Value |
+|--------|-------|
+| Authorization | Bearer `<access_token>` |
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| itemId | Number | Y | ID of the item to remove |
+
+#### Response Example
+```json
+{
+  "message": "Item removed from cart",
+  "itemId": 10
+}
+```
+
+---
+
+### GET /api/users
+
+Returns all users as raw `User` entities.
+
+#### Response Example
+```json
+[
+  {
+    "userId": 1,
+    "email": "user@example.com",
+    "status": "ACTIVE",
+    "deleted": false
+  }
+]
+```
+
+---
+
+### POST /api/users/addUser
+
+Creates a user from request parameters, not a JSON body.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | String | Y | User email |
+| passwordHash | String | Y | Password hash to save directly |
+
+#### Response Example
+```json
+{
+  "userId": 2,
+  "email": "user2@example.com",
+  "status": "PENDING",
+  "deleted": false
+}
+```
+
+---
+
+### PUT /api/users/{userId}/profile
+
+Creates or updates a profile using request parameters.
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userId | Number | Y | ID of the user whose profile to update |
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| displayName | String | N | New display name |
+| bio | String | N | New bio |
+
+#### Response Example
+```json
+{
+  "userId": 2,
+  "displayName": "LegacyUser",
+  "bio": "Legacy profile update"
+}
+```
+
+---
+
+### GET /api/users/{userId}/profile
+
+Returns the stored profile for the given user ID.
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| userId | Number | Y | ID of the user whose profile to fetch |
+
+#### Response Example
+```json
+{
+  "userId": 2,
+  "displayName": "LegacyUser",
+  "bio": "Legacy profile update"
 }
 ```

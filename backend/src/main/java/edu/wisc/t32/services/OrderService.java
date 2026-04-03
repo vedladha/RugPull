@@ -1,8 +1,8 @@
 package edu.wisc.t32.services;
 
+import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.exception.OrderItemNotFoundException;
-import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ListingCard from "./Components/ListingCard.jsx";
+import ListingModal from "./Components/ListingModal.jsx";
 
 export default function Listings() {
   const [listings, setListings] = useState([]);
@@ -8,6 +9,7 @@ export default function Listings() {
   const [error, setError] = useState(null);
   const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [keywordFilter, setKeywordFilter] = useState("");
+  const [selectedListing, setSelectedListing] = useState(null);
 
   const API = "http://localhost:3001";
 
@@ -157,10 +159,18 @@ export default function Listings() {
               description={listing.description}
               price={listing.price}
               seller={listing.sellerName}
+              onClick={() => setSelectedListing(listing)}
             />
           ))
         )}
       </div>
+
+      {selectedListing && (
+        <ListingModal
+          listing={selectedListing}
+          onClose={() => setSelectedListing(null)}
+        />
+      )}
     </div>
   );
 }
