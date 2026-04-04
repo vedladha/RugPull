@@ -139,7 +139,7 @@ public class ItemController {
     }
 
     response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
-    return ResponseEntity.ok(Map.of("items", response));
+    return ResponseEntity.ok(response);
   }
 
   /**
