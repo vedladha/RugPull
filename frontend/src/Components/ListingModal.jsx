@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import "../style/listing-modal.css"
 
+const API = "http://localhost:3001";
+
 export default function ListingModal({ listing, onClose }) {
   useEffect(() => {
     const handleEscape = (event) => {
@@ -54,11 +56,16 @@ export default function ListingModal({ listing, onClose }) {
           <button type="button" className="listing-action-btn listing-action-btn-primary">
             Buy
           </button>
-          <button type="button" className="listing-action-btn listing-action-btn-secondary">
-            Add to Cart
-          </button>
-        </div>
+          <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={
+            async () => await fetch(`${API}/cart/${listing.itemId}`, {
+              method: "POST",
+              credentials: "include"
+            })
+          }>
+          Add to Cart
+        </button>
       </div>
     </div>
+    </div >
   );
 }

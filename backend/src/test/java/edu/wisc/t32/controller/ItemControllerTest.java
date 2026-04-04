@@ -435,6 +435,59 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
+  // Checks that getItemsBatch returns the matching items for valid IDs.
+  @Test
+  void getItemsBatch_returnsItems_whenIdsAreValid() {
+    List<Integer> ids = List.of(1, 2);
+    Item item1 = buildItem(1, 7, "Item One", "Description", new BigDecimal("10.00"), 3, false);
+    Item item2 = buildItem(2, 8, "Item Two", "Description", new BigDecimal("20.00"), 5, false);
+
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of(item1, item2));
+
+    ResponseEntity<?> response = itemController.getItemsBatch(ids);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
+  }
+
+  // Checks that getItemsBatch returns 400 Bad Request when the IDs list is null.
+  @Test
+  void getItemsBatch_returnsBadRequest_whenIdsListIsNull() {
+    ResponseEntity<?> response = itemController.getItemsBatch(null);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("request body is empty or missing", body.get("error"));
+    verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
+  }
+
+  // Checks that getItemsBatch returns 400 Bad Request when the IDs list is empty.
+  @Test
+  void getItemsBatch_returnsBadRequest_whenIdsListIsEmpty() {
+    ResponseEntity<?> response = itemController.getItemsBatch(List.of());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("request body is empty or missing", body.get("error"));
+    verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
+  }
+
+  // Checks that getItemsBatch returns 200 OK with an empty result when no items match.
+  @Test
+  void getItemsBatch_returnsOkResponse_whenNoItemsMatch() {
+    List<Integer> ids = List.of(99, 100);
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of());
+
+    ResponseEntity<?> response = itemController.getItemsBatch(ids);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
+  }
+
   private ItemCreateRequest buildCreateRequest(String name, String description, String price,
                                                Integer stock) {
     ItemCreateRequest request = new ItemCreateRequest();
