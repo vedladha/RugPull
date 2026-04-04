@@ -160,8 +160,8 @@ export default function CartPage() {
                             const itemTotal = (priceNum * cartItem.quantity).toFixed(2);
 
                             return (
-                                <div className="cart-row" key={cartItem.cartId || cartItem.itemId} onClick={() => setSelectedItem(cartItem)}>
-                                    <div className="cart-item-info">
+                                <div className="cart-row" key={cartItem.cartId || cartItem.itemId}>
+                                    <div className="cart-item-info" onClick={() => setSelectedItem(cartItem)}>
                                         <h3>{name}</h3>
                                         <p className="cart-item-price">
                                             ${priceNum.toFixed(2)}
