@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/cart-page.css";
+import ListingModal from "../Components/ListingModal.jsx";
 
 export default function CartPage() {
     const { user } = useAuth();
@@ -9,6 +10,7 @@ export default function CartPage() {
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedItem, setSelectedItem] = useState(null);
 
     useEffect(() => {
         const fetchCartData = async () => {
@@ -48,13 +50,17 @@ export default function CartPage() {
                 if (!itemsResponse.ok) throw new Error("Failed to fetch batch items");
                 const itemsJson = await itemsResponse.json();
 
-                // Safely extract the items array from the batch response
-                const fetchedItems = Array.isArray(itemsJson.items) ? itemsJson.items : (Array.isArray(itemsJson) ? itemsJson : []);
+                let fetchedItems = [];
+                if (Array.isArray(itemsJson?.items?.items)) {
+                    fetchedItems = itemsJson.items.items; // Handles the double wrap
+                } else if (Array.isArray(itemsJson?.items)) {
+                    fetchedItems = itemsJson.items;       // Handles a single wrap
+                } else if (Array.isArray(itemsJson)) {
+                    fetchedItems = itemsJson;             // Handles a raw array
+                }
 
-                // Create a lookup dictionary
                 const itemLookup = new Map(fetchedItems.map(item => [item.itemId, item]));
 
-                // Merge the datasets
                 const mergedCart = cartItems.map(cartItem => {
                     const itemDetails = itemLookup.get(cartItem.itemId) || { name: "Unknown Item", price: 0 };
                     return {
@@ -154,7 +160,7 @@ export default function CartPage() {
                             const itemTotal = (priceNum * cartItem.quantity).toFixed(2);
 
                             return (
-                                <div className="cart-row" key={cartItem.cartId || cartItem.itemId}>
+                                <div className="cart-row" key={cartItem.cartId || cartItem.itemId} onClick={() => setSelectedItem(cartItem)}>
                                     <div className="cart-item-info">
                                         <h3>{name}</h3>
                                         <p className="cart-item-price">
@@ -203,6 +209,14 @@ export default function CartPage() {
                             Proceed to Checkout
                         </button>
                     </div>
+                    {
+                        selectedItem && (
+                            <ListingModal
+                                listing={selectedItem}
+                                onClose={() => setSelectedItem(null)}
+                            />
+                        )
+                    }
                 </div>
             )}
         </div>

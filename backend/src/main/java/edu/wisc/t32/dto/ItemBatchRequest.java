@@ -9,14 +9,18 @@ import java.util.Objects;
  * Data Transfer object for an item batch request.
  */
 public class ItemBatchRequest {
-  private List<Item> items = new ArrayList<>();
+  private List<ItemModelDto> items = new ArrayList<>();
+
+  public List<ItemModelDto> getItems() {
+    return items;
+  }
 
   /**
    * Completely overrides the items set for this batch request dto.
    *
    * @param items an items list, must not be null.
    */
-  public void setItems(List<Item> items) {
+  public void setItems(List<ItemModelDto> items) {
     Objects.requireNonNull(items, "Can not set ItemBatchRequest items to null");
     this.items = items;
   }

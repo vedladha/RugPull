@@ -9,7 +9,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.dto.ItemBatchRequest;
 import edu.wisc.t32.dto.ItemCreateRequest;
+import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
@@ -435,56 +437,78 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
-  // Checks that getItemsBatch returns the matching items for valid IDs.
   @Test
   void getItemsBatch_returnsItems_whenIdsAreValid() {
+    // 1. Setup input
     List<Integer> ids = List.of(1, 2);
+
+    // 2. Setup Mock Data
     Item item1 = buildItem(1, 7, "Item One", "Description", new BigDecimal("10.00"), 3, false);
     Item item2 = buildItem(2, 8, "Item Two", "Description", new BigDecimal("20.00"), 5, false);
+    List<Item> mockItems = List.of(item1, item2);
 
-    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of(item1, item2));
+    // 3. Mock Repository Behavior
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(mockItems);
 
-    ResponseEntity<?> response = itemController.getItemsBatch(ids);
+    // 4. Execute Controller Method
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(response.getBody());
+    // 5. Assertions
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    // Extract the Map wrapper
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
+    assertNotNull(body);
+
+    // Extract the ItemBatchRequest from the "items" key
+    ItemBatchRequest batchResponse = (ItemBatchRequest) body.get("items");
+    assertNotNull(batchResponse);
+
+    // Verify the contents of the DTO list inside the BatchRequest
+    List<ItemModelDto> items = batchResponse.getItems();
+    assertEquals(2, items.size());
+    assertEquals(1, items.get(0).getItemId());
+    assertEquals("Item One", items.get(0).getName());
+
     verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
   }
 
-  // Checks that getItemsBatch returns 400 Bad Request when the IDs list is null.
   @Test
   void getItemsBatch_returnsBadRequest_whenIdsListIsNull() {
-    ResponseEntity<?> response = itemController.getItemsBatch(null);
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(null);
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
     assertNotNull(body);
     assertEquals("request body is empty or missing", body.get("error"));
+
     verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
   }
 
-  // Checks that getItemsBatch returns 400 Bad Request when the IDs list is empty.
   @Test
   void getItemsBatch_returnsBadRequest_whenIdsListIsEmpty() {
-    ResponseEntity<?> response = itemController.getItemsBatch(List.of());
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(List.of());
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
     assertNotNull(body);
     assertEquals("request body is empty or missing", body.get("error"));
+
     verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
   }
 
-  // Checks that getItemsBatch returns 200 OK with an empty result when no items match.
   @Test
-  void getItemsBatch_returnsOkResponse_whenNoItemsMatch() {
+  void getItemsBatch_returnsOkResponseWithEmptyList_whenNoItemsMatch() {
     List<Integer> ids = List.of(99, 100);
     when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of());
 
-    ResponseEntity<?> response = itemController.getItemsBatch(ids);
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(response.getBody());
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ItemBatchRequest body = (ItemBatchRequest) responseEntity.getBody();
+    assertNotNull(body);
+    assertTrue(body.getItems().isEmpty());
+
     verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
   }
 

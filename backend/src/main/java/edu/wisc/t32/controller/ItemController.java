@@ -2,6 +2,7 @@ package edu.wisc.t32.controller;
 
 import edu.wisc.t32.dto.ItemBatchRequest;
 import edu.wisc.t32.dto.ItemCreateRequest;
+import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
@@ -125,24 +126,19 @@ public class ItemController {
    */
   @PostMapping("/batch")
   public ResponseEntity<?> getItemsBatch(@RequestBody List<Integer> ids) {
-    LOGGER.info("Got batch item request");
     final ItemBatchRequest response = ItemBatchRequest.next();
     if (ids == null || ids.isEmpty()) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body(Map.of("error", "request body is empty or missing"));
     }
 
-
-    LOGGER.info("Making databse post");
     final List<Item> items = itemRepository.findByItemIdInAndDeletedFalse(ids);
     if (items.isEmpty()) {
       LOGGER.info("Found no DB entries");
       return ResponseEntity.ok(response);
     }
 
-    LOGGER.info("Found DB entries returning {}", items);
-    response.setItems(items);
-    LOGGER.info("Sending response {}", response);
+    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
     return ResponseEntity.ok(Map.of("items", response));
   }
 
@@ -151,7 +147,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   *        does not exist or is marked as deleted
+   * does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
