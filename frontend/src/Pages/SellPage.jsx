@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../Auth/auth-context";
+import ImageUploadBox from '../Components/ImageUploadBox';
 import "../style/sell-page.css";
 
 export default function SellPage() {
   const { user } = useAuth();
   const API = "http://localhost:3001";
-  
+
   const formRef = useRef(null);
 
   // --- Form & Submission State ---
@@ -13,7 +14,7 @@ export default function SellPage() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  
+
   // --- Inventory & Edit State ---
   const [items, setItems] = useState([]);
   const [fetchingItems, setFetchingItems] = useState(true);
@@ -84,7 +85,7 @@ export default function SellPage() {
     setLoading(true);
     setErrors({});
     setSuccessMsg("");
-    
+
     try {
       const url = isEditMode ? `${API}/items/${editItemId}` : `${API}/items`;
       const method = isEditMode ? "PATCH" : "POST";
@@ -94,7 +95,7 @@ export default function SellPage() {
       // 1. THE FIX: If editing, only send fields that have actually changed!
       if (isEditMode) {
         const original = items.find(i => i.itemId === editItemId);
-        
+
         const newName = form.title.trim();
         const newBio = form.bio.trim();
         const newPrice = parseFloat(form.price);
@@ -169,7 +170,7 @@ export default function SellPage() {
     });
     setErrors({});
     setSuccessMsg("");
-    
+
     if (formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -187,7 +188,7 @@ export default function SellPage() {
       if (!response.ok) throw new Error("Failed to delete item.");
 
       setItems(items.filter((item) => item.itemId !== itemId));
-      
+
       if (editItemId === itemId) {
         handleResetForm();
       }
@@ -202,8 +203,8 @@ export default function SellPage() {
         <span className="hero-tag">Seller Dashboard</span>
         <h1>{isEditMode ? "Edit Listing" : "Add New Listing"}</h1>
         <p>
-          {isEditMode 
-            ? "Update your item details below." 
+          {isEditMode
+            ? "Update your item details below."
             : "Fill in the details to post a new item to the marketplace."}
         </p>
       </div>
@@ -233,6 +234,13 @@ export default function SellPage() {
           />
           {errors.title && <span className="sell-error-msg">{errors.title}</span>}
         </div>
+
+        <div className="sell-field">
+          <label className="sell-label">Item Photo</label>
+          <ImageUploadBox onImageUpload={(file) => handleChange("image", file)} />
+          {errors.image && <span className="sell-error-msg">{errors.image}</span>}
+        </div>
+
 
         <div className="sell-field">
           <label className="sell-label">
@@ -278,7 +286,7 @@ export default function SellPage() {
           <button className="btn-primary sell-submit" onClick={handleSubmit} disabled={loading} style={{ flex: 1 }}>
             {loading ? "Saving..." : isEditMode ? "Save Changes" : "Post Listing"}
           </button>
-          
+
           {isEditMode && (
             <button className="btn-ghost" onClick={handleResetForm} disabled={loading}>
               Cancel
@@ -289,7 +297,7 @@ export default function SellPage() {
 
       <div style={{ width: "100%", maxWidth: "800px", borderTop: "1px solid var(--border)", paddingTop: "3rem" }}>
         <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "1.5rem" }}>Your Active Inventory</h2>
-        
+
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {fetchingItems ? (
             <div className="loading">Loading inventory...</div>
@@ -299,36 +307,36 @@ export default function SellPage() {
             </p>
           ) : (
             items.map((item) => (
-              <div 
-                key={item.itemId} 
-                className="listing-card" 
-                style={{ 
+              <div
+                key={item.itemId}
+                className="listing-card"
+                style={{
                   flexDirection: "row", alignItems: "center", justifyContent: "space-between",
                   borderColor: editItemId === item.itemId ? "var(--amber)" : "var(--border)"
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <h3 className="listing-title" style={{ margin: 0 }}>
-                    {item.name} 
-                    {editItemId === item.itemId && <span style={{color: "var(--amber)", fontSize: "0.7rem", marginLeft: "0.5rem"}}>(Editing)</span>}
+                    {item.name}
+                    {editItemId === item.itemId && <span style={{ color: "var(--amber)", fontSize: "0.7rem", marginLeft: "0.5rem" }}>(Editing)</span>}
                   </h3>
                   <div style={{ display: "flex", gap: "1rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)" }}>
                     <span className="listing-price" style={{ fontSize: "0.85rem" }}>${parseFloat(item.price).toFixed(2)}</span>
                     <span>Stock: {item.stock}</span>
                   </div>
                 </div>
-                
+
                 <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button 
-                    className="btn-ghost" 
+                  <button
+                    className="btn-ghost"
                     style={{ padding: "0.5rem 1rem", fontSize: "0.75rem" }}
                     onClick={() => handleEditClick(item)}
                     disabled={editItemId === item.itemId}
                   >
                     Edit
                   </button>
-                  <button 
-                    className="btn-ghost" 
+                  <button
+                    className="btn-ghost"
                     style={{ padding: "0.5rem 1rem", fontSize: "0.75rem", borderColor: "rgba(255, 107, 107, 0.3)", color: "#ff6b6b" }}
                     onClick={() => handleDeleteClick(item.itemId)}
                   >
