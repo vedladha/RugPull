@@ -105,6 +105,22 @@ public class FileService {
   }
 
   /**
+   * Deletes a file from the local filesystem
+   * 
+   * @param url The url pointing to the file to delete.
+   * @throws RuntimeException if file could not be deleted.
+   */
+  public void delete(String url) {
+    try {
+      String filename = url.replace("/images/", "");
+      Path filePath = this.root.resolve(filename);
+      Files.deleteIfExists(filePath);
+    } catch (IOException e) {
+      throw new RuntimeException("Could not delete file: " + url + ". Error: " + e.getMessage());
+    }
+  }
+
+  /**
    * Extracts the file extension from a filename.
    *
    * @param filename The filename.

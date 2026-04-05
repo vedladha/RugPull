@@ -5,11 +5,13 @@ import edu.wisc.t32.dto.ItemCreateRequest;
 import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.ItemImageService;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,8 +31,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST controller for managing item entities.
@@ -44,6 +49,7 @@ public class ItemController {
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
   private final UserProfileRepository userProfileRepository;
+  private final ItemImageService itemImageService;
 
   /**
    * Constructs an ItemController with the necessary repository dependency.
@@ -54,10 +60,12 @@ public class ItemController {
    */
   public ItemController(ItemRepository itemRepository,
                         CurrentUserService currentUserService,
-                        UserProfileRepository userProfileRepository) {
+                        UserProfileRepository userProfileRepository,
+                        ItemImageService itemImageService) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
     this.userProfileRepository = userProfileRepository;
+    this.itemImageService = itemImageService;
   }
 
   /**
@@ -67,11 +75,15 @@ public class ItemController {
    * @param token   the JWT token extracted from the HTTP-only cookie
    * @param request the data transfer object containing the new item details
    * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
-   *     or a 400 (BAD REQUEST) with an error message if validation fails
+   * or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
+  @Transactional
   public ResponseEntity<?> createItem(@CookieValue(name = "jwt", required = false) String token,
-                                      @RequestBody ItemCreateRequest request) {
+                                      @RequestPart("item") ItemCreateRequest request,
+                                      @RequestPart(value = "file", required = false)
+                                      List<MultipartFile> files) {
+    // Authentication
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
@@ -83,16 +95,30 @@ public class ItemController {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
+    // Create item
     Item item = new Item();
     item.setUserId(currentUser.get().getUserId());
     item.setName(request.getName().trim());
     item.setDescription(request.getDescription().trim());
     item.setPrice(request.getPrice());
     item.setStock(request.getStock());
+    Item savedItem = itemRepository.save(item);
 
-    Item saved = itemRepository.save(item);
+    // Create item image if there is one
+    if (files != null && !files.isEmpty()) {
+      try {
+        for (int i = 0; i < files.size(); i++) {
+          itemImageService.addImageToItem(files.get(i), savedItem.getItemId(),
+              currentUser.get().getUserId(), i);
+        }
+      } catch (RuntimeException e) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", "Image upload failed: " + e.getMessage()));
+      }
+    }
+
     return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item",
-        saved));
+        savedItem));
   }
 
   /**

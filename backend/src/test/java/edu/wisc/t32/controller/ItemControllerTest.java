@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +23,9 @@ import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.ItemImageService;
+import edu.wisc.t32.services.ItemImageService;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +38,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 class ItemControllerTest {
@@ -39,6 +47,9 @@ class ItemControllerTest {
 
   @Mock
   private ItemRepository itemRepository;
+
+  @Mock
+  private ItemImageService itemImageService;
 
   @Mock
   private CurrentUserService currentUserService;
@@ -62,7 +73,7 @@ class ItemControllerTest {
       return saved;
     });
 
-    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request, null);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -84,7 +95,7 @@ class ItemControllerTest {
     ItemCreateRequest request = buildCreateRequest("Name", "Description", "10.00", 1);
     when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.createItem(null, request);
+    ResponseEntity<?> response = itemController.createItem(null, request, null);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -100,7 +111,7 @@ class ItemControllerTest {
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
         Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -116,7 +127,7 @@ class ItemControllerTest {
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
         Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -131,7 +142,7 @@ class ItemControllerTest {
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
         Optional.of(buildUser(1)));
 
-    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, null);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, null, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -149,7 +160,7 @@ class ItemControllerTest {
 
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request);
+    ResponseEntity<?> response = itemController.createItem(VALID_TOKEN, request, null);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -158,6 +169,48 @@ class ItemControllerTest {
     assertEquals("Hello", saved.getName());
     assertEquals("World", saved.getDescription());
     verify(itemRepository).save(any(Item.class));
+  }
+
+  // Create an item with an associated image
+  @Test
+  void createItem_callsImageService_whenFileIsProvided() {
+    ItemCreateRequest request = buildCreateRequest("Item", "Desc", "10", 1);
+    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
+    List<MultipartFile> fileList = List.of(mockFile);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
+        Item item = inv.getArgument(0);
+        item.setItemId(101);
+        return item;
+    });
+
+    itemController.createItem(VALID_TOKEN, request, fileList);
+
+    verify(itemImageService, times(1)).addImageToItem(eq(mockFile), eq(101), eq(7), eq(0));
+  }
+
+  // Create an item with multiple associated images
+  @Test
+  void createItem_callsImageServiceForEveryFileInList() {
+    MockMultipartFile file1 = new MockMultipartFile("files", "front.jpg", "image/jpeg", "data1".getBytes());
+    MockMultipartFile file2 = new MockMultipartFile("files", "back.jpg", "image/jpeg", "data2".getBytes());
+    List<MultipartFile> fileList = List.of(file1, file2);
+
+    ItemCreateRequest request = buildCreateRequest("Item", "Desc", "70", 1);
+    
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
+        Item item = inv.getArgument(0);
+        item.setItemId(500);
+        return item;
+    });
+
+    itemController.createItem(VALID_TOKEN, request, fileList);
+
+    // Verify the service was called twice (once per file)
+    // and that the position incremented correctly (0 then 1)
+    verify(itemImageService, times(2)).addImageToItem(any(), eq(500), eq(7), anyInt());
   }
 
   // Checks that getAllItems returns all active items.
