@@ -1,6 +1,7 @@
 package edu.wisc.t32.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -439,36 +440,23 @@ class ItemControllerTest {
 
   @Test
   void getItemsBatch_returnsItems_whenIdsAreValid() {
-    // 1. Setup input
     List<Integer> ids = List.of(1, 2);
 
-    // 2. Setup Mock Data
     Item item1 = buildItem(1, 7, "Item One", "Description", new BigDecimal("10.00"), 3, false);
     Item item2 = buildItem(2, 8, "Item Two", "Description", new BigDecimal("20.00"), 5, false);
     List<Item> mockItems = List.of(item1, item2);
-
-    // 3. Mock Repository Behavior
     when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(mockItems);
-
-    // 4. Execute Controller Method
     ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
-
-    // 5. Assertions
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    // Extract the Map wrapper
-    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
-    assertNotNull(body);
-
-    // Extract the ItemBatchRequest from the "items" key
-    ItemBatchRequest batchResponse = (ItemBatchRequest) body.get("items");
+    ItemBatchRequest batchResponse =
+        assertInstanceOf(ItemBatchRequest.class, responseEntity.getBody(),
+            "response body should be an item batch request");
     assertNotNull(batchResponse);
 
-    // Verify the contents of the DTO list inside the BatchRequest
     List<ItemModelDto> items = batchResponse.getItems();
     assertEquals(2, items.size());
-    assertEquals(1, items.get(0).getItemId());
-    assertEquals("Item One", items.get(0).getName());
+    assertEquals(1, items.getFirst().getItemId());
+    assertEquals("Item One", items.getFirst().getName());
 
     verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
   }
