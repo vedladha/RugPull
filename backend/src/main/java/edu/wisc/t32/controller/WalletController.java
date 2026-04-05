@@ -70,7 +70,7 @@ public class WalletController {
           .body(Map.of("error", "Authentication required"));
     }
 
-    final Optional<UserWallet> wallet = userWalletRepository.findUserWalletByUser(user.get());
+    final Optional<UserWallet> wallet = userWalletRepository.findUserWalletByUserId(user.get().getUserId());
     if (wallet.isEmpty()) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("error", "Internal service error fetching wallet"));

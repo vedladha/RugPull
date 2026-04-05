@@ -43,11 +43,11 @@ class WalletControllerTest {
   @Test
   void getWalletBalance_returnsBalance_whenUserAndWalletExist() {
     User user = buildUser(1);
-    UserWallet wallet = buildUserWallet(user);
+    UserWallet wallet = buildUserWallet(user.getUserId());
     float expectedBalance = 250.75f;
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
-    when(userWalletRepository.findUserWalletByUser(user)).thenReturn(Optional.of(wallet));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId())).thenReturn(Optional.of(wallet));
     when(walletService.getWalletBalance(wallet)).thenReturn(expectedBalance);
 
     ResponseEntity<?> response = walletController.getWalletBalance(VALID_TOKEN);
@@ -69,7 +69,7 @@ class WalletControllerTest {
     assertNotNull(body);
     assertEquals("Authentication required", body.get("error"));
 
-    verify(userWalletRepository, never()).findUserWalletByUser(any());
+    verify(userWalletRepository, never()).findUserWalletByUserId(any());
     verify(walletService, never()).getWalletBalance(any());
   }
 
@@ -79,7 +79,7 @@ class WalletControllerTest {
     User user = buildUser(2);
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
-    when(userWalletRepository.findUserWalletByUser(user)).thenReturn(Optional.empty());
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId())).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = walletController.getWalletBalance(VALID_TOKEN);
 
@@ -97,9 +97,9 @@ class WalletControllerTest {
     return user;
   }
 
-  private UserWallet buildUserWallet(User user) {
+  private UserWallet buildUserWallet(Integer userId) {
     UserWallet wallet = new UserWallet();
-    wallet.setUser(user);
+    wallet.setUserId(userId);
     wallet.setWalletAddress("test-wallet-address");
     return wallet;
   }

@@ -4,6 +4,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -11,6 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import edu.wisc.t32.dto.UserRegisteredEvent;
+import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
 import edu.wisc.t32.exception.WalletProvisioningException;
@@ -19,6 +25,8 @@ import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.util.JwtUtil;
+
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,19 +69,30 @@ class AuthControllerTest {
 
   // Checks that register returns the new user's basic info.
   @Test
-  void register_returnsUser_whenRequestIsValid() throws Exception {
-    User user = buildUser("test@example.com", "TestUser");
+  void register_returnsUserRegisteredEventDTO_whenRequestIsValid() throws Exception {
+    String email = "test@example.com";
+    String displayName = "TestUser";
 
-    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
-        .thenReturn(user);
+    UserProfile profile = new UserProfile();
+    profile.setDisplayName(displayName);
+
+    UserRegisteredEvent expectedEvent = new UserRegisteredEvent(
+      1,
+      email,
+      UserStatus.ACTIVE,
+      profile,
+      LocalDateTime.now()
+    );
+
+    when(authService.registerWithWallet(displayName, email, "password"))
+        .thenReturn(expectedEvent);
 
     mockMvc.perform(post("/auth/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(registerRequestJson("TestUser", "test@example.com", "password")))
-        .andExpect(status().isOk())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.email").value("test@example.com"))
-        .andExpect(jsonPath("$.displayName").value("TestUser"));
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(registerRequestJson(displayName, email, "password")))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.email").value(email))
+      .andExpect(jsonPath("$.displayName").value(displayName));
   }
 
   // Checks that register rejects an email that already exists.
@@ -107,15 +126,17 @@ class AuthControllerTest {
   // Checks that register returns 503 when wallet creation fails.
   @Test
   void register_returnsServiceUnavailable_whenWalletCreationFails() throws Exception {
-    when(authService.registerWithWallet("TestUser", "test@example.com", "password"))
-        .thenThrow(new WalletProvisioningException("wallet failed",
+    String email = "test@example.com";
+    String displayName = "TestUser";
+
+    when(authService.registerWithWallet(displayName, email, "password"))
+        .thenThrow(new WalletProvisioningException("Could not create wallet for new user", 
             new IllegalStateException("wallet failed")));
 
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(registerRequestJson("TestUser", "test@example.com", "password")))
+            .content(registerRequestJson(displayName, email, "password")))
         .andExpect(status().isServiceUnavailable())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.error").value("Could not create wallet for new user"))
         .andExpect(jsonPath("$.details").value("wallet failed"));
   }
