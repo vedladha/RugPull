@@ -4,6 +4,8 @@ import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.InvalidCurrentPasswordException;
+import edu.wisc.t32.exception.InvalidNewPasswordException;
 import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
@@ -29,6 +31,7 @@ public class AuthService {
   private final UserProfileRepository userProfileRepo;
   private final UserWalletRepository userWalletRepo;
   private final RpcWalletService walletService;
+  private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
   /**
    * Constructs an {@code AuthService} with the specified user repository.
@@ -107,8 +110,7 @@ public class AuthService {
    * @return the created {@link User} object, complete with its associated {@link UserProfile}
    */
   public User register(String displayName, String email, String password) {
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    String hashedPassword = encoder.encode(password);
+    String hashedPassword = passwordEncoder.encode(password);
 
     User user = new User();
     user.setEmail(email);
@@ -126,6 +128,35 @@ public class AuthService {
   }
 
   /**
+   * Changes the password for an authenticated user.
+   *
+   * <p>The current password must match the stored hash. The new password must be non-blank and
+   * different from the current password.
+   *
+   * @param user the authenticated user whose password is being changed
+   * @param currentPassword the user's current raw password
+   * @param newPassword the user's new raw password
+   * @throws InvalidCurrentPasswordException if the current password is wrong
+   * @throws InvalidNewPasswordException if the new password is blank or matches the current one
+   */
+  public void changePassword(User user, String currentPassword, String newPassword) {
+    if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+      throw new InvalidCurrentPasswordException("Current password is incorrect");
+    }
+
+    if (newPassword == null || newPassword.isBlank()) {
+      throw new InvalidNewPasswordException("New password is required");
+    }
+
+    if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+      throw new InvalidNewPasswordException("New password must be different from current password");
+    }
+
+    user.setPasswordHash(passwordEncoder.encode(newPassword));
+    userRepo.save(user);
+  }
+
+  /**
    * Authenticates a user based on their email and password.
    *
    * <p>Retrieves the user by email and verifies the provided raw password against
@@ -138,10 +169,7 @@ public class AuthService {
    */
   public User login(String email, String password) {
     return userRepo.findByEmailAndDeletedFalse(email)
-        .filter(user -> {
-          BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-          return encoder.matches(password, user.getPasswordHash());
-        })
+        .filter(user -> passwordEncoder.matches(password, user.getPasswordHash()))
         .orElseThrow(() -> new RuntimeException("Invalid email or password"));
   }
 }

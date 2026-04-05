@@ -2,6 +2,7 @@ package edu.wisc.t32.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.when;
 import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.InvalidCurrentPasswordException;
+import edu.wisc.t32.exception.InvalidNewPasswordException;
 import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
@@ -76,8 +79,8 @@ public class AuthServiceTest {
     when(walletService.createWallet()).thenReturn(
         new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
 
-    UserRegisteredEvent registeredUser = authService.registerWithWallet("testuser", "test@example.com",
-        "password");
+    UserRegisteredEvent registeredUser = authService.registerWithWallet(
+        "testuser", "test@example.com", "password");
 
     assertEquals("test@example.com", registeredUser.email());
     assertEquals("testuser", registeredUser.userProfile().getDisplayName());
@@ -170,5 +173,56 @@ public class AuthServiceTest {
     assertThrows(RuntimeException.class, () -> {
       authService.login("fake@example.com", "password");
     });
+  }
+
+  @Test
+  void changePassword_updatesStoredHash_whenCurrentPasswordIsValid() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    User user = new User();
+    user.setPasswordHash(encoder.encode("currentPassword"));
+
+    authService.changePassword(user, "currentPassword", "newPassword123");
+
+    verify(userRepo).save(user);
+    assertTrue(encoder.matches("newPassword123", user.getPasswordHash()));
+  }
+
+  @Test
+  void changePassword_rejectsWrongCurrentPassword() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    User user = new User();
+    user.setPasswordHash(encoder.encode("currentPassword"));
+
+    InvalidCurrentPasswordException error = assertThrows(InvalidCurrentPasswordException.class,
+        () -> authService.changePassword(user, "wrongPassword", "newPassword123"));
+
+    assertEquals("Current password is incorrect", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
+  }
+
+  @Test
+  void changePassword_rejectsBlankNewPassword() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    User user = new User();
+    user.setPasswordHash(encoder.encode("currentPassword"));
+
+    InvalidNewPasswordException error = assertThrows(InvalidNewPasswordException.class,
+        () -> authService.changePassword(user, "currentPassword", " "));
+
+    assertEquals("New password is required", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
+  }
+
+  @Test
+  void changePassword_rejectsSamePasswordAsCurrent() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    User user = new User();
+    user.setPasswordHash(encoder.encode("currentPassword"));
+
+    InvalidNewPasswordException error = assertThrows(InvalidNewPasswordException.class,
+        () -> authService.changePassword(user, "currentPassword", "currentPassword"));
+
+    assertEquals("New password must be different from current password", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
   }
 }
