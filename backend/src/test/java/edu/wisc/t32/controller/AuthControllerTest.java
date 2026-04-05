@@ -25,7 +25,6 @@ import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.util.JwtUtil;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -69,7 +68,7 @@ class AuthControllerTest {
 
   // Checks that register returns the new user's basic info.
   @Test
-  void register_returnsUserRegisteredEventDTO_whenRequestIsValid() throws Exception {
+  void register_returnsUserRegisteredEvent_whenRequestIsValid() throws Exception {
     String email = "test@example.com";
     String displayName = "TestUser";
 
@@ -77,11 +76,11 @@ class AuthControllerTest {
     profile.setDisplayName(displayName);
 
     UserRegisteredEvent expectedEvent = new UserRegisteredEvent(
-      1,
-      email,
-      UserStatus.ACTIVE,
-      profile,
-      LocalDateTime.now()
+        1,
+        email,
+        UserStatus.ACTIVE,
+        profile,
+        LocalDateTime.now()
     );
 
     when(authService.registerWithWallet(displayName, email, "password"))
@@ -90,9 +89,9 @@ class AuthControllerTest {
     mockMvc.perform(post("/auth/register")
         .contentType(MediaType.APPLICATION_JSON)
         .content(registerRequestJson(displayName, email, "password")))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$.email").value(email))
-      .andExpect(jsonPath("$.displayName").value(displayName));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value(email))
+        .andExpect(jsonPath("$.displayName").value(displayName));
   }
 
   // Checks that register rejects an email that already exists.
