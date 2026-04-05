@@ -6,25 +6,31 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import edu.wisc.t32.dto.PasswordChangeRequest;
 import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.enums.UserStatus;
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.InvalidCurrentPasswordException;
+import edu.wisc.t32.exception.InvalidNewPasswordException;
 import edu.wisc.t32.exception.WalletProvisioningException;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.util.JwtUtil;
+import jakarta.servlet.http.Cookie;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -223,6 +229,64 @@ class AuthControllerTest {
     assertEquals("Authentication required", body.get("error"));
   }
 
+  @Test
+  void changePassword_returnsOk_whenUserIsAuthenticated() throws Exception {
+    User user = buildUser("test@example.com", "TestUser");
+    when(currentUserService.getAuthenticatedUser("valid-token")).thenReturn(Optional.of(user));
+
+    mockMvc.perform(put("/auth/password")
+            .cookie(new Cookie("jwt", "valid-token"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(changePasswordRequestJson("currentPassword", "newPassword123")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Password updated successfully"));
+
+    verify(authService).changePassword(user, "currentPassword", "newPassword123");
+  }
+
+  @Test
+  void changePassword_returnsUnauthorized_whenUserIsNotAuthenticated() throws Exception {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    mockMvc.perform(put("/auth/password")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(changePasswordRequestJson("currentPassword", "newPassword123")))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("Authentication required"));
+
+    verify(authService, never()).changePassword(any(User.class), anyString(), anyString());
+  }
+
+  @Test
+  void changePassword_returnsBadRequest_whenCurrentPasswordIsWrong() throws Exception {
+    User user = buildUser("test@example.com", "TestUser");
+    when(currentUserService.getAuthenticatedUser("valid-token")).thenReturn(Optional.of(user));
+    doThrow(new InvalidCurrentPasswordException("Current password is incorrect"))
+        .when(authService).changePassword(user, "wrongPassword", "newPassword123");
+
+    mockMvc.perform(put("/auth/password")
+            .cookie(new Cookie("jwt", "valid-token"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(changePasswordRequestJson("wrongPassword", "newPassword123")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Current password is incorrect"));
+  }
+
+  @Test
+  void changePassword_returnsBadRequest_whenNewPasswordIsInvalid() throws Exception {
+    User user = buildUser("test@example.com", "TestUser");
+    when(currentUserService.getAuthenticatedUser("valid-token")).thenReturn(Optional.of(user));
+    doThrow(new InvalidNewPasswordException("New password is required"))
+        .when(authService).changePassword(user, "currentPassword", "");
+
+    mockMvc.perform(put("/auth/password")
+            .cookie(new Cookie("jwt", "valid-token"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(changePasswordRequestJson("currentPassword", "")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("New password is required"));
+  }
+
   private User buildUser(String email, String displayName) {
     User user = new User();
     user.setEmail(email);
@@ -241,5 +305,14 @@ class AuthControllerTest {
 
   private String loginRequestJson(String email, String password) {
     return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+  }
+
+  private String changePasswordRequestJson(String currentPassword, String newPassword) {
+    PasswordChangeRequest request = new PasswordChangeRequest();
+    request.setCurrentPassword(currentPassword);
+    request.setNewPassword(newPassword);
+
+    return "{\"currentPassword\":\"" + request.getCurrentPassword()
+        + "\",\"newPassword\":\"" + request.getNewPassword() + "\"}";
   }
 }

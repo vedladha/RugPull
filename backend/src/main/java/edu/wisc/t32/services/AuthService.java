@@ -140,7 +140,8 @@ public class AuthService {
    * @throws InvalidNewPasswordException if the new password is blank or matches the current one
    */
   public void changePassword(User user, String currentPassword, String newPassword) {
-    if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+    if (currentPassword == null || currentPassword.isBlank()
+        || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
       throw new InvalidCurrentPasswordException("Current password is incorrect");
     }
 

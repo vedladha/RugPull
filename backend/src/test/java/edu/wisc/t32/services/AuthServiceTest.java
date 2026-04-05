@@ -201,6 +201,19 @@ public class AuthServiceTest {
   }
 
   @Test
+  void changePassword_rejectsBlankCurrentPassword() {
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    User user = new User();
+    user.setPasswordHash(encoder.encode("currentPassword"));
+
+    InvalidCurrentPasswordException error = assertThrows(InvalidCurrentPasswordException.class,
+        () -> authService.changePassword(user, " ", "newPassword123"));
+
+    assertEquals("Current password is incorrect", error.getMessage());
+    verify(userRepo, never()).save(any(User.class));
+  }
+
+  @Test
   void changePassword_rejectsBlankNewPassword() {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     User user = new User();
