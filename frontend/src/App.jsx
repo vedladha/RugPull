@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./index.css";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Navbar from "./Components/Navbar.jsx";
@@ -7,22 +6,22 @@ import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
 import SellPage from "./SellPage.jsx"
 import ProfilePage from "./ProfilePage.jsx"
-import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
+import AuthPage from "./Pages/AuthPage.jsx";
 
 export default function App() {
-  const [modal, setModal] = useState(null); // null | "signin" | "signup"
+  // const [modal, setModal] = useState(null); // null | "signin" | "signup"
   const navigate = useNavigate();
 
   return (
     <>
-      <Navbar onSignInClick={() => setModal("signin")} />
+      <Navbar />
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <Hero onCreateAccountClick={() => setModal("signup")} />
+              <Hero />
               <PageCards
                 onCardClick={(action) => {
                   if (action === "marketplace") {
@@ -43,14 +42,15 @@ export default function App() {
         <Route path="/profile" element={
           <ProfilePage />
         } />
+        <Route path="/login" element={
+          <AuthPage />
+        } />
+        <Route path="/signup" element={
+          // AuthPage checks path to decide what to show
+          <AuthPage />
+        } />
       </Routes>
       <Footer />
-      {modal && (
-        <AuthModal
-          initialSignUp={modal === "signup"}
-          onClose={() => setModal(null)}
-        />
-      )}
     </>
   );
 }
