@@ -1,12 +1,10 @@
 plugins {
-    application
+    `java-library`
     id("environment-preset")
     id("checkstyle-preset")
     id("jacoco-preset")
     alias(libs.plugins.shadow)
 }
-
-val main = "edu.wisc.t32.Main"
 
 repositories {
     mavenCentral()
@@ -17,39 +15,17 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.hedera.hashgraph)
     implementation(libs.slf4j)
-    implementation(libs.slf4j.simple)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.launcher)
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-application {
-    mainClass = main
 }
 
 tasks.test {
     useJUnitPlatform()
 }
 
-val copyJars by tasks.registering(Copy::class) {
-    from(tasks.jar)
-    from(tasks.shadowJar)
-    into(rootProject.layout.buildDirectory.dir("libs"))
-
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
-
 tasks.jar {
-    manifest {
-        attributes["Main-Class"] = main
-        attributes["Description"] = $$"This is an application JAR for $RPC"
-    }
+    enabled = false
 }
 
 tasks.shadowJar {
@@ -60,8 +36,16 @@ tasks.shadowJar {
     mergeServiceFiles()
 }
 
+val copyJars by tasks.registering(Copy::class) {
+    from(tasks.jar)
+    from(tasks.shadowJar)
+    into(rootProject.layout.buildDirectory.dir("libs"))
+
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 tasks.build {
     dependsOn(tasks.check)
-    dependsOn(tasks.named<Test>("test"))
+    dependsOn(tasks.test)
     finalizedBy(copyJars)
 }

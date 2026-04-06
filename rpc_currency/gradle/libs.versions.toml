@@ -14,7 +14,9 @@ hedera-hashgraph = { module = "com.hedera.hashgraph:sdk", version.ref = "hedera-
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref="slf4j" }
+dotenv-gradle = { module = "co.uzzu.dotenv.gradle:co.uzzu.dotenv.gradle.gradle.plugin", version.ref = "dotenv-gradle" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
-dotenv = { id = "co.uzzu.dotenv.gradle", version.ref = "dotenv-gradle" }
+dotenv = { id = "co.uzzu.dotenv.gradle" }
