@@ -1,14 +1,10 @@
 package edu.wisc.t32.controller;
 
+import edu.wisc.t32.dto.PasswordChangeRequest;
 import edu.wisc.t32.dto.UserRegisteredEvent;
 import edu.wisc.t32.model.User;
-import edu.wisc.t32.model.UserWallet;
-import edu.wisc.t32.repository.UserProfileRepository;
-import edu.wisc.t32.repository.UserRepository;
-import edu.wisc.t32.repository.UserWalletRepository;
 import edu.wisc.t32.services.AuthService;
 import edu.wisc.t32.services.CurrentUserService;
-import edu.wisc.t32.services.RpcWalletService;
 import edu.wisc.t32.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -19,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -132,6 +129,26 @@ public class AuthController {
     response.addHeader(HttpHeaders.SET_COOKIE, buildJwtCookie("", 0).toString());
 
     return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+  }
+
+  /**
+   * Changes the password for the currently authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @param request the password-change request containing the current and new password
+   * @return a success response when the password is updated
+   */
+  @PutMapping("/password")
+  public ResponseEntity<?> changePassword(
+      @CookieValue(name = "jwt", required = false) String token,
+      @RequestBody PasswordChangeRequest request) {
+    return currentUserService.getAuthenticatedUser(token)
+        .<ResponseEntity<?>>map(user -> {
+          authService.changePassword(user, request.getCurrentPassword(), request.getNewPassword());
+          return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+        })
+        .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "Authentication required")));
   }
 
   private ResponseCookie buildJwtCookie(String token, long maxAgeSeconds) {

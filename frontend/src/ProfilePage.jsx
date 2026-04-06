@@ -3,11 +3,12 @@ import "./style/profile-page.css";
 import { useAuth } from "./Auth/auth-context";
 
 export default function ProfilePage() {
-    const { user, walletBalance, profileDetails, updateProfile } = useAuth();
+    const { user, walletBalance, profileDetails, updateProfile, changePassword } = useAuth();
     const [displayName, setDisplayName] = useState("")
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
-    const [password, setPassword] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [balance, setBalance] = useState(0);
 
@@ -36,7 +37,15 @@ export default function ProfilePage() {
         setError("");
         setSuccess("");
 
-        if (password && password !== confirmPassword) {
+        const wantsPasswordChange = currentPassword || newPassword || confirmPassword;
+
+        if (wantsPasswordChange && (!currentPassword || !newPassword || !confirmPassword)) {
+            setError("Fill out all password fields to change your password.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (newPassword && newPassword !== confirmPassword) {
             setError("Passwords do not match!");
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
@@ -45,8 +54,17 @@ export default function ProfilePage() {
         try {
             await updateProfile(displayName, bio);
 
-            setSuccess("Profile updated successfully");
-            setPassword("");
+            if (wantsPasswordChange) {
+                await changePassword(currentPassword, newPassword);
+            }
+
+            setSuccess(
+                wantsPasswordChange
+                    ? "Profile and password updated successfully"
+                    : "Profile updated successfully"
+            );
+            setCurrentPassword("");
+            setNewPassword("");
             setConfirmPassword("");
 
             setTimeout(() => setSuccess(""), 4000);
@@ -122,15 +140,26 @@ export default function ProfilePage() {
                     />
                 </div>
 
+                <div className="form-group">
+                    <label className="form-label">Current Password</label>
+                    <input
+                        type="password"
+                        className="form-input"
+                        placeholder="Enter your current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                </div>
+
                 <div className="form-row">
                     <div className="form-group">
                         <label className="form-label">New Password</label>
                         <input
                             type="password"
                             className="form-input"
-                            placeholder="Leave blank to keep current"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter a new password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                         />
                     </div>
 
