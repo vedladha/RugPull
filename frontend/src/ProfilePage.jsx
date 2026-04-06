@@ -140,18 +140,18 @@ export default function ProfilePage() {
                     />
                 </div>
 
-                <div className="form-row">
-                    <div className="form-group">
-                        <label className="form-label">Current Password</label>
-                        <input
-                            type="password"
-                            className="form-input"
-                            placeholder="Enter your current password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                        />
-                    </div>
+                <div className="form-group">
+                    <label className="form-label">Current Password</label>
+                    <input
+                        type="password"
+                        className="form-input"
+                        placeholder="Enter your current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                </div>
 
+                <div className="form-row">
                     <div className="form-group">
                         <label className="form-label">New Password</label>
                         <input
