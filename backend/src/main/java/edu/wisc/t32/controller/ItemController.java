@@ -8,6 +8,7 @@ import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
@@ -50,6 +51,7 @@ public class ItemController {
   private final CurrentUserService currentUserService;
   private final UserProfileRepository userProfileRepository;
   private final ItemImageService itemImageService;
+  private final ItemImageRepository itemImageRepository;
 
   /**
    * Constructs an ItemController with the necessary repository dependency.
@@ -61,11 +63,13 @@ public class ItemController {
   public ItemController(ItemRepository itemRepository,
                         CurrentUserService currentUserService,
                         UserProfileRepository userProfileRepository,
-                        ItemImageService itemImageService) {
+                        ItemImageService itemImageService,
+                        ItemImageRepository itemImageRepository) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
     this.userProfileRepository = userProfileRepository;
     this.itemImageService = itemImageService;
+    this.itemImageRepository = itemImageRepository;
   }
 
   /**
@@ -184,6 +188,23 @@ public class ItemController {
           "Item not found"));
     }
     return ResponseEntity.ok(Map.of("item", existing.get()));
+  }
+
+  /**
+   * Retrieves an ItemImage list of images associated with the itemId.
+   * 
+   * @param itemId item to find the images for
+   * @return a {@link ResponseEntity} containing a list of ItemImages, or a 404 NOT FOUND
+   *         if there are no images
+   */
+  @GetMapping("/{itemId}/images")
+  public ResponseEntity<?> getItemImages(@PathVariable Integer itemId) {
+    List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+    if (images.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+       "Item not found"));
+    }
+    return ResponseEntity.ok(Map.of("images", images));
   }
 
   /**

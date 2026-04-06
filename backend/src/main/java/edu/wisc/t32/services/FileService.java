@@ -105,7 +105,7 @@ public class FileService {
   }
 
   /**
-   * Deletes a file from the local filesystem
+   * Deletes a file from the local filesystem.
    * 
    * @param url The url pointing to the file to delete.
    * @throws RuntimeException if file could not be deleted.

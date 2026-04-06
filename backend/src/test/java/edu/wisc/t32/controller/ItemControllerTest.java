@@ -18,8 +18,10 @@ import edu.wisc.t32.dto.ItemCreateRequest;
 import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
@@ -50,6 +52,9 @@ class ItemControllerTest {
 
   @Mock
   private ItemImageService itemImageService;
+
+  @Mock
+  private ItemImageRepository itemImageRepository;
 
   @Mock
   private CurrentUserService currentUserService;
@@ -280,6 +285,56 @@ class ItemControllerTest {
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
     assertEquals("Item not found", body.get("error"));
+  }
+
+  // Checks that getItemImages returns the list of images when they exist
+  @Test
+  void getItemImages_returnsImages_whenImagesExist() {
+    Integer itemId = 101;
+    ItemImage img1 = new ItemImage();
+    img1.setImageId(1);
+    img1.setItemId(itemId);
+    img1.setImageUrl("/images/thumb1.jpg");
+    img1.setPosition(0);
+
+    ItemImage img2 = new ItemImage();
+    img2.setImageId(2);
+    img2.setItemId(itemId);
+    img2.setImageUrl("/images/thumb2.jpg");
+    img2.setPosition(1);
+
+    List<ItemImage> imageList = List.of(img1, img2);
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(itemId))
+        .thenReturn(imageList);
+
+    ResponseEntity<?> response = itemController.getItemImages(itemId);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    
+    List<?> resultList = (List<?>) body.get("images");
+    assertEquals(2, resultList.size());
+    
+    ItemImage firstImage = (ItemImage) resultList.get(0);
+    assertEquals("/images/thumb1.jpg", firstImage.getImageUrl());
+    verify(itemImageRepository).findByItemIdOrderByPositionAsc(itemId);
+  }
+
+  // Checks that getItemImages returns 404 when no images are found for the ID
+  @Test
+  void getItemImages_returnsNotFound_whenNoImagesFound() {
+    Integer itemId = 999;
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(itemId))
+        .thenReturn(List.of());
+
+    ResponseEntity<?> response = itemController.getItemImages(itemId);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item not found", body.get("error"));
+    verify(itemImageRepository).findByItemIdOrderByPositionAsc(itemId);
   }
 
   // Checks that a valid item update saves new values and should return 200.
