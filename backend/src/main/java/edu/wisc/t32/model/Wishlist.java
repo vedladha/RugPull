@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 
 /**
  * Entity representing a wishlist entry in the database.
- * Mapped to the "Wishlists" table with a composite primary key of (user_id, item_id).
+ * Mapped to the "wishlists" table with a composite primary key of (user_id, item_id).
  */
 @Entity
-@Table(name = "Wishlists")
+@Table(name = "wishlists")
 @IdClass(WishlistId.class)
 public class Wishlist {
 
