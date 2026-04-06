@@ -2,6 +2,8 @@ package edu.wisc.t32.controller;
 
 import edu.wisc.t32.exception.DuplicateDisplayNameException;
 import edu.wisc.t32.exception.DuplicateEmailException;
+import edu.wisc.t32.exception.InvalidCurrentPasswordException;
+import edu.wisc.t32.exception.InvalidNewPasswordException;
 import edu.wisc.t32.exception.WalletProvisioningException;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -24,7 +26,12 @@ public class AuthExceptionHandler {
    * @param exception the duplicate-data exception raised during registration
    * @return a bad request response with the original message field
    */
-  @ExceptionHandler({DuplicateEmailException.class, DuplicateDisplayNameException.class})
+  @ExceptionHandler({
+      DuplicateEmailException.class,
+      DuplicateDisplayNameException.class,
+      InvalidCurrentPasswordException.class,
+      InvalidNewPasswordException.class
+  })
   public ResponseEntity<Map<String, String>> handleBadRequest(RuntimeException exception) {
     return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
   }

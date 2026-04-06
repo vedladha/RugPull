@@ -76,8 +76,8 @@ class AuthServiceIntegrationTest {
     when(walletService.createWallet()).thenReturn(
         new RpcWalletService.WalletCredentials("wallet-1", "private-key"));
 
-    UserRegisteredEvent registeredUser = authService.registerWithWallet("testuser", "test@example.com",
-        "password");
+    UserRegisteredEvent registeredUser = authService.registerWithWallet(
+        "testuser", "test@example.com", "password");
 
     assertNotNull(registeredUser.userId());
     assertEquals(1, userRepo.count());

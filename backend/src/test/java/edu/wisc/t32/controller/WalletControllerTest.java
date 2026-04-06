@@ -47,7 +47,8 @@ class WalletControllerTest {
     float expectedBalance = 250.75f;
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
-    when(userWalletRepository.findUserWalletByUserId(user.getUserId())).thenReturn(Optional.of(wallet));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.of(wallet));
     when(walletService.getWalletBalance(wallet)).thenReturn(expectedBalance);
 
     ResponseEntity<?> response = walletController.getWalletBalance(VALID_TOKEN);
@@ -79,7 +80,8 @@ class WalletControllerTest {
     User user = buildUser(2);
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
-    when(userWalletRepository.findUserWalletByUserId(user.getUserId())).thenReturn(Optional.empty());
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.empty());
 
     ResponseEntity<?> response = walletController.getWalletBalance(VALID_TOKEN);
 

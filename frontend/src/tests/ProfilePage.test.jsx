@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ProfilePage from "../ProfilePage.jsx";
 
 const mockUpdateProfile = vi.fn();
+const mockChangePassword = vi.fn();
 const mockProfileDetails = vi.fn();
 const mockUseAuth = vi.fn();
 
@@ -17,6 +18,7 @@ describe("ProfilePage", () => {
             user: { email: "test@example.com" },
             profileDetails: mockProfileDetails,
             updateProfile: mockUpdateProfile,
+            changePassword: mockChangePassword,
             walletBalance: vi.fn().mockResolvedValue(-999.99)
         });
 
@@ -28,6 +30,7 @@ describe("ProfilePage", () => {
         });
 
         mockUpdateProfile.mockReset();
+        mockChangePassword.mockReset();
     });
 
     // Tests that profile data is loaded and displayed on mount
@@ -89,18 +92,50 @@ describe("ProfilePage", () => {
         });
     });
 
+    it("calls changePassword when all password fields are provided", async () => {
+        mockUpdateProfile.mockResolvedValue();
+        mockChangePassword.mockResolvedValue({ message: "Password updated successfully" });
+        render(<ProfilePage />);
+
+        await waitFor(() => expect(screen.getByDisplayValue("TestUser")).toBeDefined());
+
+        await userEvent.type(screen.getByPlaceholderText("Enter your current password"), "oldPassword");
+        await userEvent.type(screen.getByPlaceholderText("Enter a new password"), "newPassword123");
+        await userEvent.type(screen.getByPlaceholderText("Confirm your new password"), "newPassword123");
+        await userEvent.click(screen.getByText("Save Changes"));
+
+        await waitFor(() => {
+            expect(mockChangePassword).toHaveBeenCalledWith("oldPassword", "newPassword123");
+        });
+    });
+
+    it("shows error when password fields are incomplete", async () => {
+        render(<ProfilePage />);
+
+        await waitFor(() => expect(screen.getByDisplayValue("TestUser")).toBeDefined());
+
+        await userEvent.type(screen.getByPlaceholderText("Enter a new password"), "newPassword123");
+        await userEvent.click(screen.getByText("Save Changes"));
+
+        expect(screen.getByText("Fill out all password fields to change your password.")).toBeDefined();
+        expect(mockUpdateProfile).not.toHaveBeenCalled();
+        expect(mockChangePassword).not.toHaveBeenCalled();
+    });
+
     // Tests that an error is shown when passwords do not match
     it("shows error when passwords do not match", async () => {
         render(<ProfilePage />);
 
         await waitFor(() => expect(screen.getByDisplayValue("TestUser")).toBeDefined());
 
-        await userEvent.type(screen.getByPlaceholderText("Leave blank to keep current"), "password123");
+        await userEvent.type(screen.getByPlaceholderText("Enter your current password"), "oldPassword");
+        await userEvent.type(screen.getByPlaceholderText("Enter a new password"), "password123");
         await userEvent.type(screen.getByPlaceholderText("Confirm your new password"), "differentpassword");
         await userEvent.click(screen.getByText("Save Changes"));
 
         expect(screen.getByText("Passwords do not match!")).toBeDefined();
         expect(mockUpdateProfile).not.toHaveBeenCalled();
+        expect(mockChangePassword).not.toHaveBeenCalled();
     });
 
     // Tests that an error message is shown when updateProfile fails
@@ -116,19 +151,39 @@ describe("ProfilePage", () => {
         });
     });
 
-    // Tests that password fields are cleared after successful save
-    it("clears password fields after successful save", async () => {
+    it("shows error message when changePassword fails", async () => {
         mockUpdateProfile.mockResolvedValue();
+        mockChangePassword.mockRejectedValue(new Error("Current password is incorrect"));
         render(<ProfilePage />);
 
         await waitFor(() => expect(screen.getByDisplayValue("TestUser")).toBeDefined());
 
-        await userEvent.type(screen.getByPlaceholderText("Leave blank to keep current"), "password123");
+        await userEvent.type(screen.getByPlaceholderText("Enter your current password"), "wrongPassword");
+        await userEvent.type(screen.getByPlaceholderText("Enter a new password"), "newPassword123");
+        await userEvent.type(screen.getByPlaceholderText("Confirm your new password"), "newPassword123");
+        await userEvent.click(screen.getByText("Save Changes"));
+
+        await waitFor(() => {
+            expect(screen.getByText("Current password is incorrect")).toBeDefined();
+        });
+    });
+
+    // Tests that password fields are cleared after successful save
+    it("clears password fields after successful save", async () => {
+        mockUpdateProfile.mockResolvedValue();
+        mockChangePassword.mockResolvedValue({ message: "Password updated successfully" });
+        render(<ProfilePage />);
+
+        await waitFor(() => expect(screen.getByDisplayValue("TestUser")).toBeDefined());
+
+        await userEvent.type(screen.getByPlaceholderText("Enter your current password"), "oldPassword");
+        await userEvent.type(screen.getByPlaceholderText("Enter a new password"), "password123");
         await userEvent.type(screen.getByPlaceholderText("Confirm your new password"), "password123");
         await userEvent.click(screen.getByText("Save Changes"));
 
         await waitFor(() => {
-            expect(screen.getByPlaceholderText("Leave blank to keep current").value).toBe("");
+            expect(screen.getByPlaceholderText("Enter your current password").value).toBe("");
+            expect(screen.getByPlaceholderText("Enter a new password").value).toBe("");
             expect(screen.getByPlaceholderText("Confirm your new password").value).toBe("");
         });
     });

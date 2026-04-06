@@ -375,3 +375,56 @@ describe("AuthProvider - wishlist", () => {
         await waitFor(() => expect(result.itemId).toBe(10));
     });
 });
+
+describe("AuthProvider - changePassword", () => {
+    it("returns success message after successful changePassword", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ message: "Password updated successfully" }),
+            }));
+
+        let result = null;
+        const PasswordConsumer = () => {
+            const { changePassword } = useAuth();
+            return (
+                <button onClick={async () => {
+                    result = await changePassword("currentPassword", "newPassword123");
+                }}>Change Password</button>
+            );
+        };
+
+        renderWithAuth(<PasswordConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Change Password").click(); });
+        await waitFor(() => expect(result.message).toBe("Password updated successfully"));
+    });
+
+    it("throws backend message when changePassword fails", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: false,
+                json: () => Promise.resolve({ message: "Current password is incorrect" }),
+            }));
+
+        let error = null;
+        const PasswordConsumer = () => {
+            const { changePassword } = useAuth();
+            return (
+                <button onClick={async () => {
+                    try { await changePassword("wrongPassword", "newPassword123"); }
+                    catch (e) { error = e.message; }
+                }}>Change Password</button>
+            );
+        };
+
+        renderWithAuth(<PasswordConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Change Password").click(); });
+        await waitFor(() => expect(error).toBe("Current password is incorrect"));
+    });
+});
