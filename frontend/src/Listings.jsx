@@ -41,6 +41,18 @@ export default function Listings() {
   }, [user, getWishlist]);
 
   useEffect(() => {
+    if (!wishlistSuccess) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setWishlistSuccess("");
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [wishlistSuccess]);
+
+  useEffect(() => {
     const filterListings = () => {
       let filtered = listings;
 
@@ -145,6 +157,19 @@ export default function Listings() {
     }
   };
 
+  const handleOpenListing = (listing) => {
+    setWishlistError("");
+    setWishlistSuccess("");
+    setSelectedListing(listing);
+  };
+
+  const handleCloseListing = () => {
+    setWishlistError("");
+    setWishlistSuccess("");
+    setWishlistBusyItemId(null);
+    setSelectedListing(null);
+  };
+
   if (loading) {
     return (
       <div className="listings-section">
@@ -166,9 +191,6 @@ export default function Listings() {
   return (
     <div className="listings-section">
       <h2>Active Listings</h2>
-
-      {wishlistError && <div className="error">{wishlistError}</div>}
-      {wishlistSuccess && <div className="success">{wishlistSuccess}</div>}
 
       <div className="filters-section">
         <div className="filter-group">
@@ -221,7 +243,7 @@ export default function Listings() {
               description={listing.description}
               price={listing.price}
               seller={listing.sellerName}
-              onClick={() => setSelectedListing(listing)}
+              onClick={() => handleOpenListing(listing)}
             />
           ))
         )}
@@ -230,10 +252,12 @@ export default function Listings() {
       {selectedListing && (
         <ListingModal
           listing={selectedListing}
-          onClose={() => setSelectedListing(null)}
+          onClose={handleCloseListing}
           isWishlisted={wishlistItemIds.has(selectedListing.id)}
           onToggleWishlist={() => handleToggleWishlist(selectedListing.id)}
           wishlistBusy={wishlistBusyItemId === selectedListing.id}
+          wishlistError={wishlistError}
+          wishlistSuccess={wishlistSuccess}
         />
       )}
     </div>

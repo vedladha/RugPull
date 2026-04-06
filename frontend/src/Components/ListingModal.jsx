@@ -1,7 +1,15 @@
 import { useEffect } from "react";
 import "../style/listing-modal.css"
 
-export default function ListingModal({ listing, onClose }) {
+export default function ListingModal({
+  listing,
+  onClose,
+  isWishlisted = false,
+  onToggleWishlist,
+  wishlistBusy = false,
+  wishlistError = "",
+  wishlistSuccess = "",
+}) {
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();
@@ -50,12 +58,36 @@ export default function ListingModal({ listing, onClose }) {
           <div className="listing-modal-seller">Seller: {listing.sellerName}</div>
         </div>
 
+        {wishlistError && (
+          <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
+            {wishlistError}
+          </div>
+        )}
+
+        {wishlistSuccess && (
+          <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
+            {wishlistSuccess}
+          </div>
+        )}
+
         <div className="listing-modal-actions">
           <button type="button" className="listing-action-btn listing-action-btn-primary">
             Buy
           </button>
           <button type="button" className="listing-action-btn listing-action-btn-secondary">
             Add to Cart
+          </button>
+          <button
+            type="button"
+            className="listing-action-btn listing-action-btn-secondary"
+            onClick={onToggleWishlist}
+            disabled={wishlistBusy}
+          >
+            {wishlistBusy
+              ? "Saving..."
+              : isWishlisted
+                ? "Remove from Wishlist"
+                : "Add to Wishlist"}
           </button>
         </div>
       </div>
