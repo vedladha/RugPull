@@ -109,6 +109,22 @@ public class WalletServiceImpl implements WalletService {
   }
 
   @Override
+  public void fundWallet(Wallet wallet, float amount) throws IllegalArgumentException {
+    assertNotNull(wallet, "WalletServiceImpl", "wallet", "fundWallet");
+    if (amount <= 0) {
+      throw new IllegalArgumentException(
+          "can not fund a wallet with amounts less than or equal to 0");
+    }
+
+    // Wallet is actually just a accountId and privateKey let's make one for our operator
+    final Wallet operatorWallet =
+        new WalletImpl(this.client.getOperatorAccountId(), this.operatorKey);
+
+    // delegate to our transferBalance method
+    transferBalance(operatorWallet, wallet, amount);
+  }
+
+  @Override
   public TransferResponse transferBalance(Wallet sender, Wallet receiver, float amount)
       throws IllegalArgumentException, IllegalStateException {
     assertNotNull(sender, "WalletServiceImpl", "sender", "transferBalance");
