@@ -267,3 +267,111 @@ describe("AuthProvider - updateProfile", () => {
         await waitFor(() => expect(error).toBe("Update failed"));
     });
 });
+
+describe("AuthProvider - wishlist", () => {
+    it("returns wishlist items after successful getWishlist", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    wishlist: [{ userId: 1, itemId: 10 }, { userId: 1, itemId: 11 }],
+                }),
+            }));
+
+        let wishlist = [];
+        const WishlistConsumer = () => {
+            const { getWishlist } = useAuth();
+            return (
+                <button onClick={async () => {
+                    wishlist = await getWishlist();
+                }}>Get Wishlist</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Get Wishlist").click(); });
+        await waitFor(() => expect(wishlist).toHaveLength(2));
+    });
+
+    it("returns saved row after successful addToWishlist", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ wishlist: { userId: 1, itemId: 10 } }),
+            }));
+
+        let saved = null;
+        const WishlistConsumer = () => {
+            const { addToWishlist } = useAuth();
+            return (
+                <button onClick={async () => {
+                    saved = await addToWishlist(10);
+                }}>Add Wishlist</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Add Wishlist").click(); });
+        await waitFor(() => expect(saved.itemId).toBe(10));
+    });
+
+    it("throws backend error when addToWishlist fails", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: false,
+                json: () => Promise.resolve({ error: "Authentication required" }),
+            }));
+
+        let error = null;
+        const WishlistConsumer = () => {
+            const { addToWishlist } = useAuth();
+            return (
+                <button onClick={async () => {
+                    try { await addToWishlist(10); }
+                    catch (e) { error = e.message; }
+                }}>Add Wishlist</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Add Wishlist").click(); });
+        await waitFor(() => expect(error).toBe("Authentication required"));
+    });
+
+    it("returns confirmation after successful removeFromWishlist", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    message: "Item removed from wishlist",
+                    itemId: 10,
+                }),
+            }));
+
+        let result = null;
+        const WishlistConsumer = () => {
+            const { removeFromWishlist } = useAuth();
+            return (
+                <button onClick={async () => {
+                    result = await removeFromWishlist(10);
+                }}>Remove Wishlist</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Remove Wishlist").click(); });
+        await waitFor(() => expect(result.itemId).toBe(10));
+    });
+});

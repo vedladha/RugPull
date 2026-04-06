@@ -126,8 +126,64 @@ async function walletBalance() {
     return data.profile;
   }
 
+  async function getWishlist() {
+    const response = await fetch(`${API}/wishlist`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch wishlist");
+    }
+
+    const data = await response.json();
+    return data.wishlist || [];
+  }
+
+  async function addToWishlist(itemId) {
+    const response = await fetch(`${API}/wishlist/${itemId}`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to add item to wishlist");
+    }
+
+    const data = await response.json();
+    return data.wishlist;
+  }
+
+  async function removeFromWishlist(itemId) {
+    const response = await fetch(`${API}/wishlist/${itemId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to remove item from wishlist");
+    }
+
+    return response.json();
+  }
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, walletBalance, profileDetails, updateProfile, register, loading }}>
+    <AuthContext.Provider value={{
+      user,
+      signIn,
+      signOut,
+      walletBalance,
+      profileDetails,
+      updateProfile,
+      getWishlist,
+      addToWishlist,
+      removeFromWishlist,
+      register,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );
