@@ -4,7 +4,15 @@ import "../style/listing-modal.css"
 
 const API = "http://localhost:3001";
 
-export default function ListingModal({ listing, onClose }) {
+export default function ListingModal({
+  listing,
+  onClose,
+  isWishlisted = false,
+  onToggleWishlist,
+  wishlistBusy = false,
+  wishlistError = "",
+  wishlistSuccess = "",
+}) {
   const navigate = useNavigate();
   const [addingToCart, setAddingToCart] = useState(false)
 
@@ -65,6 +73,18 @@ export default function ListingModal({ listing, onClose }) {
           <div className="listing-modal-seller">Seller: {listing.sellerName}</div>
         </div>
 
+        {wishlistError && (
+          <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
+            {wishlistError}
+          </div>
+        )}
+
+        {wishlistSuccess && (
+          <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
+            {wishlistSuccess}
+          </div>
+        )}
+
         <div className="listing-modal-actions">
           <button
             type="button"
@@ -87,8 +107,20 @@ export default function ListingModal({ listing, onClose }) {
           <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={addToCart}>
             {addingToCart ? "Adding to your Cart" : "Add to Cart"}
           </button>
+          <button
+            type="button"
+            className="listing-action-btn listing-action-btn-secondary"
+            onClick={onToggleWishlist}
+            disabled={wishlistBusy}
+          >
+            {wishlistBusy
+              ? "Saving..."
+              : isWishlisted
+                ? "Remove from Wishlist"
+                : "Add to Wishlist"}
+          </button>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
