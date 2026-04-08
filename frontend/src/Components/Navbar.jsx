@@ -35,6 +35,16 @@ export default function Navbar({ onSignInClick, currentPage }) {
             Marketplace
           </Link>
         </button>
+        {user && (
+          <button className="nav-btn">
+            <Link
+              to="/wishlist"
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              Wishlist
+            </Link>
+          </button>
+        )}
         <button className="nav-btn">
           <Link to="/sell" style={{ textDecoration: "none", color: "inherit" }}>
             Sell

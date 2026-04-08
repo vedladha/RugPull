@@ -296,6 +296,33 @@ describe("AuthProvider - wishlist", () => {
         await waitFor(() => expect(wishlist).toHaveLength(2));
     });
 
+    it("returns detailed wishlist items after successful getWishlistItems", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    wishlistItems: [{ itemId: 10, name: "Guitar" }],
+                }),
+            }));
+
+        let wishlistItems = [];
+        const WishlistConsumer = () => {
+            const { getWishlistItems } = useAuth();
+            return (
+                <button onClick={async () => {
+                    wishlistItems = await getWishlistItems();
+                }}>Get Wishlist Items</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Get Wishlist Items").click(); });
+        await waitFor(() => expect(wishlistItems[0].name).toBe("Guitar"));
+    });
+
     it("returns saved row after successful addToWishlist", async () => {
         vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false })
@@ -373,6 +400,32 @@ describe("AuthProvider - wishlist", () => {
 
         await act(async () => { screen.getByText("Remove Wishlist").click(); });
         await waitFor(() => expect(result.itemId).toBe(10));
+    });
+
+    it("throws backend error when getWishlistItems fails", async () => {
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({
+                ok: false,
+                json: () => Promise.resolve({ error: "Authentication required" }),
+            }));
+
+        let error = null;
+        const WishlistConsumer = () => {
+            const { getWishlistItems } = useAuth();
+            return (
+                <button onClick={async () => {
+                    try { await getWishlistItems(); }
+                    catch (e) { error = e.message; }
+                }}>Get Wishlist Items</button>
+            );
+        };
+
+        renderWithAuth(<WishlistConsumer />);
+        await waitFor(() => {});
+
+        await act(async () => { screen.getByText("Get Wishlist Items").click(); });
+        await waitFor(() => expect(error).toBe("Authentication required"));
     });
 });
 

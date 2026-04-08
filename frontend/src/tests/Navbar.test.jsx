@@ -85,6 +85,24 @@ describe("Navbar", () => {
     expect(screen.getByTestId("location").textContent).toBe("/profile");
   });
 
+  it("navigates to /wishlist when Wishlist is clicked", async () => {
+    mockUseAuth.mockReturnValue({
+      user: { displayName: "Test User" },
+      signOut: vi.fn(),
+      walletBalance: vi.fn().mockResolvedValue(-999.99),
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Navbar />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByText("Wishlist"));
+    expect(screen.getByTestId("location").textContent).toBe("/wishlist");
+  });
+
   /*it("navigates to /sell when Sell is clicked", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>

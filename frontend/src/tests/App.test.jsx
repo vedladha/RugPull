@@ -12,7 +12,11 @@ vi.mock("../Auth/auth-context", () => ({
 
 beforeEach(() => {
     mockUseAuth.mockReturnValue({
-        user: null, signOut: vi.fn(), walletBalance: vi.fn().mockResolvedValue(-999.99)
+        user: null,
+        signOut: vi.fn(),
+        walletBalance: vi.fn().mockResolvedValue(-999.99),
+        getWishlistItems: vi.fn().mockResolvedValue([]),
+        removeFromWishlist: vi.fn(),
     });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
         ok: true,
@@ -97,12 +101,30 @@ describe("App", () => {
             }),
             updateProfile: vi.fn(),
             signOut: vi.fn(),
-            walletBalance: vi.fn().mockResolvedValue(-999.99)
+            walletBalance: vi.fn().mockResolvedValue(-999.99),
+            getWishlistItems: vi.fn().mockResolvedValue([]),
+            removeFromWishlist: vi.fn(),
         });
 
         renderApp("/profile");
         await waitFor(() => {
             expect(screen.getByText("Your Profile")).toBeInTheDocument();
+        });
+    });
+
+    it("renders wishlist page at /wishlist", async () => {
+        mockUseAuth.mockReturnValue({
+            user: { email: "test@example.com", displayName: "Test User" },
+            signOut: vi.fn(),
+            walletBalance: vi.fn().mockResolvedValue(-999.99),
+            getWishlistItems: vi.fn().mockResolvedValue([]),
+            removeFromWishlist: vi.fn(),
+        });
+
+        renderApp("/wishlist");
+
+        await waitFor(() => {
+            expect(screen.getByText("Your Wishlist")).toBeInTheDocument();
         });
     });
 });

@@ -7,6 +7,7 @@ import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
 import SellPage from "./SellPage.jsx"
 import ProfilePage from "./ProfilePage.jsx"
+import WishlistPage from "./WishlistPage.jsx";
 import AuthModal from "./Auth/AuthModal.jsx";
 import Footer from "./Components/Footer.jsx";
 
@@ -42,6 +43,9 @@ export default function App() {
         />
         <Route path="/profile" element={
           <ProfilePage />
+        } />
+        <Route path="/wishlist" element={
+          <WishlistPage />
         } />
       </Routes>
       <Footer />

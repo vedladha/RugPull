@@ -157,6 +157,21 @@ async function walletBalance() {
     return data.wishlist || [];
   }
 
+  async function getWishlistItems() {
+    const response = await fetch(`${API}/wishlist/items`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch wishlist items");
+    }
+
+    const data = await response.json();
+    return data.wishlistItems || [];
+  }
+
   async function addToWishlist(itemId) {
     const response = await fetch(`${API}/wishlist/${itemId}`, {
       method: "POST",
@@ -196,6 +211,7 @@ async function walletBalance() {
       updateProfile,
       changePassword,
       getWishlist,
+      getWishlistItems,
       addToWishlist,
       removeFromWishlist,
       register,
