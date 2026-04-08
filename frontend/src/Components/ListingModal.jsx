@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../style/listing-modal.css"
 
 const API = "http://localhost:3001";
 
 export default function ListingModal({ listing, onClose }) {
+  const navigate = useNavigate();
   const [addingToCart, setAddingToCart] = useState(false)
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function ListingModal({ listing, onClose }) {
 
   const addToCart = async () => {
     setAddingToCart(true);
-    
+
     await fetch(`${API}/cart/${listing.itemId}`, {
       method: "POST",
       credentials: "include"
@@ -64,8 +66,23 @@ export default function ListingModal({ listing, onClose }) {
         </div>
 
         <div className="listing-modal-actions">
-          <button type="button" className="listing-action-btn listing-action-btn-primary">
-            Buy
+          <button
+            type="button"
+            className="listing-action-btn listing-action-btn-primary"
+            onClick={() => navigate("/order", {
+              state: {
+                source: "listing",
+                items: [
+                  {
+                    ...listing,
+                    quantity: 1,
+                    fromCart: false,
+                  },
+                ],
+              },
+            })}
+          >
+            Buy It Now
           </button>
           <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={addToCart}>
             {addingToCart ? "Adding to your Cart" : "Add to Cart"}
