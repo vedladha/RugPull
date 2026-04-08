@@ -29,5 +29,5 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
    * @param user the user object
    * @return the matching order if it belongs to the given user
    */
-  Optional<Order> findByOrderIdAndUserId(Integer orderId, User user);
+  Optional<Order> findByOrderIdAndUser(Integer orderId, User user);
 }

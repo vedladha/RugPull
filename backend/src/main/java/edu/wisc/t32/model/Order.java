@@ -48,7 +48,7 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     @Column(name = "total_price", nullable = false, precision = 30, scale = 8)
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -91,9 +91,15 @@ public class Order {
     public void finalizeOrder() {
         BigDecimal totalPrice = BigDecimal.ZERO;
         for (OrderItem item : items) {
-            totalPrice.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            totalPrice = totalPrice.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
         this.totalPrice = totalPrice;
         this.orderStatus = OrderStatus.AWAITING_CONFIRMATION;
+    }
+
+    public void addItemToOrder(Item item, Integer quantity) {
+        OrderItem newItem = new OrderItem(this, item, quantity, item.getPrice());
+        this.items.add(newItem);
+        this.totalPrice = this.totalPrice.add(newItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity)));
     }
 }

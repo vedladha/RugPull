@@ -57,37 +57,26 @@ public class OrderService {
    */
   @Transactional
   public Order createOrder(User currentUser, OrderCreateRequest request) {
-    if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
-      throw new IllegalArgumentException("Orders must contain at least one item.");
-    }
+    validateRequest(request);
 
+    // Initialize the order
     Order order = new Order(currentUser, OrderStatus.PENDING);
-    orderRepository.save(order);
 
     for (OrderCreateRequest.ItemRequest itemRequest : request.getItems()) {
-      // Get the item being ordered and ensure it is valid
-      Item itemBeingOrdered = 
-        itemRepository.findByItemIdAndDeletedFalseForUpdate(itemRequest.getItemId())
-        .orElseThrow(() -> new OrderItemNotFoundException("Item not found."));
+      Item item = itemRepository.findByItemIdAndDeletedFalseForUpdate(itemRequest.getItemId())
+          .orElseThrow(() -> new OrderItemNotFoundException("Item not found."));
 
-      // Validate stock
-      if (itemRequest.getQuantity() <= 0) {
-        throw new IllegalArgumentException("Order quantity must be positive.");
-      }
-      if (itemBeingOrdered.getStock() == null || itemBeingOrdered.getStock() < itemRequest.getQuantity()) {
-        throw new InsufficientStockException("Insufficient stock.");
-      }
+      // Reserve the stock
+      reserveStock(item, itemRequest.getQuantity());
 
-      // Update inventory
-      itemBeingOrdered.setStock(itemBeingOrdered.getStock() - itemRequest.getQuantity());
-
-      // Create the order row
-      OrderItem orderItem = 
-        new OrderItem(order, itemBeingOrdered, itemRequest.getQuantity(), itemBeingOrdered.getPrice());
-      orderItemRepository.save(orderItem);
+      // Add the item to the order
+      order.addItemToOrder(item, itemRequest.getQuantity());
     }
 
+    // Ensure the order contains all the information
     order.finalizeOrder();
+      
+    // Save the order and all the OrderItems
     return orderRepository.save(order);
   }
 
@@ -99,5 +88,53 @@ public class OrderService {
    */
   public List<Order> getOrderHistory(User currentUser) {
     return orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+  }
+
+  /**
+   * Checks that the quantity is valid for the current stock of an item
+   * and reduces the stock by that quantity.
+   * 
+   * @param item The item to check the stock of
+   * @param quantity The quantity of the item wanted
+   * @throws InsufficientStockException when there is less stock than the quantity requested
+   * @throws IllegalArgumentException if the quantity is not positive
+   */
+  public void reserveStock(Item item, Integer quantity) {
+    if (quantity == null || quantity <= 0) {
+      throw new IllegalArgumentException("Quantity must be positive.");
+    }
+    if (item.getStock() < quantity) {
+      throw new InsufficientStockException("Insufficient stock");
+    }
+    item.setStock(item.getStock() - quantity);
+  }
+
+  /**
+   * Validates the order request to ensure it contains at least one item
+   * and that all item details are present and valid.
+   *
+   * @param request the order payload to validate
+   * @throws IllegalArgumentException if the request is null, empty, or contains invalid data
+   */
+  private void validateRequest(OrderCreateRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Order request cannot be null.");
+    }
+      
+    if (request.getItems() == null || request.getItems().isEmpty()) {
+      throw new IllegalArgumentException("Order must contain at least one item.");
+    }
+
+    for (OrderCreateRequest.ItemRequest item : request.getItems()) {
+      if (item.getItemId() == null) {
+        throw new IllegalArgumentException("itemId is required for all items.");
+      }
+      if (item.getQuantity() == null) {
+        throw new IllegalArgumentException("quantity is required for all items.");
+      }
+      if (item.getQuantity() <= 0) {
+        throw new IllegalArgumentException("quantity must be greater than 0.");
+      }
+    }
   }
 }
