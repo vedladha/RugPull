@@ -64,8 +64,6 @@ public class OrderService {
     Order order = new Order(currentUser, OrderStatus.PENDING);
     orderRepository.save(order);
 
-    BigDecimal totalPrice = BigDecimal.ZERO;
-
     for (OrderCreateRequest.ItemRequest itemRequest : request.getItems()) {
       // Get the item being ordered and ensure it is valid
       Item itemBeingOrdered = 
@@ -87,13 +85,9 @@ public class OrderService {
       OrderItem orderItem = 
         new OrderItem(order, itemBeingOrdered, itemRequest.getQuantity(), itemBeingOrdered.getPrice());
       orderItemRepository.save(orderItem);
-
-      // Accumulate total price
-      BigDecimal lineTotal = itemBeingOrdered.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
-      totalPrice = totalPrice.add(lineTotal);
     }
 
-    order.setTotalPrice(totalPrice);
+    order.finalizeOrder();
     return orderRepository.save(order);
   }
 

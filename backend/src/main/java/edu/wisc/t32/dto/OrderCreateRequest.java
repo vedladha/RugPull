@@ -8,10 +8,6 @@ import java.util.List;
  */
 public class OrderCreateRequest {
     private List<ItemRequest> items;
-    private Integer userId;
-
-  public Integer getUserId() { return userId; }
-  public void setUserId(Integer userId) { this.userId = userId; }
 
     public List<ItemRequest> getItems() { return items; }
     public void setItems(List<ItemRequest> items) { this.items = items; }

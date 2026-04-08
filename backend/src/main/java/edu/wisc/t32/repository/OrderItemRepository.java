@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 /**
  * Repository interface for {@link OrderItem} entities.
  */
-@Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     /**
      * Finds all items associated with a specific order by its primary identifier.

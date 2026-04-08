@@ -38,7 +38,7 @@ public class OrderItem {
     private Integer quantity = 1;
 
     @Column(name = "unit_price", nullable = false, precision = 30, scale = 8)
-    private BigDecimal unit_price;
+    private BigDecimal unitPrice;
 
     // -- Constructors -- 
     protected OrderItem() {}

@@ -1,6 +1,7 @@
 package edu.wisc.t32.model;
 
 import edu.wisc.t32.enums.OrderStatus;
+import edu.wisc.t32.model.OrderItem;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,9 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column(name = "total_price", nullable = false, precision = 30, scale = 8)
+    private BigDecimal totalPrice;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -68,11 +73,27 @@ public class Order {
     public User getUser() { return user; }
     public OrderStatus getOrderStatus() { return orderStatus; }
     public List<OrderItem> getItems() { return items; }
+    public BigDecimal getTotalPrice() { return totalPrice; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     // -- Setters --
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    // -- Other --
+    /**
+     * Do everything necessary to finalize the ordering process:
+     * - Calculate total price
+     * - Set order status to AWAITING_CONFIRMATION
+     */
+    public void finalizeOrder() {
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (OrderItem item : items) {
+            totalPrice.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+        this.totalPrice = totalPrice;
+        this.orderStatus = OrderStatus.AWAITING_CONFIRMATION;
     }
 }
