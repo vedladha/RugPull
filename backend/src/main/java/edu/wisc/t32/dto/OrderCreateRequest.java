@@ -1,47 +1,32 @@
 package edu.wisc.t32.dto;
 
+import java.util.List;
+
 /**
- * Data Transfer Object representing a request to create a new order.
- * This request supports a single item per order row.
+ * Request payload for creating a new order.
+ * Contains a list of items within the order.
  */
 public class OrderCreateRequest {
+    private List<ItemRequest> items;
+    private Integer userId;
 
-  private Integer itemId;
-  private Integer quantity;
+  public Integer getUserId() { return userId; }
+  public void setUserId(Integer userId) { this.userId = userId; }
 
-  /**
-   * Retrieves the item ID being ordered.
-   *
-   * @return the item ID
-   */
-  public Integer getItemId() {
-    return itemId;
-  }
+    public List<ItemRequest> getItems() { return items; }
+    public void setItems(List<ItemRequest> items) { this.items = items; }
 
-  /**
-   * Sets the item ID being ordered.
-   *
-   * @param itemId the item ID to set
-   */
-  public void setItemId(Integer itemId) {
-    this.itemId = itemId;
-  }
+    /**
+     * Individual line item in the order request.
+     */
+    public static class ItemRequest {
+        private Integer itemId;
+        private Integer quantity;
 
-  /**
-   * Retrieves the quantity being ordered.
-   *
-   * @return the quantity
-   */
-  public Integer getQuantity() {
-    return quantity;
-  }
+        public Integer getItemId() { return itemId; }
+        public void setItemId(Integer itemId) { this.itemId = itemId; }
 
-  /**
-   * Sets the quantity being ordered.
-   *
-   * @param quantity the quantity to set
-   */
-  public void setQuantity(Integer quantity) {
-    this.quantity = quantity;
-  }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    }
 }

@@ -1,221 +1,78 @@
 package edu.wisc.t32.model;
 
+import edu.wisc.t32.enums.OrderStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entity representing an order in the database.
- * Mapped to the "Orders" table and stores a single item per order row.
+ * Mapped to the "orders" table; acts as a parent for multiple OrderItems.
  */
 @Entity
-@Table(name = "Orders")
+@Table(name = "orders")
 public class Order {
 
-  /**
-   * The unique identifier for the order.
-   */
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "order_id")
-  private Integer orderId;
+    // -- Values --
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_id")
+    private Integer orderId;
 
-  /**
-   * The identifier of the user who placed the order.
-   */
-  @Column(name = "user_id")
-  private Integer userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", updatable = false)
+    private User user;
 
-  /**
-   * The identifier of the item included in the order.
-   */
-  @Column(name = "item_id")
-  private Integer itemId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
-  /**
-   * The quantity of the item ordered.
-   */
-  @Column(name = "quantity")
-  private Integer quantity = 1;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
 
-  /**
-   * The item price captured at the time the order was placed.
-   */
-  @Column(name = "price", nullable = false, precision = 30, scale = 8)
-  private BigDecimal price;
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-  /**
-   * The marketplace fee percentage applied to the order.
-   */
-  @Column(name = "fee_percentage", precision = 5, scale = 2)
-  private BigDecimal feePercentage = new BigDecimal("2.50");
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
 
-  /**
-   * The current status of the order.
-   */
-  @Column(name = "order_status", nullable = false)
-  private String orderStatus = "pending";
+    // -- Constructors -- 
+    protected Order() {}
 
-  /**
-   * The timestamp when the order record was created.
-   * Managed entirely by the database schema.
-   */
-  @Column(name = "created_at", insertable = false, updatable = false)
-  private LocalDateTime createdAt;
+    public Order(User user) {
+        this.user = user;
+    }
 
-  /**
-   * The timestamp when the order record was last updated.
-   * Managed entirely by the database schema.
-   */
-  @Column(name = "updated_at", insertable = false, updatable = false)
-  private LocalDateTime updatedAt;
+    public Order(User user, OrderStatus orderStatus) {
+        this.user = user;
+        this.orderStatus = orderStatus;
+    }
 
-  /**
-   * Retrieves the unique identifier for the order.
-   *
-   * @return the order ID
-   */
-  public Integer getOrderId() {
-    return orderId;
-  }
+    // -- Getters --
+    public Integer getOrderId() { return orderId; }
+    public User getUser() { return user; }
+    public OrderStatus getOrderStatus() { return orderStatus; }
+    public List<OrderItem> getItems() { return items; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
-  /**
-   * Sets the unique identifier for the order.
-   *
-   * @param orderId the order ID to set
-   */
-  public void setOrderId(Integer orderId) {
-    this.orderId = orderId;
-  }
-
-  /**
-   * Retrieves the user ID associated with the order.
-   *
-   * @return the user ID
-   */
-  public Integer getUserId() {
-    return userId;
-  }
-
-  /**
-   * Sets the user ID associated with the order.
-   *
-   * @param userId the user ID to set
-   */
-  public void setUserId(Integer userId) {
-    this.userId = userId;
-  }
-
-  /**
-   * Retrieves the item ID associated with the order.
-   *
-   * @return the item ID
-   */
-  public Integer getItemId() {
-    return itemId;
-  }
-
-  /**
-   * Sets the item ID associated with the order.
-   *
-   * @param itemId the item ID to set
-   */
-  public void setItemId(Integer itemId) {
-    this.itemId = itemId;
-  }
-
-  /**
-   * Retrieves the order quantity.
-   *
-   * @return the quantity
-   */
-  public Integer getQuantity() {
-    return quantity;
-  }
-
-  /**
-   * Sets the order quantity.
-   *
-   * @param quantity the quantity to set
-   */
-  public void setQuantity(Integer quantity) {
-    this.quantity = quantity;
-  }
-
-  /**
-   * Retrieves the item price captured on the order.
-   *
-   * @return the order price
-   */
-  public BigDecimal getPrice() {
-    return price;
-  }
-
-  /**
-   * Sets the item price captured on the order.
-   *
-   * @param price the price to set
-   */
-  public void setPrice(BigDecimal price) {
-    this.price = price;
-  }
-
-  /**
-   * Retrieves the marketplace fee percentage applied to the order.
-   *
-   * @return the fee percentage
-   */
-  public BigDecimal getFeePercentage() {
-    return feePercentage;
-  }
-
-  /**
-   * Sets the marketplace fee percentage applied to the order.
-   *
-   * @param feePercentage the fee percentage to set
-   */
-  public void setFeePercentage(BigDecimal feePercentage) {
-    this.feePercentage = feePercentage;
-  }
-
-  /**
-   * Retrieves the current order status.
-   *
-   * @return the order status
-   */
-  public String getOrderStatus() {
-    return orderStatus;
-  }
-
-  /**
-   * Sets the current order status.
-   *
-   * @param orderStatus the order status to set
-   */
-  public void setOrderStatus(String orderStatus) {
-    this.orderStatus = orderStatus;
-  }
-
-  /**
-   * Retrieves the timestamp when the order was created.
-   *
-   * @return the creation timestamp
-   */
-  public LocalDateTime getCreatedAt() {
-    return createdAt;
-  }
-
-  /**
-   * Retrieves the timestamp when the order was last updated.
-   *
-   * @return the last update timestamp
-   */
-  public LocalDateTime getUpdatedAt() {
-    return updatedAt;
-  }
+    // -- Setters --
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
 }
