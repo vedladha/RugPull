@@ -9,11 +9,14 @@ import static org.mockito.Mockito.when;
 
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.model.Wishlist;
 import edu.wisc.t32.model.WishlistId;
 import edu.wisc.t32.repository.ItemRepository;
+import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.WishlistRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +37,9 @@ class WishlistControllerTest {
 
   @Mock
   private ItemRepository itemRepository;
+
+  @Mock
+  private UserProfileRepository userProfileRepository;
 
   @Mock
   private CurrentUserService currentUserService;
@@ -90,6 +96,74 @@ class WishlistControllerTest {
     when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = wishlistController.getWishlist(null);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+  }
+
+  @Test
+  void getWishlistItems_returnsDetailedItems_whenAuthenticated() {
+    User user = new User();
+    user.setUserId(1);
+
+    Wishlist wishlistEntry = new Wishlist();
+    wishlistEntry.setUserId(1);
+    wishlistEntry.setItemId(10);
+
+    Item item = new Item();
+    item.setItemId(10);
+    item.setUserId(5);
+    item.setName("Guitar");
+    item.setDescription("Great condition");
+    item.setPrice(new BigDecimal("5.20"));
+    item.setStock(2);
+
+    UserProfile seller = new UserProfile();
+    seller.setDisplayName("john");
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(wishlistRepository.findByUserId(1)).thenReturn(List.of(wishlistEntry));
+    when(itemRepository.findByItemIdInAndDeletedFalse(List.of(10))).thenReturn(List.of(item));
+    when(userProfileRepository.findByUserId(5)).thenReturn(seller);
+
+    ResponseEntity<?> response = wishlistController.getWishlistItems(VALID_TOKEN);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> wishlistItems = (List<?>) body.get("wishlistItems");
+    assertEquals(1, wishlistItems.size());
+
+    Map<?, ?> wishlistItem = (Map<?, ?>) wishlistItems.get(0);
+    assertEquals(10, wishlistItem.get("itemId"));
+    assertEquals("Guitar", wishlistItem.get("name"));
+    assertEquals("john", wishlistItem.get("sellerName"));
+  }
+
+  @Test
+  void getWishlistItems_returnsEmptyList_whenNoItems() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(wishlistRepository.findByUserId(1)).thenReturn(List.of());
+
+    ResponseEntity<?> response = wishlistController.getWishlistItems(VALID_TOKEN);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    List<?> wishlistItems = (List<?>) body.get("wishlistItems");
+    assertEquals(0, wishlistItems.size());
+  }
+
+  @Test
+  void getWishlistItems_returnsUnauthorized_whenNotAuthenticated() {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = wishlistController.getWishlistItems(null);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
