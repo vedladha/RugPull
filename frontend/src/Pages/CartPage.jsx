@@ -26,10 +26,8 @@ export default function CartPage() {
                 if (!cartResponse.ok) throw new Error("Failed to fetch cart data");
                 const cartJson = await cartResponse.json();
 
-                // Safely extract the array
                 const cartItems = Array.isArray(cartJson.cart) ? cartJson.cart : (Array.isArray(cartJson) ? cartJson : []);
 
-                // Early exit if cart is empty to prevent failing the batch request
                 if (cartItems.length === 0) {
                     setCart([]);
                     setLoading(false);
@@ -50,14 +48,7 @@ export default function CartPage() {
                 if (!itemsResponse.ok) throw new Error("Failed to fetch batch items");
                 const itemsJson = await itemsResponse.json();
 
-                let fetchedItems = [];
-                if (Array.isArray(itemsJson?.items?.items)) {
-                    fetchedItems = itemsJson.items.items; // Handles the double wrap
-                } else if (Array.isArray(itemsJson?.items)) {
-                    fetchedItems = itemsJson.items;       // Handles a single wrap
-                } else if (Array.isArray(itemsJson)) {
-                    fetchedItems = itemsJson;             // Handles a raw array
-                }
+                let fetchedItems = itemsJson.items;
 
                 const itemLookup = new Map(fetchedItems.map(item => [item.itemId, item]));
 

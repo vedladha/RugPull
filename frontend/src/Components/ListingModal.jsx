@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "../style/listing-modal.css"
 
 const API = "http://localhost:3001";
 
 export default function ListingModal({ listing, onClose }) {
+  const [addingToCart, setAddingToCart] = useState(false)
+
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();
@@ -20,6 +22,15 @@ export default function ListingModal({ listing, onClose }) {
   }, [onClose]);
 
   if (!listing) return null;
+
+  const addToCart = async () => {
+    setAddingToCart(true);
+    
+    await fetch(`${API}/cart/${listing.itemId}`, {
+      method: "POST",
+      credentials: "include"
+    }).then(() => setAddingToCart(false));
+  }
 
   return (
     <div className="listing-modal-overlay" onClick={onClose} role="presentation">
@@ -56,16 +67,11 @@ export default function ListingModal({ listing, onClose }) {
           <button type="button" className="listing-action-btn listing-action-btn-primary">
             Buy
           </button>
-          <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={
-            async () => await fetch(`${API}/cart/${listing.itemId}`, {
-              method: "POST",
-              credentials: "include"
-            })
-          }>
-          Add to Cart
-        </button>
+          <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={addToCart}>
+            {addingToCart ? "Adding to your Cart" : "Add to Cart"}
+          </button>
+        </div>
       </div>
-    </div>
     </div >
   );
 }

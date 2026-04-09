@@ -134,8 +134,8 @@ public class ItemController {
 
     final List<Item> items = itemRepository.findByItemIdInAndDeletedFalse(ids);
     if (items.isEmpty()) {
-      LOGGER.info("Found no DB entries");
-      return ResponseEntity.ok(response);
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "No item's founding matching input list"));
     }
 
     response.setItems(items.stream().map(ItemModelDto::fromItem).toList());

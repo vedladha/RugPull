@@ -462,6 +462,20 @@ class ItemControllerTest {
   }
 
   @Test
+  void getItemsBatch_returnsItems_whenIdsAreInvalid() {
+    List<Integer> ids = List.of(1, 2);
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of());
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
+
+    assertNotNull(body);
+    assertEquals("No item's founding matching input list", body.get("error"));
+    verify(itemRepository).findByItemIdInAndDeletedFalse(any());
+  }
+
+
+  @Test
   void getItemsBatch_returnsBadRequest_whenIdsListIsNull() {
     ResponseEntity<?> responseEntity = itemController.getItemsBatch(null);
 
@@ -483,21 +497,6 @@ class ItemControllerTest {
     assertEquals("request body is empty or missing", body.get("error"));
 
     verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
-  }
-
-  @Test
-  void getItemsBatch_returnsOkResponseWithEmptyList_whenNoItemsMatch() {
-    List<Integer> ids = List.of(99, 100);
-    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of());
-
-    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    ItemBatchRequest body = (ItemBatchRequest) responseEntity.getBody();
-    assertNotNull(body);
-    assertTrue(body.getItems().isEmpty());
-
-    verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
   }
 
   private ItemCreateRequest buildCreateRequest(String name, String description, String price,
