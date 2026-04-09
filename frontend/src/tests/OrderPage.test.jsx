@@ -36,7 +36,7 @@ describe("OrderPage", () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        order: { orderId: 77, itemId: 9, quantity: 1 },
+        order: { orderId: 77 },
       }),
     });
 
@@ -66,7 +66,9 @@ describe("OrderPage", () => {
         expect.objectContaining({
           method: "POST",
           credentials: "include",
-          body: JSON.stringify({ itemId: 9, quantity: 1 }),
+          body: JSON.stringify({
+            items: [{ itemId: 9, quantity: 1 }],
+          }),
         }),
       );
     });
@@ -74,21 +76,16 @@ describe("OrderPage", () => {
     expect(await screen.findByText("Order submitted.")).toBeInTheDocument();
   });
 
-  it("submits cart checkout items sequentially and keeps failed items for retry", async () => {
+  it("submits cart checkout as one batched order and clears cart items after success", async () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          order: { orderId: 11, itemId: 1, quantity: 2 },
+          order: { orderId: 11 },
         }),
       })
       .mockResolvedValueOnce({ ok: true })
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({
-          error: "insufficient stock",
-        }),
-      });
+      .mockResolvedValueOnce({ ok: true });
 
     renderOrderPage({
       source: "cart",
@@ -119,18 +116,65 @@ describe("OrderPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Place orders" }));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenNthCalledWith(
-        2,
-        "http://localhost:3001/cart/1",
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3001/orders",
         expect.objectContaining({
-          method: "DELETE",
+          method: "POST",
           credentials: "include",
+          body: JSON.stringify({
+            items: [
+              { itemId: 1, quantity: 2 },
+              { itemId: 2, quantity: 1 },
+            ],
+          }),
         }),
       );
     });
 
-    expect(await screen.findByText(/Some items could not be ordered: Tripod\./i)).toBeInTheDocument();
-    expect(screen.queryByText("Camera")).toBeNull();
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://localhost:3001/cart/1",
+      expect.objectContaining({
+        method: "DELETE",
+        credentials: "include",
+      }),
+    );
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://localhost:3001/cart/2",
+      expect.objectContaining({
+        method: "DELETE",
+        credentials: "include",
+      }),
+    );
+    expect(await screen.findByText("Order submitted.")).toBeInTheDocument();
+  });
+
+  it("shows backend batch errors without clearing the checkout items", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        error: "Insufficient stock",
+      }),
+    });
+
+    renderOrderPage({
+      source: "cart",
+      items: [
+        {
+          itemId: 2,
+          name: "Tripod",
+          description: "Carbon fiber",
+          price: 25,
+          sellerName: "Carol",
+          stock: 1,
+          quantity: 1,
+          fromCart: true,
+        },
+      ],
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Place order" }));
+
+    expect(await screen.findByText("Insufficient stock")).toBeInTheDocument();
     expect(screen.getByText("Tripod")).toBeInTheDocument();
   });
 });

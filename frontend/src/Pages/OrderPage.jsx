@@ -53,13 +53,13 @@ export default function OrderPage() {
   const [wallet, setWallet] = useState(null);
   const [walletError, setWalletError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
-  const [successOrders, setSuccessOrders] = useState([]);
+  const [successfulOrder, setSuccessfulOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setOrderItems(normalizeItems(location.state));
     setSubmissionError("");
-    setSuccessOrders([]);
+    setSuccessfulOrder(null);
   }, [location.state]);
 
   useEffect(() => {
@@ -121,70 +121,47 @@ export default function OrderPage() {
 
     setSubmitting(true);
     setSubmissionError("");
-
-    const successfulOrders = [];
-    const failedOrders = [];
-
-    for (const item of orderItems) {
-      try {
-        const response = await fetch(`${API}/orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
+    try {
+      const response = await fetch(`${API}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          items: orderItems.map((item) => ({
             itemId: item.itemId,
             quantity: item.quantity,
-          }),
-        });
+          })),
+        }),
+      });
 
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.error || "Failed to place order");
-        }
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to place order");
+      }
 
-        successfulOrders.push({
-          ...payload.order,
-          itemId: item.itemId,
-          name: item.name,
-          quantity: item.quantity,
-          total: item.price * item.quantity,
-        });
-
-        if (item.fromCart) {
-          await fetch(`${API}/cart/${item.itemId}`, {
+      const cartItems = orderItems.filter((item) => item.fromCart);
+      await Promise.allSettled(
+        cartItems.map((item) =>
+          fetch(`${API}/cart/${item.itemId}`, {
             method: "DELETE",
             credentials: "include",
-          }).catch(() => null);
-        }
-      } catch (error) {
-        failedOrders.push({
-          itemId: item.itemId,
-          name: item.name,
-          message: error.message || "Failed to place order",
-        });
-      }
-    }
-
-    if (successfulOrders.length > 0) {
-      setSuccessOrders(successfulOrders);
-      await reloadWallet();
-    }
-
-    if (failedOrders.length > 0) {
-      const failedNames = failedOrders.map((item) => item.name).join(", ");
-      setSubmissionError(`Some items could not be ordered: ${failedNames}.`);
-      setOrderItems((currentItems) =>
-        currentItems.filter((item) =>
-          failedOrders.some((failedItem) => failedItem.itemId === item.itemId),
+          }),
         ),
       );
-    } else {
-      setOrderItems([]);
-    }
 
-    setSubmitting(false);
+      setSuccessfulOrder({
+        orderId: payload.order?.orderId ?? null,
+        itemCount: orderItems.length,
+      });
+      setOrderItems([]);
+      await reloadWallet();
+    } catch (error) {
+      setSubmissionError(error.message || "Failed to place order");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!user) {
@@ -208,7 +185,7 @@ export default function OrderPage() {
     );
   }
 
-  if (orderItems.length === 0 && successOrders.length === 0) {
+  if (orderItems.length === 0 && !successfulOrder) {
     return (
       <section className="order-page">
         <div className="order-shell order-empty-state">
@@ -229,14 +206,15 @@ export default function OrderPage() {
     );
   }
 
-  if (orderItems.length === 0 && successOrders.length > 0) {
+  if (orderItems.length === 0 && successfulOrder) {
     return (
       <section className="order-page">
         <div className="order-shell order-empty-state">
           <div className="order-feedback order-feedback-success" role="status">
             <h2>Order submitted.</h2>
             <p>
-              {successOrders.length} {successOrders.length === 1 ? "order" : "orders"} created successfully.
+              Order {successfulOrder.orderId ? `#${successfulOrder.orderId} ` : ""}created successfully
+              with {successfulOrder.itemCount} {successfulOrder.itemCount === 1 ? "item" : "items"}.
             </p>
           </div>
           <button
@@ -264,11 +242,12 @@ export default function OrderPage() {
           </p>
         </header>
 
-        {successOrders.length > 0 && (
+        {successfulOrder && (
           <div className="order-feedback order-feedback-success" role="status">
             <h2>Order submitted.</h2>
             <p>
-              {successOrders.length} {successOrders.length === 1 ? "order" : "orders"} created successfully.
+              Order {successfulOrder.orderId ? `#${successfulOrder.orderId} ` : ""}created successfully
+              with {successfulOrder.itemCount} {successfulOrder.itemCount === 1 ? "item" : "items"}.
             </p>
           </div>
         )}
