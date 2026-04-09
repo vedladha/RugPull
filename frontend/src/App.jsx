@@ -4,10 +4,11 @@ import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
-import SellPage from "./SellPage.jsx"
-import ProfilePage from "./ProfilePage.jsx"
+import SellPage from "./SellPage.jsx";
+import ProfilePage from "./ProfilePage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
+import History from "./History.jsx";
 
 export default function App() {
   // const [modal, setModal] = useState(null); // null | "signin" | "signup"
@@ -27,7 +28,9 @@ export default function App() {
                   if (action === "marketplace") {
                     navigate("/listings");
                   } else if (action === "sell") {
-                    navigate("/sell")
+                    navigate("/sell");
+                  } else if (action === "history") {
+                    navigate("/history");
                   }
                 }}
               />
@@ -35,20 +38,17 @@ export default function App() {
           }
         />
         <Route path="/sell" element={<SellPage />} />
-        <Route path="/listings" element={
-          <Listings />
-        }
+        <Route path="/listings" element={<Listings />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/signup"
+          element={
+            // AuthPage checks path to decide what to show
+            <AuthPage />
+          }
         />
-        <Route path="/profile" element={
-          <ProfilePage />
-        } />
-        <Route path="/login" element={
-          <AuthPage />
-        } />
-        <Route path="/signup" element={
-          // AuthPage checks path to decide what to show
-          <AuthPage />
-        } />
       </Routes>
       <Footer />
     </>
