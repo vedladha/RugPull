@@ -177,4 +177,58 @@ describe("OrderPage", () => {
     expect(await screen.findByText("Insufficient stock")).toBeInTheDocument();
     expect(screen.getByText("Tripod")).toBeInTheDocument();
   });
+
+  it("removes a cart item from checkout and from the cart backend", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+
+    renderOrderPage({
+      source: "cart",
+      items: [
+        {
+          itemId: 2,
+          name: "Tripod",
+          description: "Carbon fiber",
+          price: 25,
+          sellerName: "Carol",
+          stock: 1,
+          quantity: 1,
+          fromCart: true,
+        },
+      ],
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove Tripod from order" }));
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://localhost:3001/cart/2",
+      expect.objectContaining({
+        method: "DELETE",
+        credentials: "include",
+      }),
+    );
+    expect(await screen.findByText("No items are ready for checkout.")).toBeInTheDocument();
+  });
+
+  it("removes a buy-now item locally without calling the cart api", async () => {
+    renderOrderPage({
+      source: "listing",
+      items: [
+        {
+          itemId: 9,
+          name: "Ledger Wallet",
+          description: "Hardware wallet",
+          price: 49.99,
+          sellerName: "Alice",
+          stock: 3,
+          quantity: 1,
+          fromCart: false,
+        },
+      ],
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove Ledger Wallet from order" }));
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(await screen.findByText("No items are ready for checkout.")).toBeInTheDocument();
+  });
 });

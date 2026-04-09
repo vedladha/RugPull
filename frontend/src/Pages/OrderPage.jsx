@@ -103,6 +103,28 @@ export default function OrderPage() {
     );
   };
 
+  const handleRemoveItem = async (itemToRemove) => {
+    try {
+      if (itemToRemove.fromCart) {
+        const response = await fetch(`${API}/cart/${itemToRemove.itemId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to remove item");
+        }
+      }
+
+      setOrderItems((currentItems) =>
+        currentItems.filter((item) => item.itemId !== itemToRemove.itemId),
+      );
+      setSubmissionError("");
+    } catch (error) {
+      setSubmissionError(error.message || "Failed to remove item");
+    }
+  };
+
   const reloadWallet = async () => {
     if (!user) return;
 
@@ -266,15 +288,26 @@ export default function OrderPage() {
 
               return (
                 <article className="order-item-card" key={item.itemId}>
-                  <div className="order-item-copy">
-                    <div className="order-item-meta">
-                      <span className="order-item-origin">
-                        {item.fromCart ? "From cart" : "Buy now"}
-                      </span>
-                      <span className="order-item-seller">Seller: {item.sellerName}</span>
+                  <div className="order-item-header">
+                    <div className="order-item-copy">
+                      <div className="order-item-meta">
+                        <span className="order-item-origin">
+                          {item.fromCart ? "From cart" : "Buy now"}
+                        </span>
+                        <span className="order-item-seller">Seller: {item.sellerName}</span>
+                      </div>
+                      <h2>{item.name}</h2>
+                      <p>{item.description}</p>
                     </div>
-                    <h2>{item.name}</h2>
-                    <p>{item.description}</p>
+
+                    <button
+                      type="button"
+                      className="order-remove-btn"
+                      onClick={() => handleRemoveItem(item)}
+                      aria-label={`Remove ${item.name} from order`}
+                    >
+                      ✕
+                    </button>
                   </div>
 
                   <div className="order-item-controls">
