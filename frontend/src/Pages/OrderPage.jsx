@@ -4,7 +4,6 @@ import { useAuth } from "../Auth/auth-context.js";
 import "../style/order-page.css";
 
 const API = "http://localhost:3001";
-const MARKETPLACE_FEE_RATE = 0.025;
 
 function parsePrice(value) {
   const parsed = Number.parseFloat(value);
@@ -80,8 +79,7 @@ export default function OrderPage() {
   }, [user, walletBalance]);
 
   const subtotal = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const fee = subtotal * MARKETPLACE_FEE_RATE;
-  const total = subtotal + fee;
+  const total = subtotal;
   const totalQuantity = orderItems.reduce((count, item) => count + item.quantity, 0);
   const sourceLabel = location.state?.source === "cart" ? "cart checkout" : "buy it now";
   const hasUnavailableItems = orderItems.some((item) => item.stock !== null && item.stock <= 0);
@@ -365,10 +363,6 @@ export default function OrderPage() {
               <div className="summary-row">
                 <span>Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Marketplace fee</span>
-                <span>{formatCurrency(fee)}</span>
               </div>
               <div className="modal-divider"></div>
               <div className="summary-row total-row">
