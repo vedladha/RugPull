@@ -1,6 +1,8 @@
 package edu.wisc.t32.controller;
 
+import edu.wisc.t32.dto.ItemBatchRequest;
 import edu.wisc.t32.dto.ItemCreateRequest;
+import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -34,6 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/items")
 public class ItemController {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ItemController.class);
+
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
   private final UserProfileRepository userProfileRepository;
@@ -41,12 +47,12 @@ public class ItemController {
   /**
    * Constructs an ItemController with the necessary repository dependency.
    *
-   * @param itemRepository          the repository used for item database operations
-   * @param currentUserService      service used to resolve the authenticated user
-   * @param userProfileRepository   the reposiroty used for user profile operations
+   * @param itemRepository        the repository used for item database operations
+   * @param currentUserService    service used to resolve the authenticated user
+   * @param userProfileRepository the reposiroty used for user profile operations
    */
-  public ItemController(ItemRepository itemRepository, 
-                        CurrentUserService currentUserService, 
+  public ItemController(ItemRepository itemRepository,
+                        CurrentUserService currentUserService,
                         UserProfileRepository userProfileRepository) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
@@ -57,10 +63,10 @@ public class ItemController {
    * Creates a new item listing.
    * Requires all fields to be provided in the request body.
    *
-   * @param token the JWT token extracted from the HTTP-only cookie
+   * @param token   the JWT token extracted from the HTTP-only cookie
    * @param request the data transfer object containing the new item details
    * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
-   *        or a 400 (BAD REQUEST) with an error message if validation fails
+   * or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
   public ResponseEntity<?> createItem(@CookieValue(name = "jwt", required = false) String token,
@@ -113,11 +119,35 @@ public class ItemController {
   }
 
   /**
+   * Retrieves a list of items specified in the body of this request returning a response.
+   *
+   * @param ids the list of ids finding in this batch request
+   * @return a http response
+   */
+  @PostMapping("/batch")
+  public ResponseEntity<?> getItemsBatch(@RequestBody List<Integer> ids) {
+    final ItemBatchRequest response = ItemBatchRequest.next();
+    if (ids == null || ids.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(Map.of("error", "request body is empty or missing"));
+    }
+
+    final List<Item> items = itemRepository.findByItemIdInAndDeletedFalse(ids);
+    if (items.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "No item's founding matching input list"));
+    }
+
+    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
+    return ResponseEntity.ok(response);
+  }
+
+  /**
    * Retrieves a single active item by its ID.
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   *         does not exist or is marked as deleted
+   * does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
@@ -136,7 +166,7 @@ public class ItemController {
    * @param itemId  the unique identifier of the item to update
    * @param request the data transfer object containing the updated item details
    * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
-   *         if validation fails,  or a 404 NOT FOUND if the item does not exist
+   * if validation fails,  or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
   public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
@@ -181,7 +211,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to delete
    * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does
-   *        not exist
+   * not exist
    */
   @DeleteMapping("/{itemId}")
   public ResponseEntity<?> deleteItem(@CookieValue(name = "jwt", required = false) String token,
@@ -214,7 +244,7 @@ public class ItemController {
    *
    * @param request the creation request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   *         valid
+   * valid
    */
   private String validateCreate(ItemCreateRequest request) {
     if (request == null) {
@@ -246,7 +276,7 @@ public class ItemController {
    *
    * @param request the update request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   *         valid
+   * valid
    */
   private String validate(ItemUpdateRequest request) {
     if (request == null) {
