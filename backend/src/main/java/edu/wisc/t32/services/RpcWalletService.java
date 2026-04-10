@@ -1,5 +1,6 @@
 package edu.wisc.t32.services;
 
+import edu.wisc.t32.api.TokenSupplyService;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
 import edu.wisc.t32.model.UserWallet;
@@ -27,8 +28,40 @@ public class RpcWalletService {
   @Value("${wallet.currency.id:}")
   private String currencyId;
 
+  @Value("${wallet.currency.supply.key}")
+  private String currencySupplyKey;
+
   @Value("${wallet.new-account.initial-funding:10}")
   private int initialFunding;
+
+  /**
+   * Funds a wallet account by minting new tokens of amount rewardAmount then depositing it into the
+   * user account.
+   *
+   * @param userWallet   the user wallet to fund
+   * @param rewardAmount the reward to fund the account with
+   * @throws IllegalStateException thrown if the wallet is failed to be funded for some reason
+   */
+  public void fundAccount(UserWallet userWallet, float rewardAmount) throws IllegalStateException {
+    if (userWallet == null) {
+      throw new IllegalArgumentException("null user wallet is not valid for fund account");
+    }
+
+    try (WalletService walletService = WalletService.getService(operatorId, operatorKey,
+        currencyId)) {
+      try (TokenSupplyService supplyService = TokenSupplyService.getService(operatorId, operatorKey,
+          currencyId, currencySupplyKey)) {
+        supplyService.mint(rewardAmount); // mint's then halts until tokens can be minted
+      }
+
+      final Wallet wallet = walletService.createWallet(userWallet.getWalletAddress(),
+          userWallet.getWalletPrivateKey());
+      // funds the wallets with the newly minted tokens.
+      walletService.fundWallet(wallet, rewardAmount);
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to fund wallet: " + e.getMessage(), e);
+    }
+  }
 
   /**
    * Creates a new funded wallet using the configured operator credentials.

@@ -215,6 +215,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 
 #### Response Example
 
+
 ```json
 {
   "message": "Logged out successfully"
@@ -228,6 +229,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 Returns the authenticated user's basic auth profile.
 
 #### Response Example
+
 
 ```json
 {
@@ -830,18 +832,18 @@ This route is not implemented in the current backend.
 #### Response Example
 
 ```json
-{
-{
-  "id": 1,
-  "name": "Art",
-  "parent_id": null
-},
-{
-"id": 2,
-"name": "Digital Art",
-"parent_id": 1
-}
-}
+[
+  {
+    "id": 1,
+    "name": "Art",
+    "parent_id": null
+  },
+  {
+    "id": 2,
+    "name": "Digital Art",
+    "parent_id": 1
+  }
+]
 ```
 
 ---
@@ -2060,3 +2062,37 @@ Returns the stored profile for the given user ID.
   "bio": "Legacy profile update"
 }
 ```
+
+---
+
+### GET /daily
+
+Returns the status of the user's daily reward at the current moment
+
+#### Headers
+
+| Header        | Value                   |
+|---------------|-------------------------|
+| Authorization | Bearer `<access_token>` |
+
+#### Response Example
+
+```json
+{
+  "status": {
+    "claimed": false
+  }
+}
+```
+
+---
+
+### GET /daily/claim
+
+Claims daily reward if possible
+
+#### Headers
+
+| Header        | Value                   | 
+|---------------|-------------------------|
+| Authorization | Bearer `<access_token>` |

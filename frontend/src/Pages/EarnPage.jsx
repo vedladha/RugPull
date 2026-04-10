@@ -74,8 +74,7 @@ export default function EarnPage() {
     )
   }
 
-  // Restrict access to logged-in users only
-  if (user) {
+  if (user) { // make sure to ! this for prod
     return (
       <div className="earn-page">
         <div className="earn-header">

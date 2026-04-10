@@ -81,6 +81,10 @@ public class TokenSupplyServiceImpl implements TokenSupplyService {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    this.client.close();
+  }
 
   private record PoolResponse(long supply, int decimals) {
 
