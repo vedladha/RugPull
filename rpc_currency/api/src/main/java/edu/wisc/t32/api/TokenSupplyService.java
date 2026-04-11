@@ -30,6 +30,6 @@ public interface TokenSupplyService extends AutoCloseable {
    */
   static TokenSupplyService getService(String operatorId, String operatorKey, String tokenId,
                                        String supplyKey) {
-    return TokenSupplyServiceImpl.create(operatorId, operatorId, tokenId, supplyKey);
+    return TokenSupplyServiceImpl.create(operatorId, operatorKey, tokenId, supplyKey);
   }
 }

@@ -13,6 +13,8 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/daily")
 public class DailyRewardController {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DailyRewardController.class);
   private static final ZoneId UTC = ZoneId.of("UTC");
 
   private final CurrentUserService currentUserService;
@@ -70,7 +73,7 @@ public class DailyRewardController {
     boolean reward = dailyRewardRepository.findById(id)
         .map(DailyReward::getClaimedLast)
         .map((lastClaimed) ->
-            ChronoUnit.HOURS.between(lastClaimed, LocalDateTime.now(UTC)) >= 24)
+            ChronoUnit.HOURS.between(lastClaimed, LocalDateTime.now(UTC)) < 24)
         .orElse(false);
     response.setClaimed(reward);
 
@@ -121,6 +124,7 @@ public class DailyRewardController {
       reward.setClaimedLast(now);
       dailyRewardRepository.save(reward);
     } catch (IllegalStateException e) {
+      LOGGER.error("Error occurred while funding account with reward", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("error", "Internal service error claiming reward"));
     }

@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
  * Mapped to the "daily_reward" table with a unique constraint on user_id.
  */
 @Entity
-@Table(name = "daily_reward")
+@Table(name = "daily_rewards")
 public class DailyReward {
 
   @Id
   @Column(name = "user_id", nullable = false)
   private Integer userId;
 
-  @Column(name = "claimed_last", insertable = false, updatable = false)
+  @Column(name = "claimed_last", nullable = false)
   private LocalDateTime claimedLast;
 
   public Integer getUserId() {

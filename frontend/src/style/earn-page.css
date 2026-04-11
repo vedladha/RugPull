@@ -1,15 +1,15 @@
-/* style/earn-page.css */
-
+/* Earn Page Container */
 .earn-page {
   padding: 5rem 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3rem;
-  max-width: 1000px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
+/* Header */
 .earn-header {
   text-align: center;
   display: flex;
@@ -24,167 +24,82 @@
   letter-spacing: -0.04em;
 }
 
-.earn-header p, 
+/* Messages */
 .earn-auth-msg {
   font-family: var(--font-mono);
   font-size: 0.9rem;
   color: var(--muted);
+  text-align: center;
+  margin-top: 1rem;
 }
 
-/* Daily Claim Banner */
-.earn-banner {
+/* Standard Daily Banner */
+.daily-banner {
   width: 100%;
-  background: var(--amber-glow);
-  border: 1px solid var(--amber);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 2.5rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 2rem;
-  box-shadow: 0 10px 30px rgba(245, 166, 35, 0.05);
+  transition: all 0.2s ease;
 }
 
-.earn-banner-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.daily-banner:hover {
+  border-color: var(--amber);
+  background: var(--amber-glow);
 }
 
-.earn-banner-title {
+.banner-content h2 {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--amber);
+  margin-bottom: 0.5rem;
+  color: var(--white);
 }
 
-.earn-banner-desc {
+.banner-content p {
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  color: var(--white);
+  color: var(--muted);
   line-height: 1.5;
+  transition: color 0.2s ease;
 }
 
-.earn-claim-btn {
-  background: var(--amber);
-  color: var(--black);
-  border: none;
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 1rem;
-  padding: 1rem 2.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+.claim-btn {
   white-space: nowrap;
+  min-width: 160px;
 }
 
-.earn-claim-btn:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-2px);
+/* Error State Daily Banner */
+.daily-banner.banner-error {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.05);
 }
 
-.earn-claim-btn:disabled {
-  background: var(--surface);
-  color: var(--muted);
-  border: 1px solid var(--border);
-  cursor: not-allowed;
-  transform: none;
+.daily-banner.banner-error:hover {
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.1);
 }
 
-/* Expandable Tasks Grid */
-.earn-tasks-section {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.daily-banner.banner-error .banner-content h2 {
+  color: #ff6b6b;
 }
 
-.earn-tasks-section h2 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--white);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.75rem;
-}
-
-.earn-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.earn-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.earn-card:hover {
-  border-color: rgba(245, 166, 35, 0.5);
-  background: rgba(245, 166, 35, 0.02);
-}
-
-.earn-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.earn-card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.earn-reward-badge {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--amber);
-  background: var(--amber-glow);
-  padding: 0.25rem 0.5rem;
-  border-radius: 2px;
-}
-
-.earn-card-desc {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--muted);
-  line-height: 1.5;
-  flex-grow: 1;
-}
-
-.earn-card-action {
-  background: transparent;
-  color: var(--white);
-  border: 1px solid var(--border);
-  font-family: var(--font-head);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.75rem;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-  text-align: center;
-}
-
-.earn-card-action:hover {
-  border-color: var(--amber);
-  color: var(--amber);
+.daily-banner.banner-error .banner-content p {
+  color: #ff6b6b;
+  font-weight: 500;
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-  .earn-banner {
+@media (max-width: 600px) {
+  .daily-banner {
     flex-direction: column;
     text-align: center;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem;
   }
-  .earn-claim-btn {
+  
+  .claim-btn {
     width: 100%;
   }
 }

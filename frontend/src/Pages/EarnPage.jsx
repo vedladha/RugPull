@@ -1,130 +1,105 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../Auth/auth-context"; // Adjust path if necessary
-import "../style/earn-page.css"; // Adjust path if necessary
+import "../style/earn-page.css";
 
 export default function EarnPage() {
   const { user } = useAuth();
+  const API = "http://localhost:3001";
 
-  // State for the daily claim banner
+  const [canClaim, setCanClaim] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [hasClaimedToday, setHasClaimedToday] = useState(false);
-  const [rewardAmount, setRewardAmount] = useState(10); // Example static reward
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setRewardAmount(0);
-    // our fetch endpoint goes here
-    // ------------------------------------------------------------------------
-    // API ENDPOINT: CHECK DAILY CLAIM STATUS
-    // ------------------------------------------------------------------------
-    // TODO: When the page loads, check if the user has already claimed today.
-    // Recommended Method: GET /api/earn/daily-status
-    // Headers: Authorization containing the user's JWT or Session
-    // Example Response: { claimed: true, nextClaimAvailable: "2026-04-01T00:00:00Z" }
-    //
-    // if (user) {
-    //   fetch('/api/earn/daily-status')
-    //     .then(res => res.json())
-    //     .then(data => setHasClaimedToday(data.claimed));
-    // }
+    if (user) {
+      fetch(`${API}/daily`, { credentials: "include" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status) {
+            // If claimed is false, the user CAN claim it
+            setCanClaim(!data.status.claimed);
+          }
+        })
+        .catch(err => console.error("Error fetching daily status:", err))
+        .finally(() => setLoading(false));
+    }
   }, [user]);
 
-  const handleDailyClaim = async () => {
+  const handleClaim = async () => {
     setIsClaiming(true);
+    setError(null); // Reset error state on new attempt
+
     try {
-      // ------------------------------------------------------------------------
-      // API ENDPOINT: PROCESS DAILY CLAIM
-      // ------------------------------------------------------------------------
-      // TODO: Submit the claim request to the backend.
-      // Recommended Method: POST /api/earn/claim-daily
-      // Headers: Authorization containing the user's JWT or Session
-      // 
-      // const response = await fetch('/api/earn/claim-daily', { method: 'POST' });
-      // if (!response.ok) throw new Error("Claim failed");
-      // const data = await response.json();
+      const response = await fetch(`${API}/daily/claim`, { credentials: "include" });
 
-      // Simulating a successful network request for UI purposes
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setHasClaimedToday(true);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to claim reward.");
+      }
 
-      // TODO: If you have a wallet balance context, trigger a refresh here.
-      // e.g., refreshWalletBalance();
+      // On success, hide the banner completely
+      setCanClaim(false);
 
-    } catch (error) {
-      console.error("Failed to claim daily reward:", error);
-      // Optional: Add a toast notification or error state here
+      // TODO: If you need to update the wallet balance in context, call it here
+      // e.g., updateWalletBalance();
+
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsClaiming(false);
     }
   };
 
-  function earnCard(title, description, reward) {
-    return (
-      // This is for extra earning cards
-      <div className="earn-grid">
-        <div className="earn-card">
-          <div className="earn-card-header">
-            <span className="earn-card-title">{title}</span>
-            <span className="earn-reward-badge">+{reward} $RPC</span>
-          </div>
-          <p className="earn-card-desc">
-            {description}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (user) { // make sure to ! this for prod
+  // 1. Logged Out View
+  if (!user) {
     return (
       <div className="earn-page">
         <div className="earn-header">
           <span className="hero-tag">Rewards</span>
           <h1>Earn $RPC</h1>
         </div>
-        <p className="earn-auth-msg">Please sign in to view and claim your rewards.</p>
+        <p className="earn-auth-msg">Please sign in to view your rewards.</p>
       </div>
     );
   }
 
+  // 2. Logged In View
   return (
     <div className="earn-page">
       <div className="earn-header">
         <span className="hero-tag">Rewards</span>
         <h1>Earn $RPC</h1>
-        <p>Complete tasks and claim your daily tokens to build your wallet.</p>
       </div>
 
-      {/* The Daily Claim Banner */}
-      <div className="earn-banner">
-        <div className="earn-banner-info">
-          <h2 className="earn-banner-title">Daily Login Reward</h2>
-          <p className="earn-banner-desc">
-            Check in every 24 hours to claim your free {rewardAmount} $RPC tokens.
-            Keep your streak alive to unlock bonuses!
-          </p>
-        </div>
-        <button
-          className="earn-claim-btn"
-          onClick={handleDailyClaim}
-          disabled={hasClaimedToday || isClaiming}
-        >
-          {isClaiming
-            ? "Claiming..."
-            : hasClaimedToday
-              ? "Claimed Today ✓"
-              : "Claim Tokens"}
-        </button>
-      </div>
+      {loading ? (
+        <div className="loading">Checking reward status...</div>
+      ) : canClaim ? (
+        // Banner is present and dynamically changes class if there's an error
+        <div className={`daily-banner ${error ? "banner-error" : ""}`}>
+          <div className="banner-content">
+            <h2>Daily Login Reward</h2>
+            <p>
+              {error
+                ? `Error: ${error}`
+                : "Check in today to claim your free 10.0 $RPC tokens!"}
+            </p>
+          </div>
 
-      {/* Expandable Entries Section */}
-      <div className="earn-tasks-section">
-        <h2>More Ways to Earn</h2>
-        <div className="earn-grid">
-          {earnCard("Watch", "Watch an ads to earn", 5)}
-          {earnCard("Complete Profile", "Fill out all of your profile information so everyone knows who you are!", 10)}
-          {earnCard("First Sale", "Upon your first sale on RPC Market earn a bonus %5 on your sale", "5%")}
+          <button
+            className="btn-primary claim-btn"
+            onClick={handleClaim}
+            disabled={isClaiming}
+          >
+            {isClaiming ? "Claiming..." : "Claim Tokens"}
+          </button>
         </div>
-      </div>
+      ) : (
+        // Render a small message (or nothing at all) if the reward is already claimed
+        <p className="earn-auth-msg">
+          You have already claimed your reward today. Come back tomorrow!
+        </p>
+      )}
     </div>
   );
 }
