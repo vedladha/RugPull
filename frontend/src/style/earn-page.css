@@ -103,3 +103,136 @@
     width: 100%;
   }
 }
+
+
+/* --- Developer Sandbox Tool --- */
+.dev-sandbox {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(20, 20, 20, 0.8);
+  border: 2px dashed var(--muted);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Optional: Warning stripes at the top */
+.dev-sandbox::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--amber),
+    var(--amber) 10px,
+    var(--black) 10px,
+    var(--black) 20px
+  );
+}
+
+.dev-sandbox-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.dev-badge {
+  background: var(--amber);
+  color: var(--black);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.dev-sandbox h3 {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--white);
+}
+
+.dev-desc {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.dev-input-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.dev-input {
+  flex: 1;
+  background: var(--black);
+  border: 1px solid var(--border);
+  color: var(--amber); /* Making the input text pop */
+  font-family: var(--font-mono);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  outline: none;
+}
+
+.dev-input:focus {
+  border-color: var(--amber);
+}
+
+.dev-btn {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 0 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dev-btn:hover:not(:disabled) {
+  background: var(--amber-glow);
+}
+
+.dev-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.dev-msg {
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+}
+
+.dev-msg.success {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.dev-msg.error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+@media (max-width: 600px) {
+  .dev-input-group {
+    flex-direction: column;
+  }
+  .dev-btn {
+    padding: 1rem;
+  }
+}

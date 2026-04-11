@@ -1,15 +1,21 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../Auth/auth-context"; // Adjust path if necessary
+import { useAuth } from "../Auth/auth-context"; 
 import "../style/earn-page.css";
 
 export default function EarnPage() {
   const { user } = useAuth();
   const API = "http://localhost:3001";
 
+  // Daily Reward State
   const [canClaim, setCanClaim] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Dev Minting State
+  const [fundAmount, setFundAmount] = useState("");
+  const [isFunding, setIsFunding] = useState(false);
+  const [fundMsg, setFundMsg] = useState({ text: "", type: "" });
 
   useEffect(() => {
     if (user) {
@@ -17,7 +23,6 @@ export default function EarnPage() {
         .then(res => res.json())
         .then(data => {
           if (data.status) {
-            // If claimed is false, the user CAN claim it
             setCanClaim(!data.status.claimed);
           }
         })
@@ -28,7 +33,7 @@ export default function EarnPage() {
 
   const handleClaim = async () => {
     setIsClaiming(true);
-    setError(null); // Reset error state on new attempt
+    setError(null);
 
     try {
       const response = await fetch(`${API}/daily/claim`, { credentials: "include" });
@@ -38,12 +43,8 @@ export default function EarnPage() {
         throw new Error(errData.error || "Failed to claim reward.");
       }
 
-      // On success, hide the banner completely
       setCanClaim(false);
-
-      // TODO: If you need to update the wallet balance in context, call it here
-      // e.g., updateWalletBalance();
-
+      // TODO: updateWalletBalance();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,7 +52,43 @@ export default function EarnPage() {
     }
   };
 
-  // 1. Logged Out View
+  // --- Developer Function: Arbitrary Minting ---
+  const handleDevMint = async () => {
+    setFundMsg({ text: "", type: "" });
+    const amount = parseFloat(fundAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      setFundMsg({ text: "Please enter a valid amount greater than 0.", type: "error" });
+      return;
+    }
+
+    setIsFunding(true);
+
+    try {
+      const response = await fetch(`${API}/wallets/fund`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ amount }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to fund wallet.");
+      }
+
+      setFundMsg({ text: `Successfully minted ${amount} $RPC!`, type: "success" });
+      setFundAmount(""); 
+      // TODO: updateWalletBalance();
+    } catch (err) {
+      setFundMsg({ text: `Mint Error: ${err.message}`, type: "error" });
+    } finally {
+      setIsFunding(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="earn-page">
@@ -64,7 +101,6 @@ export default function EarnPage() {
     );
   }
 
-  // 2. Logged In View
   return (
     <div className="earn-page">
       <div className="earn-header">
@@ -75,7 +111,6 @@ export default function EarnPage() {
       {loading ? (
         <div className="loading">Checking reward status...</div>
       ) : canClaim ? (
-        // Banner is present and dynamically changes class if there's an error
         <div className={`daily-banner ${error ? "banner-error" : ""}`}>
           <div className="banner-content">
             <h2>Daily Login Reward</h2>
@@ -95,11 +130,45 @@ export default function EarnPage() {
           </button>
         </div>
       ) : (
-        // Render a small message (or nothing at all) if the reward is already claimed
         <p className="earn-auth-msg">
           You have already claimed your reward today. Come back tomorrow!
         </p>
       )}
+
+      {/* --- Developer Minting Tool --- */}
+      <div className="dev-sandbox">
+        <div className="dev-sandbox-header">
+          <span className="dev-badge">⚠️ DEV ONLY</span>
+          <h3>Arbitrary Minting Tool</h3>
+        </div>
+        <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
+        
+        <div className="dev-input-group">
+          <input 
+            type="number" 
+            className="dev-input" 
+            placeholder="Amount (e.g. 500)"
+            value={fundAmount}
+            onChange={(e) => setFundAmount(e.target.value)}
+            disabled={isFunding}
+            min="1"
+            step="any"
+          />
+          <button 
+            className="dev-btn" 
+            onClick={handleDevMint}
+            disabled={isFunding || !fundAmount}
+          >
+            {isFunding ? "Minting..." : "Execute Mint"}
+          </button>
+        </div>
+
+        {fundMsg.text && (
+          <div className={`dev-msg ${fundMsg.type}`}>
+            {fundMsg.text}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -58,7 +58,7 @@ class DailyRewardControllerTest {
   // --- getDailyRewardStatus Tests ---
 
   @Test
-  void getDailyRewardStatus_ReturnsTrue_AtExactly24Hours() {
+  void getDailyRewardStatus_ReturnsFalse_AtExactly24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     // Exactly 24 hours satisfies >= 24
@@ -68,11 +68,11 @@ class DailyRewardControllerTest {
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(JWT);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertTrue(extractStatus(response).isClaimed());
+    assertFalse(extractStatus(response).isClaimed());
   }
 
   @Test
-  void getDailyRewardStatus_ReturnsFalse_WhenUnder24Hours() {
+  void getDailyRewardStatus_ReturnsTrue_WhenUnder24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     // 23 hours fails >= 24
@@ -81,7 +81,7 @@ class DailyRewardControllerTest {
 
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(JWT);
 
-    assertFalse(extractStatus(response).isClaimed());
+    assertTrue(extractStatus(response).isClaimed());
   }
 
   // --- claimDailyReward Tests ---

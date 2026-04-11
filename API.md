@@ -95,9 +95,10 @@ Buying and selling workflow.
 
 ### 8. Crypto Transactions & Wallets
 
-| Endpoint   | Method | Description                               |
-|------------|--------|-------------------------------------------|
-| `/wallets` | GET    | Fetch authenticated user's wallet balance |
+| Endpoint        | Method | Description                                                                |
+|-----------------|--------|----------------------------------------------------------------------------|
+| `/wallets`      | GET    | Fetch authenticated user's wallet balance                                  |
+| `/wallets/fund/ | POST   | Allows self funding of arbitrary amount of currency (dev and testing only) | 
 
 Deposit, withdraw, transfer, and transaction history endpoints are not currently implemented in
 the backend controllers.
@@ -215,7 +216,6 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 
 #### Response Example
 
-
 ```json
 {
   "message": "Logged out successfully"
@@ -229,7 +229,6 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 Returns the authenticated user's basic auth profile.
 
 #### Response Example
-
 
 ```json
 {
@@ -624,7 +623,8 @@ implemented in the backend controller.
 
 ### POST /items/batch
 
-Retrieves a list of items specified by an array of IDs provided in the request body. Only active (non-deleted) items are returned in the response.
+Retrieves a list of items specified by an array of IDs provided in the request body. Only active (non-deleted) items are
+returned in the response.
 
 #### Headers
 
@@ -638,7 +638,11 @@ Retrieves a list of items specified by an array of IDs provided in the request b
 A JSON array of integers representing the item IDs.
 
 ```json
-[1, 2, 3]
+[
+  1,
+  2,
+  3
+]
 ```
 
 #### Response Example
@@ -1363,113 +1367,19 @@ This route is not implemented in the current backend.
 
 ---
 
-### POST /wallets/deposit
-
-This route is not implemented in the current backend.
+### POST /wallets/fund
 
 #### Headers
 
-| Header        | Value                   |
+| Header        | value                   |
 |---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
-
-#### Request Body
-
-| Field  | Type   | Required | Description       |
-|--------|--------|----------|-------------------|
-| amount | Number | Y        | Amount to deposit |
 
 #### Request Example
 
 ```json
 {
-  "amount": 1.2
-}
-```
-
-#### Response Example
-
-```json
-{
-  "message": "Deposit recorded and pending confirmation",
-  "amount": 1.2,
-  "status": "pending"
-}
-```
-
----
-
-### POST /wallets/withdraw
-
-This route is not implemented in the current backend.
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
-#### Request Body
-
-| Field  | Type   | Required | Description        |
-|--------|--------|----------|--------------------|
-| amount | Number | Y        | Amount to withdraw |
-
-#### Request Example
-
-```json
-{
-  "amount": 1.2
-}
-```
-
-#### Response Example
-
-```json
-{
-  "message": "Withdrawal recorded and pending confirmation",
-  "amount": 1.2,
-  "status": "pending"
-}
-```
-
----
-
-### POST /wallets/transfer
-
-This route is not implemented in the current backend.
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
-#### Request Body
-
-| Field             | Type   | Required | Description          |
-|-------------------|--------|----------|----------------------|
-| amount            | Number | Y        | Amount to withdraw   |
-| recipient_user_id | Number | Y        | ID of recipient user |
-
-#### Request Example
-
-```json
-{
-  "amount": 2,
-  "recipient_user_id": 345
-}
-```
-
-#### Response Example
-
-```json
-{
-  "message": "Transfer completed",
-  "amount": 2,
-  "from_user_id": 1,
-  "to_user_id": 345,
-  "transaction_id": 3456
+  "amount": 10.12
 }
 ```
 
