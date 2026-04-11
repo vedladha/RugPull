@@ -11,6 +11,10 @@ export default function EarnPage() {
   const [isClaiming, setIsClaiming] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // New Streak & Dynamic Reward State
+  const [streak, setStreak] = useState(0);
+  const [rewardAmount, setRewardAmount] = useState(10);
 
   // Dev Minting State
   const [fundAmount, setFundAmount] = useState("");
@@ -24,6 +28,8 @@ export default function EarnPage() {
         .then(data => {
           if (data.status) {
             setCanClaim(!data.status.claimed);
+            setStreak(data.status.streak || 0);
+            setRewardAmount(data.status.next_reward_amount || 10);
           }
         })
         .catch(err => console.error("Error fetching daily status:", err))
@@ -43,7 +49,9 @@ export default function EarnPage() {
         throw new Error(errData.error || "Failed to claim reward.");
       }
 
+      // On success, hide the banner and optimistically bump their streak
       setCanClaim(false);
+      setStreak((prev) => prev + 1);
       // TODO: updateWalletBalance();
     } catch (err) {
       setError(err.message);
@@ -113,11 +121,14 @@ export default function EarnPage() {
       ) : canClaim ? (
         <div className={`daily-banner ${error ? "banner-error" : ""}`}>
           <div className="banner-content">
-            <h2>Daily Login Reward</h2>
+            <div className="banner-title-row">
+              <h2>Daily Login Reward</h2>
+              {streak > 0 && <span className="streak-badge">🔥 {streak} Day Streak</span>}
+            </div>
             <p>
               {error
                 ? `Error: ${error}`
-                : "Check in today to claim your free 10.0 $RPC tokens!"}
+                : `Check in today to claim your free ${rewardAmount.toFixed(1)} $RPC tokens!`}
             </p>
           </div>
 
@@ -130,9 +141,14 @@ export default function EarnPage() {
           </button>
         </div>
       ) : (
-        <p className="earn-auth-msg">
-          You have already claimed your reward today. Come back tomorrow!
-        </p>
+        <div className="earn-claimed-msg">
+          <p className="earn-auth-msg">
+            You have already claimed your reward today. Come back tomorrow!
+          </p>
+          {streak > 0 && (
+            <div className="streak-badge claimed-streak">🔥 Current Streak: {streak} Days</div>
+          )}
+        </div>
       )}
 
       {/* --- Developer Minting Tool --- */}

@@ -31,16 +31,22 @@ public class DailyRewardController {
   private static final Logger LOGGER = LoggerFactory.getLogger(DailyRewardController.class);
   private static final ZoneId UTC = ZoneId.of("UTC");
 
+  // Streak configuration constants
+  private static final long STREAK_GRACE_PERIOD_HOURS = 48;
+  private static final float BASE_REWARD = 10.0f;
+
   private final CurrentUserService currentUserService;
   private final UserWalletRepository userWalletRepository;
   private final DailyRewardRepository dailyRewardRepository;
   private final RpcWalletService walletService;
 
   /**
-   * Daily reward controller initialization.
+   * represents a new daily reward controller.
    *
    * @param currentUserService    the current user service
+   * @param userWalletRepository  the wallet repository
    * @param dailyRewardRepository the daily reward repository
+   * @param walletService         and the wallet service
    */
   public DailyRewardController(CurrentUserService currentUserService,
                                UserWalletRepository userWalletRepository,
@@ -50,6 +56,14 @@ public class DailyRewardController {
     this.userWalletRepository = userWalletRepository;
     this.dailyRewardRepository = dailyRewardRepository;
     this.walletService = walletService;
+  }
+
+  /**
+   * Calculates the reward amount based on the user's current streak.
+   * Example: 10 base + 2 bonus for every 10 streak days.
+   */
+  private float calculateReward(int streak) {
+    return BASE_REWARD + ((streak / 10) * 2.0f);
   }
 
   /**
@@ -69,13 +83,26 @@ public class DailyRewardController {
 
     final int id = currentUser.get().getUserId();
     final DailyRewardStatusRequest response = DailyRewardStatusRequest.next();
-    // if the user has no daily reward entry return false it can't have been claimed
-    boolean reward = dailyRewardRepository.findById(id)
-        .map(DailyReward::getClaimedLast)
-        .map((lastClaimed) ->
-            ChronoUnit.HOURS.between(lastClaimed, LocalDateTime.now(UTC)) < 24)
-        .orElse(false);
-    response.setClaimed(reward);
+
+    dailyRewardRepository.findById(id).ifPresentOrElse(reward -> {
+      long hoursElapsed = ChronoUnit.HOURS.between(reward.getClaimedLast(), LocalDateTime.now(UTC));
+      boolean claimed = hoursElapsed < 24;
+
+      // Determine what their streak WILL be next time they claim
+      int activeStreak = reward.getStreak();
+      if (hoursElapsed > STREAK_GRACE_PERIOD_HOURS) {
+        activeStreak = 0; // Streak was lost
+      }
+
+      response.setClaimed(claimed);
+      response.setStreak(reward.getStreak()); // Return actual current DB streak
+      response.setNextReward(calculateReward(activeStreak + 1));
+    }, () -> {
+      // Brand new user
+      response.setClaimed(false);
+      response.setStreak(0);
+      response.setNextReward(calculateReward(1));
+    });
 
     return ResponseEntity.ok(Map.of("status", response));
   }
@@ -96,12 +123,13 @@ public class DailyRewardController {
     }
 
     final int id = currentUser.get().getUserId();
-
     final LocalDateTime now = LocalDateTime.now(UTC);
+
     final DailyReward reward = dailyRewardRepository.findById(id).orElseGet(() -> {
       final DailyReward newReward = new DailyReward();
       newReward.setUserId(id);
-      newReward.setClaimedLast(now.minusDays(1));
+      newReward.setClaimedLast(now.minusDays(1)); // Ensures exactly 24h elapsed
+      newReward.setStreak(0);
       return newReward;
     });
 
@@ -117,10 +145,16 @@ public class DailyRewardController {
           .body(Map.of("error", "Internal service error fetching wallet"));
     }
 
+    if (hoursElapsed > STREAK_GRACE_PERIOD_HOURS) {
+      reward.setStreak(1);
+    } else {
+      reward.setStreak(reward.getStreak() + 1);
+    }
+
+    float rewardAmount = calculateReward(reward.getStreak());
+
     try {
-      // 10.0f hardcoded for now in the very very near future we should discuss what to do for this.
-      // streaks? etc easy to append to the database.
-      walletService.fundAccount(wallet.get(), 10.0f);
+      walletService.fundAccount(wallet.get(), rewardAmount);
       reward.setClaimedLast(now);
       dailyRewardRepository.save(reward);
     } catch (IllegalStateException e) {

@@ -104,6 +104,43 @@
   }
 }
 
+/* --- Streak Badge Styles --- */
+.banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.banner-title-row h2 {
+  margin-bottom: 0; /* Override previous margin */
+}
+
+.streak-badge {
+  background: var(--amber-glow);
+  color: var(--amber);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.earn-claimed-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.claimed-streak {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
 
 /* --- Developer Sandbox Tool --- */
 .dev-sandbox {

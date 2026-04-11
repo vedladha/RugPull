@@ -18,6 +18,9 @@ public class DailyReward {
   @Column(name = "user_id", nullable = false)
   private Integer userId;
 
+  @Column(name = "streak_length", nullable = false)
+  private Integer streak;
+
   @Column(name = "claimed_last", nullable = false)
   private LocalDateTime claimedLast;
 
@@ -27,6 +30,14 @@ public class DailyReward {
 
   public void setUserId(Integer userId) {
     this.userId = userId;
+  }
+
+  public void setStreak(Integer streak) {
+    this.streak = streak;
+  }
+
+  public Integer getStreak() {
+    return streak;
   }
 
   public LocalDateTime getClaimedLast() {

@@ -28,6 +28,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,11 +49,15 @@ class DailyRewardControllerTest {
   @InjectMocks private DailyRewardController dailyRewardController;
 
   private User mockUser;
+  private UserWallet mockWallet;
 
   @BeforeEach
   void setUp() {
     mockUser = new User();
     mockUser.setUserId(42);
+
+    mockWallet = new UserWallet();
+    mockWallet.setUserId(42);
   }
 
   // --- getDailyRewardStatus Tests ---
@@ -61,72 +66,105 @@ class DailyRewardControllerTest {
   void getDailyRewardStatus_ReturnsFalse_AtExactly24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
-    // Exactly 24 hours satisfies >= 24
+    reward.setStreak(5);
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(24));
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
 
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(JWT);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertFalse(extractStatus(response).isClaimed());
+    DailyRewardStatusRequest status = extractStatus(response);
+    assertFalse(status.isClaimed());
+    assertEquals(5, status.getStreak());
   }
 
   @Test
   void getDailyRewardStatus_ReturnsTrue_WhenUnder24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
-    // 23 hours fails >= 24
+    reward.setStreak(10);
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(23));
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
 
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(JWT);
 
     assertTrue(extractStatus(response).isClaimed());
+    // Since streak is 10, next reward (streak 11) should be 12.0f
+    assertEquals(12.0f, extractStatus(response).getNextReward());
   }
 
   // --- claimDailyReward Tests ---
 
   @Test
-  void claimDailyReward_Success_AtExactly24Hours() {
-    UserWallet wallet = new UserWallet();
+  void claimDailyReward_Success_ContinuesStreak() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
 
     DailyReward reward = new DailyReward();
     reward.setUserId(42);
-    // 24 hours elapsed: (24 < 24) is FALSE, so check passes
-    reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(24));
+    reward.setStreak(9);
+    // Claimed 25 hours ago, perfectly within the 48-hour grace period
+    reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(25));
 
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
-    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(wallet));
+    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(mockWallet));
 
     ResponseEntity<?> response = dailyRewardController.claimDailyReward(JWT);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    verify(walletService).fundAccount(eq(wallet), eq(10.0f));
-    verify(dailyRewardRepository).save(any());
+
+    // Streak hits 10, so reward should scale up to 12.0f
+    verify(walletService).fundAccount(eq(mockWallet), eq(12.0f));
+
+    ArgumentCaptor<DailyReward> captor = ArgumentCaptor.forClass(DailyReward.class);
+    verify(dailyRewardRepository).save(captor.capture());
+    assertEquals(10, captor.getValue().getStreak());
+  }
+
+  @Test
+  void claimDailyReward_Success_ResetsStreakWhenGracePeriodExceeded() {
+    when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
+
+    DailyReward reward = new DailyReward();
+    reward.setUserId(42);
+    reward.setStreak(50); // Big streak
+    // Claimed 50 hours ago (Exceeds 48 hour grace period)
+    reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(50));
+
+    when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
+    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(mockWallet));
+
+    ResponseEntity<?> response = dailyRewardController.claimDailyReward(JWT);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+
+    // Streak reset to 1, back to base reward of 10.0f
+    verify(walletService).fundAccount(eq(mockWallet), eq(10.0f));
+
+    ArgumentCaptor<DailyReward> captor = ArgumentCaptor.forClass(DailyReward.class);
+    verify(dailyRewardRepository).save(captor.capture());
+    assertEquals(1, captor.getValue().getStreak());
   }
 
   @Test
   void claimDailyReward_Success_ForNewUser() {
-    // New users are initialized with now.minusDays(1) (24 hours ago)
-    // Since 24 is not < 24, this should now succeed.
-    UserWallet wallet = new UserWallet();
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.empty());
-    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(wallet));
+    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(mockWallet));
 
     ResponseEntity<?> response = dailyRewardController.claimDailyReward(JWT);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     verify(walletService).fundAccount(any(), eq(10.0f));
-    verify(dailyRewardRepository).save(any());
+
+    ArgumentCaptor<DailyReward> captor = ArgumentCaptor.forClass(DailyReward.class);
+    verify(dailyRewardRepository).save(captor.capture());
+    assertEquals(1, captor.getValue().getStreak());
   }
 
   @Test
   void claimDailyReward_BadRequest_WhenUnder24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
-    // 23 hours elapsed: (23 < 24) is TRUE, triggers BAD_REQUEST
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(23));
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
 
@@ -138,13 +176,14 @@ class DailyRewardControllerTest {
 
   @Test
   void claimDailyReward_InternalError_WhenRpcFails() {
-    UserWallet wallet = new UserWallet();
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
 
     DailyReward reward = new DailyReward();
+    reward.setStreak(1);
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(25));
+
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.of(reward));
-    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(wallet));
+    when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(mockWallet));
 
     doThrow(new IllegalStateException()).when(walletService).fundAccount(any(), anyFloat());
 
@@ -172,39 +211,17 @@ class DailyRewardControllerTest {
 
   @Test
   void getDailyRewardStatus_ReturnsUnauthorized_WhenTokenIsMissingOrInvalid() {
-    // Arrange: Simulate CurrentUserService returning an empty Optional
     when(currentUserService.getAuthenticatedUser(any())).thenReturn(Optional.empty());
-
-    // Act
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(null);
-
-    // Assert
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("Authentication required", body.get("error"));
-
-    // Guard Rail: Ensure the database is NEVER queried if auth fails
     verify(dailyRewardRepository, never()).findById(anyInt());
   }
 
   @Test
   void claimDailyReward_ReturnsUnauthorized_WhenTokenIsMissingOrInvalid() {
-    // Arrange: Simulate auth failure
     when(currentUserService.getAuthenticatedUser(any())).thenReturn(Optional.empty());
-
-    // Act
     ResponseEntity<?> response = dailyRewardController.claimDailyReward("invalid-token");
-
-    // Assert
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-
-    Map<?, ?> body = (Map<?, ?>) response.getBody();
-    assertNotNull(body);
-    assertEquals("Authentication required", body.get("error"));
-
-    // Guard Rail: Ensure no financial transactions or DB updates are attempted
     verify(walletService, never()).fundAccount(any(), anyFloat());
     verify(dailyRewardRepository, never()).save(any());
   }

@@ -1990,6 +1990,8 @@ Returns the status of the user's daily reward at the current moment
 ```json
 {
   "status": {
+    "streak": 10,
+    "next_reward_amount": 12,
     "claimed": false
   }
 }
