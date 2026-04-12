@@ -52,10 +52,20 @@
   border-color: var(--amber);
 }
 
+.cart-row-sold-out {
+  opacity: 0.8;
+  border-color: rgba(192, 187, 178, 0.25);
+}
+
+.cart-row-sold-out:hover {
+  border-color: rgba(192, 187, 178, 0.35);
+}
+
 .cart-item-info {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  cursor: pointer;
 }
 
 .cart-item-info h3 {
@@ -68,6 +78,17 @@
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.cart-item-meta,
+.cart-item-stock {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.cart-item-stock-sold-out {
+  color: #c0bbb2;
 }
 
 .cart-item-actions {
@@ -100,6 +121,16 @@
 .quantity-controls button:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--amber);
+}
+
+.quantity-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quantity-controls button:disabled:hover {
+  background: none;
+  color: var(--white);
 }
 
 .quantity-controls span {

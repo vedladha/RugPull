@@ -8,6 +8,7 @@ describe("ListingCard", () => {
     name: "Guitar",
     description: "Great condition, barely used",
     price: "5.2 RPC",
+    stock: 3,
     seller: "john",
   };
 
@@ -33,6 +34,12 @@ describe("ListingCard", () => {
     expect(screen.getByText("Seller: john")).toBeInTheDocument();
   });
 
+  it("renders the stock quantity", () => {
+    render(<ListingCard {...defaultProps} />);
+    expect(screen.getByText("Quantity available: 3")).toBeInTheDocument();
+    expect(screen.getByText("3 left")).toBeInTheDocument();
+  });
+
   it("renders all props together correctly", () => {
     render(<ListingCard {...defaultProps} />);
     expect(screen.getByText("Guitar")).toBeInTheDocument();
@@ -40,6 +47,7 @@ describe("ListingCard", () => {
       screen.getByText("Great condition, barely used"),
     ).toBeInTheDocument();
     expect(screen.getByText("5.2 RPC")).toBeInTheDocument();
+    expect(screen.getByText("Quantity available: 3")).toBeInTheDocument();
     expect(screen.getByText("Seller: john")).toBeInTheDocument();
   });
 
