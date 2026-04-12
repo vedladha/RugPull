@@ -5,12 +5,21 @@ import CartPage from "../Pages/CartPage.jsx";
 
 const mockUseAuth = vi.fn();
 const mockFetch = vi.fn();
+const mockNavigate = vi.fn();
 
 vi.mock("../Auth/auth-context.js", () => ({
     useAuth: () => mockUseAuth(),
 }));
 
 // Mock ListingModal to isolate CartPage logic
+vi.mock("react-router-dom", async () => {
+    const actual = await vi.importActual("react-router-dom");
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    };
+});
+
 vi.mock("../Components/ListingModal.jsx", () => ({
     default: ({ listing, onClose }) => (
         <div data-testid="listing-modal">
@@ -87,9 +96,9 @@ describe("CartPage", () => {
     it("calls PUT endpoint and updates UI when incrementing quantity", async () => {
         mockFetch
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
-            .mockResolvedValueOnce({ 
-                ok: true, 
-                json: async () => ({ items: [{ itemId: 101, name: "Item", price: 10 }] }) 
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ items: [{ itemId: 101, name: "Item", price: 10 }] })
             });
 
         render(<CartPage />);
@@ -114,9 +123,9 @@ describe("CartPage", () => {
     it("calls DELETE endpoint and removes item from list", async () => {
         mockFetch
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
-            .mockResolvedValueOnce({ 
-                ok: true, 
-                json: async () => ({ items: [{ itemId: 101, name: "Trash Item", price: 5 }] }) 
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ items: [{ itemId: 101, name: "Trash Item", price: 5 }] })
             });
 
         render(<CartPage />);
@@ -141,9 +150,9 @@ describe("CartPage", () => {
     it("opens ListingModal when item info is clicked", async () => {
         mockFetch
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
-            .mockResolvedValueOnce({ 
-                ok: true, 
-                json: async () => ({ items: [{ itemId: 101, name: "Clickable Item", price: 5 }] }) 
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ items: [{ itemId: 101, name: "Clickable Item", price: 5 }] })
             });
 
         render(<CartPage />);
@@ -172,6 +181,38 @@ describe("CartPage", () => {
 
         await waitFor(() => {
             expect(screen.getByText(/Failed to fetch cart data/i)).toBeDefined();
+        });
+    });
+
+    it("navigates to the order page with cart items", async () => {
+        mockFetch
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ cart: [{ itemId: 3, quantity: 2 }] }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    items: [{ itemId: 3, name: "Checkout Item", price: 9.5, stock: 4 }],
+                }),
+            });
+
+        render(<CartPage />);
+        await waitFor(() => expect(screen.getByText("Checkout Item")).toBeDefined());
+
+        await userEvent.click(screen.getByRole("button", { name: "Proceed to Checkout" }));
+
+        expect(mockNavigate).toHaveBeenCalledWith("/order", {
+            state: {
+                source: "cart",
+                items: [
+                    expect.objectContaining({
+                        itemId: 3,
+                        quantity: 2,
+                        fromCart: true,
+                    }),
+                ],
+            },
         });
     });
 });

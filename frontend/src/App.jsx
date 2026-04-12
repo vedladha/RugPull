@@ -9,6 +9,7 @@ import ProfilePage from "./ProfilePage.jsx"
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
 import CartPage from "./Pages/CartPage";
+import OrderPage from "./Pages/OrderPage.jsx";
 
 export default function App() {
   // const [modal, setModal] = useState(null); // null | "signin" | "signup"
@@ -45,6 +46,9 @@ export default function App() {
         } />
         <Route path="/cart" element={
           <CartPage />
+        } />
+        <Route path="/order" element={
+          <OrderPage />
         } />
         <Route path="/login" element={
           <AuthPage />

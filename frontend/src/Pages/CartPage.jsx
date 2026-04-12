@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/cart-page.css";
 import ListingModal from "../Components/ListingModal.jsx";
@@ -6,6 +7,7 @@ import ListingModal from "../Components/ListingModal.jsx";
 export default function CartPage() {
     const { user } = useAuth();
     const API = "http://localhost:3001";
+    const navigate = useNavigate();
 
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -120,6 +122,20 @@ export default function CartPage() {
         }, 0).toFixed(2);
     };
 
+    const handleCheckout = () => {
+        if (cart.length === 0) return;
+
+        navigate("/order", {
+            state: {
+                source: "cart",
+                items: cart.map((cartItem) => ({
+                    ...cartItem,
+                    fromCart: true,
+                })),
+            },
+        });
+    };
+
     if (!user) {
         return (
             <div className="cart-page">
@@ -196,7 +212,10 @@ export default function CartPage() {
                             <span>Total</span>
                             <span>${calculateTotal()}</span>
                         </div>
-                        <button className="btn-primary checkout-btn">
+                        <button
+                            className="btn-primary checkout-btn"
+                            onClick={handleCheckout}
+                        >
                             Proceed to Checkout
                         </button>
                     </div>
