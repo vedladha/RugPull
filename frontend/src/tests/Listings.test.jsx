@@ -181,7 +181,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
         await waitFor(() => expect(getWishlist).toHaveBeenCalled());
 
@@ -212,7 +212,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
         await waitFor(() => expect(getWishlist).toHaveBeenCalled());
 
@@ -236,7 +236,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: /view details for guitar/i }));
