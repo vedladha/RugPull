@@ -62,6 +62,24 @@
   color: var(--muted);
   font-size: 0.78rem;
 }
+.listing-modal-feedback {
+  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.listing-modal-feedback-error {
+  background: rgba(168, 55, 55, 0.16);
+  border: 1px solid rgba(168, 55, 55, 0.45);
+  color: #ffb4b4;
+}
+.listing-modal-feedback-success {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--amber);
+}
 .listing-modal-actions {
   display: flex;
   gap: 0.8rem;
@@ -78,6 +96,10 @@
     opacity 0.15s,
     border-color 0.15s,
     color 0.15s;
+}
+.listing-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .listing-action-btn-primary {
   background: var(--amber);

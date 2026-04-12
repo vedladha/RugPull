@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import ListingCard from "./Components/ListingCard.jsx";
 import ListingModal from "./Components/ListingModal.jsx";
+import { useAuth } from "./Auth/auth-context";
 
 export default function Listings() {
+  const { user, getWishlist, addToWishlist, removeFromWishlist } = useAuth();
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,12 +12,45 @@ export default function Listings() {
   const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [keywordFilter, setKeywordFilter] = useState("");
   const [selectedListing, setSelectedListing] = useState(null);
+  const [wishlistItemIds, setWishlistItemIds] = useState(new Set());
+  const [wishlistError, setWishlistError] = useState("");
+  const [wishlistSuccess, setWishlistSuccess] = useState("");
+  const [wishlistBusyItemId, setWishlistBusyItemId] = useState(null);
 
   const API = "http://localhost:3001";
 
   useEffect(() => {
     fetchListings();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setWishlistItemIds(new Set());
+      setWishlistError("");
+      setWishlistSuccess("");
+      return;
+    }
+
+    getWishlist()
+      .then((wishlist) => {
+        setWishlistItemIds(new Set(wishlist.map((entry) => entry.itemId)));
+      })
+      .catch((err) => {
+        setWishlistError(err.message);
+      });
+  }, [user, getWishlist]);
+
+  useEffect(() => {
+    if (!wishlistSuccess) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setWishlistSuccess("");
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [wishlistSuccess]);
 
   useEffect(() => {
     const filterListings = () => {
@@ -57,7 +92,11 @@ export default function Listings() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setListings(data.items || []);
+      const normalizedListings = (data.items || []).map((item) => ({
+        ...item,
+        id: item.itemId,
+      }));
+      setListings(normalizedListings);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching listings:", err);
@@ -84,6 +123,51 @@ export default function Listings() {
       }
       return updated;
     });
+  };
+
+  const handleToggleWishlist = async (itemId) => {
+    setWishlistError("");
+    setWishlistSuccess("");
+
+    if (!user) {
+      setWishlistError("Sign in to save items to your wishlist.");
+      return;
+    }
+
+    try {
+      setWishlistBusyItemId(itemId);
+
+      if (wishlistItemIds.has(itemId)) {
+        await removeFromWishlist(itemId);
+        setWishlistItemIds((prev) => {
+          const updated = new Set(prev);
+          updated.delete(itemId);
+          return updated;
+        });
+        setWishlistSuccess("Item removed from wishlist");
+      } else {
+        await addToWishlist(itemId);
+        setWishlistItemIds((prev) => new Set(prev).add(itemId));
+        setWishlistSuccess("Item added to wishlist");
+      }
+    } catch (err) {
+      setWishlistError(err.message);
+    } finally {
+      setWishlistBusyItemId(null);
+    }
+  };
+
+  const handleOpenListing = (listing) => {
+    setWishlistError("");
+    setWishlistSuccess("");
+    setSelectedListing(listing);
+  };
+
+  const handleCloseListing = () => {
+    setWishlistError("");
+    setWishlistSuccess("");
+    setWishlistBusyItemId(null);
+    setSelectedListing(null);
   };
 
   if (loading) {
@@ -159,7 +243,7 @@ export default function Listings() {
               description={listing.description}
               price={listing.price}
               seller={listing.sellerName}
-              onClick={() => setSelectedListing(listing)}
+              onClick={() => handleOpenListing(listing)}
             />
           ))
         )}
@@ -168,7 +252,12 @@ export default function Listings() {
       {selectedListing && (
         <ListingModal
           listing={selectedListing}
-          onClose={() => setSelectedListing(null)}
+          onClose={handleCloseListing}
+          isWishlisted={wishlistItemIds.has(selectedListing.id)}
+          onToggleWishlist={() => handleToggleWishlist(selectedListing.id)}
+          wishlistBusy={wishlistBusyItemId === selectedListing.id}
+          wishlistError={wishlistError}
+          wishlistSuccess={wishlistSuccess}
         />
       )}
     </div>
