@@ -193,9 +193,7 @@ describe("CartPage", () => {
             .mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
-                    items: {
-                        items: [{ itemId: 3, name: "Checkout Item", price: 9.5, stock: 4 }],
-                    },
+                    items: [{ itemId: 3, name: "Checkout Item", price: 9.5, stock: 4 }],
                 }),
             });
 
