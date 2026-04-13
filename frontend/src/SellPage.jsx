@@ -6,7 +6,12 @@ export default function SellPage() {
   const API = "http://localhost:3001";
 
   // State variables for form data, validation errors, submission status, and loading state
-  const [form, setForm] = useState({ title: "", bio: "", price: "" });
+  const [form, setForm] = useState({
+    title: "",
+    bio: "",
+    price: "",
+    quantity: "1",
+  });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,6 +36,13 @@ export default function SellPage() {
     if (!form.bio.trim()) errs.bio = "Description is required";
     if (form.price === "" || isNaN(form.price) || parseFloat(form.price) <= 0)
       errs.price = "Enter a valid price";
+    if (
+      form.quantity === "" ||
+      !Number.isInteger(Number(form.quantity)) ||
+      Number(form.quantity) < 1
+    ) {
+      errs.quantity = "Enter a valid quantity";
+    }
     return errs;
   };
 
@@ -57,7 +69,7 @@ export default function SellPage() {
           name: form.title.trim(),
           description: form.bio.trim(),
           price: parseFloat(form.price),
-          stock: 1,
+          stock: Number(form.quantity),
         }),
       });
       setSubmitted(true);
@@ -71,7 +83,7 @@ export default function SellPage() {
 
   // Resets the form to its initial state, clearing all fields and errors, and allowing the user to post another listing
   const handleReset = () => {
-    setForm({ title: "", bio: "", price: "" });
+    setForm({ title: "", bio: "", price: "", quantity: "1" });
     setErrors({});
     setSubmitted(false);
   };
@@ -90,6 +102,7 @@ export default function SellPage() {
             <div className="listing-price">
               ${parseFloat(form.price).toFixed(2)}
             </div>
+            <div className="listing-stock">{form.quantity} available</div>
           </div>
           <button className="btn-primary" onClick={handleReset}>
             Post Another
@@ -164,6 +177,25 @@ export default function SellPage() {
           </div>
           {errors.price && (
             <span className="sell-error-msg">{errors.price}</span>
+          )}
+        </div>
+
+        <div className="sell-field">
+          <label className="sell-label" htmlFor="sell-quantity">
+            Quantity
+          </label>
+          <input
+            id="sell-quantity"
+            className={`sell-input sell-input-quantity ${errors.quantity ? "sell-input-error" : ""}`}
+            type="number"
+            placeholder="1"
+            min="1"
+            step="1"
+            value={form.quantity}
+            onChange={(e) => handleChange("quantity", e.target.value)}
+          />
+          {errors.quantity && (
+            <span className="sell-error-msg">{errors.quantity}</span>
           )}
         </div>
 

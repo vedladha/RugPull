@@ -11,8 +11,8 @@ vi.mock("../Auth/auth-context", () => ({
 }));
 
 const mockListings = [
-    { itemId: 1, name: "Guitar", description: "Great condition", price: 5.2, sellerName: "john" },
-    { itemId: 2, name: "Bike", description: "Barely used", price: 10.0, sellerName: "jane" },
+    { itemId: 1, name: "Guitar", description: "Great condition", price: 5.2, sellerName: "john", stock: 3 },
+    { itemId: 2, name: "Bike", description: "Barely used", price: 10.0, sellerName: "jane", stock: 0 },
 ];
 
 beforeEach(() => {
@@ -57,6 +57,8 @@ describe("Listings", () => {
         await waitFor(() => {
             expect(screen.getByText("Guitar")).toBeInTheDocument();
             expect(screen.getByText("Bike")).toBeInTheDocument();
+            expect(screen.getByText("Quantity available: 3")).toBeInTheDocument();
+            expect(screen.getByText("Sold Out")).toBeInTheDocument();
         });
 
     });
@@ -245,5 +247,20 @@ describe("Listings", () => {
         await waitFor(() => {
             expect(screen.getByText("Sign in to save items to your wishlist.")).toBeInTheDocument();
         });
+    });
+
+    it("shows sold out state in the listing modal and blocks buying", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({ items: mockListings }),
+        }));
+
+        renderListings();
+        await waitFor(() => expect(screen.getByText("Bike")).toBeInTheDocument());
+
+        await userEvent.click(screen.getByRole("button", { name: /view details for bike/i }));
+
+        expect(screen.getAllByRole("button", { name: "Sold Out" })).toHaveLength(2);
+        expect(screen.getByRole("spinbutton", { name: "Quantity" })).toBeDisabled();
     });
 });

@@ -242,6 +242,7 @@ export default function Listings() {
               name={listing.name}
               description={listing.description}
               price={listing.price}
+              stock={listing.stock}
               seller={listing.sellerName}
               onClick={() => handleOpenListing(listing)}
             />
