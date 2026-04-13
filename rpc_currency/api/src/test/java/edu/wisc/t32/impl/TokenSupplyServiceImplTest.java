@@ -3,20 +3,14 @@ package edu.wisc.t32.impl;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.TokenAssociateTransaction;
-import com.hedera.hashgraph.sdk.TransactionResponse;
-import com.hedera.hashgraph.sdk.TransferTransaction;
 import edu.wisc.t32.AbstractCryptoTest;
 import edu.wisc.t32.api.TokenSupplyService;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -52,6 +46,7 @@ public class TokenSupplyServiceImplTest extends AbstractCryptoTest {
   void teardownResources() {
     try {
       walletService.close();
+      supplyService.close();
       tokenA.close();
     } catch (Exception e) {
       throw new RuntimeException("Failed to cleanly teardown resources", e);

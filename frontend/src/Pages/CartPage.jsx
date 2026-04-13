@@ -14,6 +14,10 @@ export default function CartPage() {
     const [error, setError] = useState(null);
     const [selectedItem, setSelectedItem] = useState(null);
 
+    const getStockCount = (item) => (
+        Number.isFinite(Number(item?.stock)) ? Number(item.stock) : null
+    );
+
     useEffect(() => {
         const fetchCartData = async () => {
             setLoading(true);
@@ -77,6 +81,10 @@ export default function CartPage() {
 
     const handleUpdateQuantity = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
+
+        const targetItem = cart.find((item) => item.itemId === itemId);
+        const stock = getStockCount(targetItem);
+        if (stock !== null && newQuantity > stock) return;
 
         try {
             const response = await fetch(`${API}/cart/${itemId}?quantity=${newQuantity}`, {
@@ -165,23 +173,49 @@ export default function CartPage() {
                             const name = cartItem.name || "Unknown Item";
                             const priceNum = parseFloat(cartItem.price) || 0;
                             const itemTotal = (priceNum * cartItem.quantity).toFixed(2);
+                            const stock = getStockCount(cartItem);
+                            const soldOut = stock !== null && stock <= 0;
+                            const atStockLimit = stock !== null && cartItem.quantity >= stock;
 
                             return (
-                                <div className="cart-row" key={cartItem.cartId || cartItem.itemId}>
+                                <div
+                                    className={`cart-row ${soldOut ? "cart-row-sold-out" : ""}`}
+                                    key={cartItem.cartId || cartItem.itemId}
+                                >
                                     <div className="cart-item-info" onClick={() => setSelectedItem(cartItem)}>
                                         <h3>{name}</h3>
                                         <p className="cart-item-price">
                                             ${priceNum.toFixed(2)}
                                         </p>
+                                        <p className="cart-item-meta">
+                                            Qty in cart: {cartItem.quantity}
+                                        </p>
+                                        <p className={`cart-item-stock ${soldOut ? "cart-item-stock-sold-out" : ""}`}>
+                                            {stock !== null
+                                                ? soldOut
+                                                    ? "Sold out"
+                                                    : `${stock} in stock`
+                                                : "Stock unavailable"}
+                                        </p>
                                     </div>
 
                                     <div className="cart-item-actions">
                                         <div className="quantity-controls">
-                                            <button onClick={() => handleUpdateQuantity(cartItem.itemId, cartItem.quantity - 1)}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleUpdateQuantity(cartItem.itemId, cartItem.quantity - 1)}
+                                                disabled={cartItem.quantity <= 1}
+                                                aria-label={`Decrease quantity for ${name}`}
+                                            >
                                                 -
                                             </button>
                                             <span>{cartItem.quantity}</span>
-                                            <button onClick={() => handleUpdateQuantity(cartItem.itemId, cartItem.quantity + 1)}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleUpdateQuantity(cartItem.itemId, cartItem.quantity + 1)}
+                                                disabled={soldOut || atStockLimit}
+                                                aria-label={`Increase quantity for ${name}`}
+                                            >
                                                 +
                                             </button>
                                         </div>

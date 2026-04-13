@@ -30,6 +30,7 @@ describe("SellPage", () => {
         expect(screen.getByPlaceholderText("What are you selling?")).toBeInTheDocument();
         expect(screen.getByPlaceholderText("Describe the condition, specs, or any relevant details...")).toBeInTheDocument();
         expect(screen.getByPlaceholderText("0.00")).toBeInTheDocument();
+        expect(screen.getByLabelText("Quantity")).toBeInTheDocument();
     });
 
     // Tests that validation errors are shown when form is submitted empty
@@ -63,6 +64,17 @@ describe("SellPage", () => {
         expect(screen.getByText("Enter a valid price")).toBeInTheDocument();
     });
 
+    it("shows quantity error when quantity is 0", async () => {
+        render(<SellPage />);
+
+        const quantityInput = screen.getByLabelText("Quantity");
+        await userEvent.clear(quantityInput);
+        await userEvent.type(quantityInput, "0");
+        await userEvent.click(screen.getByText("Post Listing"));
+
+        expect(screen.getByText("Enter a valid quantity")).toBeInTheDocument();
+    });
+
     // Tests that a successful submission shows the success screen
     it("shows success screen after successful submission", async () => {
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
@@ -71,11 +83,15 @@ describe("SellPage", () => {
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
         await userEvent.type(screen.getByPlaceholderText("Describe the condition, specs, or any relevant details..."), "Great condition");
         await userEvent.type(screen.getByPlaceholderText("0.00"), "5.2");
+        const quantityInput = screen.getByLabelText("Quantity");
+        await userEvent.clear(quantityInput);
+        await userEvent.type(quantityInput, "4");
         await userEvent.click(screen.getByText("Post Listing"));
 
         await waitFor(() => {
             expect(screen.getByText("Listing Posted")).toBeInTheDocument();
             expect(screen.getByText("Guitar")).toBeInTheDocument();
+            expect(screen.getByText("4 available")).toBeInTheDocument();
         });
     });
 
@@ -87,6 +103,9 @@ describe("SellPage", () => {
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
         await userEvent.type(screen.getByPlaceholderText("Describe the condition, specs, or any relevant details..."), "Great condition");
         await userEvent.type(screen.getByPlaceholderText("0.00"), "5.2");
+        const quantityInput = screen.getByLabelText("Quantity");
+        await userEvent.clear(quantityInput);
+        await userEvent.type(quantityInput, "4");
         await userEvent.click(screen.getByText("Post Listing"));
 
         await waitFor(() => {
@@ -98,7 +117,7 @@ describe("SellPage", () => {
                         name: "Guitar",
                         description: "Great condition",
                         price: 5.2,
-                        stock: 1,
+                        stock: 4,
                     }),
                 })
             );

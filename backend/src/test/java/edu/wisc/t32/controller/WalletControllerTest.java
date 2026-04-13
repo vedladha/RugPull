@@ -3,10 +3,13 @@ package edu.wisc.t32.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.dto.WalletFundRequest;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.repository.UserWalletRepository;
@@ -91,6 +94,106 @@ class WalletControllerTest {
     assertEquals("Internal service error fetching wallet", body.get("error"));
 
     verify(walletService, never()).getWalletBalance(any());
+  }
+
+  // --- fundWallet Tests ---
+
+  @Test
+  void fundWallet_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    WalletFundRequest request = new WalletFundRequest();
+    request.setAmount(100.0f);
+
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = walletController.fundWallet(null, request);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+
+    verify(walletService, never()).fundAccount(any(), anyFloat());
+  }
+
+  @Test
+  void fundWallet_returnsInternalServerError_whenWalletIsMissing() {
+    User user = buildUser(1);
+    WalletFundRequest request = new WalletFundRequest();
+    request.setAmount(100.0f);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = walletController.fundWallet(VALID_TOKEN, request);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Internal service error fetching wallet", body.get("error"));
+
+    verify(walletService, never()).fundAccount(any(), anyFloat());
+  }
+
+  @Test
+  void fundWallet_returnsBadRequest_whenAmountIsZeroOrLess() {
+    User user = buildUser(1);
+    UserWallet wallet = buildUserWallet(user.getUserId());
+    WalletFundRequest request = new WalletFundRequest();
+    request.setAmount(-50.0f); // Works for 0.0f as well
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.of(wallet));
+
+    ResponseEntity<?> response = walletController.fundWallet(VALID_TOKEN, request);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Can not fund account with 0 or less tokens", body.get("error"));
+
+    verify(walletService, never()).fundAccount(any(), anyFloat());
+  }
+
+  @Test
+  void fundWallet_returnsInternalServerError_whenHederaNetworkFails() {
+    User user = buildUser(1);
+    UserWallet wallet = buildUserWallet(user.getUserId());
+    WalletFundRequest request = new WalletFundRequest();
+    request.setAmount(100.0f);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.of(wallet));
+
+    // Mock the IllegalStateException from Hedera
+    doThrow(new IllegalStateException("Network unreachable"))
+        .when(walletService).fundAccount(wallet, 100.0f);
+
+    ResponseEntity<?> response = walletController.fundWallet(VALID_TOKEN, request);
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Internal service error while funding wallet", body.get("error"));
+  }
+
+  @Test
+  void fundWallet_returnsOk_whenFundingIsSuccessful() {
+    User user = buildUser(1);
+    UserWallet wallet = buildUserWallet(user.getUserId());
+    WalletFundRequest request = new WalletFundRequest();
+    request.setAmount(250.0f);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(userWalletRepository.findUserWalletByUserId(user.getUserId()))
+        .thenReturn(Optional.of(wallet));
+
+    ResponseEntity<?> response = walletController.fundWallet(VALID_TOKEN, request);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    verify(walletService).fundAccount(wallet, 250.0f);
   }
 
   private User buildUser(Integer userId) {

@@ -315,14 +315,43 @@ nav {
   flex-direction: column;
   gap: 0.75rem;
 }
+.listing-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
 .listing-card:hover {
   background: var(--amber-glow);
   border-color: var(--amber);
+}
+.listing-card-sold-out {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(192, 187, 178, 0.2);
+}
+.listing-card-sold-out:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(192, 187, 178, 0.35);
 }
 .listing-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--white);
+}
+.listing-status,
+.listing-stock {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.listing-status {
+  color: var(--amber);
+  white-space: nowrap;
+}
+.listing-status-sold-out {
+  color: #c0bbb2;
 }
 .listing-bio {
   font-family: var(--font-mono);
@@ -709,6 +738,9 @@ footer {
 }
 .sell-input-price {
   padding-left: 3.5rem;
+  width: 160px;
+}
+.sell-input-quantity {
   width: 160px;
 }
 .sell-error-msg {

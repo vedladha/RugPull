@@ -76,7 +76,7 @@ describe("CartPage", () => {
             ok: true,
             json: async () => ({
                 items: [
-                    { itemId: 101, name: "Laser Sword", price: 50.00 }
+                    { itemId: 101, name: "Laser Sword", price: 50.00, stock: 5 }
                 ]
             }),
         });
@@ -86,6 +86,8 @@ describe("CartPage", () => {
         await waitFor(() => {
             expect(screen.getByText("Laser Sword")).toBeDefined();
             expect(screen.getByText("$50.00")).toBeDefined();
+            expect(screen.getByText("Qty in cart: 2")).toBeDefined();
+            expect(screen.getByText("5 in stock")).toBeDefined();
             // Total should be 50 * 2 = 100
             const totals = screen.getAllByText("$100.00");
             expect(totals.length).toBeGreaterThan(0);
@@ -98,7 +100,7 @@ describe("CartPage", () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
             .mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ items: [{ itemId: 101, name: "Item", price: 10 }] })
+                json: async () => ({ items: [{ itemId: 101, name: "Item", price: 10, stock: 3 }] })
             });
 
         render(<CartPage />);
@@ -125,7 +127,7 @@ describe("CartPage", () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
             .mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ items: [{ itemId: 101, name: "Trash Item", price: 5 }] })
+                json: async () => ({ items: [{ itemId: 101, name: "Trash Item", price: 5, stock: 2 }] })
             });
 
         render(<CartPage />);
@@ -152,7 +154,7 @@ describe("CartPage", () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [{ itemId: 101, quantity: 1 }] })
             .mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ items: [{ itemId: 101, name: "Clickable Item", price: 5 }] })
+                json: async () => ({ items: [{ itemId: 101, name: "Clickable Item", price: 5, stock: 2 }] })
             });
 
         render(<CartPage />);
@@ -182,6 +184,30 @@ describe("CartPage", () => {
         await waitFor(() => {
             expect(screen.getByText(/Failed to fetch cart data/i)).toBeDefined();
         });
+    });
+
+    it("disables quantity increase when the cart quantity matches stock", async () => {
+        mockFetch
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ cart: [{ itemId: 8, quantity: 2 }] }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    items: [{ itemId: 8, name: "Limited Item", price: 12, stock: 2 }],
+                }),
+            });
+
+        render(<CartPage />);
+        await waitFor(() => expect(screen.getByText("Limited Item")).toBeDefined());
+
+        const increaseButton = screen.getByRole("button", { name: "Increase quantity for Limited Item" });
+        expect(increaseButton).toBeDisabled();
+
+        await userEvent.click(increaseButton);
+
+        expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
     it("navigates to the order page with cart items", async () => {

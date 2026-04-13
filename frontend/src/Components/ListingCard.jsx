@@ -1,14 +1,38 @@
-export default function ListingCard({ name, description, price, seller, onClick }) {
+export default function ListingCard({
+  name,
+  description,
+  price,
+  stock,
+  seller,
+  onClick,
+}) {
+  const quantity = Number.isFinite(Number(stock)) ? Number(stock) : null;
+  const isSoldOut = quantity !== null && quantity <= 0;
+
   return (
     <button
       type="button"
-      className="listing-card listing-card-button"
+      className={`listing-card listing-card-button ${isSoldOut ? "listing-card-sold-out" : ""}`}
       onClick={onClick}
       aria-label={`View details for ${name}`}
     >
-      <div className="listing-title">{name}</div>
+      <div className="listing-card-header">
+        <div className="listing-title">{name}</div>
+        <div className={`listing-status ${isSoldOut ? "listing-status-sold-out" : ""}`}>
+          {isSoldOut
+            ? "Sold Out"
+            : quantity !== null
+              ? `${quantity} left`
+              : "Stock unavailable"}
+        </div>
+      </div>
       <div className="listing-bio">{description}</div>
       <div className="listing-price">{price}</div>
+      <div className="listing-stock">
+        {quantity !== null
+          ? `Quantity available: ${Math.max(quantity, 0)}`
+          : "Quantity available: Unknown"}
+      </div>
       <div className="listing-seller">Seller: {seller}</div>
     </button>
   );

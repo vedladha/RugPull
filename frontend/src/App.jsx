@@ -11,6 +11,7 @@ import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
 import CartPage from "./Pages/CartPage";
 import OrderPage from "./Pages/OrderPage.jsx";
+import EarnPage from "./Pages/EarnPage";
 
 export default function App() {
   // const [modal, setModal] = useState(null); // null | "signin" | "signup"
@@ -60,6 +61,9 @@ export default function App() {
         <Route path="/signup" element={
           // AuthPage checks path to decide what to show
           <AuthPage />
+        } />
+        <Route path="/earn" element={
+          <EarnPage />
         } />
       </Routes>
       <Footer />

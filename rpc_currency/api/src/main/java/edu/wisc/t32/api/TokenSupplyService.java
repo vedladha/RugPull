@@ -6,7 +6,7 @@ import edu.wisc.t32.impl.TokenSupplyServiceImpl;
  * The token service takes in a token id, and supply key. To allow you to make modifications to a
  * token such as increasing supply or decreasing supply of the token.
  */
-public interface TokenSupplyService {
+public interface TokenSupplyService extends AutoCloseable {
   /**
    * Mints the amount of tokens specified. for the token this supply service acts on behalf of.
    *
@@ -15,8 +15,9 @@ public interface TokenSupplyService {
    *
    * @param amount the amount of tokens to mint
    * @throws IllegalArgumentException thrown if the parameter is negative or 0
+   * @throws RuntimeException if minting fails
    */
-  void mint(float amount) throws IllegalArgumentException;
+  void mint(float amount) throws IllegalArgumentException, RuntimeException;
 
   /**
    * Creates a new token supply service with the given parameters.
@@ -29,6 +30,6 @@ public interface TokenSupplyService {
    */
   static TokenSupplyService getService(String operatorId, String operatorKey, String tokenId,
                                        String supplyKey) {
-    return TokenSupplyServiceImpl.create(operatorId, operatorId, tokenId, supplyKey);
+    return TokenSupplyServiceImpl.create(operatorId, operatorKey, tokenId, supplyKey);
   }
 }
