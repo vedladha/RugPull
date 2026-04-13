@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation(files("libs/app-bundle.jar"))
+    implementation(files("libs/api-bundle.jar"))
     implementation(libs.spring.boot.webmvc)
     implementation(libs.spring.boot.data)
     implementation(libs.spring.boot.security)

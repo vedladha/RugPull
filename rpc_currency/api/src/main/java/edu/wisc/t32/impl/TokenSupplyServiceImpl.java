@@ -81,6 +81,10 @@ public class TokenSupplyServiceImpl implements TokenSupplyService {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    this.client.close();
+  }
 
   private record PoolResponse(long supply, int decimals) {
 
@@ -111,7 +115,7 @@ public class TokenSupplyServiceImpl implements TokenSupplyService {
     final AccountId accountId = AccountId.fromString(operatorId);
     final PrivateKey privateKey = PrivateKey.fromStringECDSA(operatorKey);
     final TokenId token = TokenId.fromString(tokenId);
-    final PrivateKey tokenKey = PrivateKey.fromStringECDSA(supplyKey);
+    final PrivateKey tokenKey = PrivateKey.fromString(supplyKey);
 
     final Client client = Client.forTestnet().setOperator(accountId, privateKey);
 

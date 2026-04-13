@@ -1,5 +1,6 @@
 package edu.wisc.t32.controller;
 
+import edu.wisc.t32.dto.WalletFundRequest;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.model.UserWallet;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,7 +59,7 @@ public class WalletController {
    *        <ul>
    *        <li>{@code 200 OK} with the balance (float) if successful</li>
    *        <li>{@code 401 UNAUTHORIZED} with an error map if the token is invalid or missing</li>
-   *        <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if 
+   *        <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if
    *            the user has no associated wallet</li>
    *        </ul>
    */
@@ -79,5 +82,42 @@ public class WalletController {
 
     float balance = this.walletService.getWalletBalance(wallet.get());
     return ResponseEntity.ok(balance);
+  }
+
+  /**
+   * Funds the connected and authenticated wallet with the provided token amount.
+   *
+   * @param token the user's jwt token
+   * @return a response entity.
+   */
+  @PostMapping("/fund")
+  public ResponseEntity<?> fundWallet(@CookieValue(name = "jwt", required = false) String token,
+                                      @RequestBody WalletFundRequest fundRequest) {
+    final Optional<User> user = currentUserService.getAuthenticatedUser(token);
+    if (user.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+
+    final Optional<UserWallet> wallet = userWalletRepository.findUserWalletByUserId(
+        user.get().getUserId());
+    if (wallet.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "Internal service error fetching wallet"));
+    }
+
+    if (fundRequest.getAmount() <= 0) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(Map.of("error", "Can not fund account with 0 or less tokens"));
+    }
+
+    try {
+      this.walletService.fundAccount(wallet.get(), fundRequest.getAmount());
+    } catch (IllegalStateException e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "Internal service error while funding wallet"));
+    }
+
+    return ResponseEntity.ok().build();
   }
 }

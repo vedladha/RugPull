@@ -40,12 +40,17 @@ export default function Navbar({ currentPage }) {
             Sell
           </Link>
         </button>
+        <button className="nav-btn">
+          <Link to="/earn" style={{ textDecoration: "none", color: "inherit" }}>
+            Earn
+          </Link>
+        </button>
+        {user && <Link to="/cart" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="nav-btn">Cart</div>
+        </Link>
+        }
         <button className="nav-btn">About</button>
       </div>
-      {user && <Link to="/cart" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="nav-btn">Cart</div>
-      </Link>
-      }
       {user && balance !== null && (
         <div className="nav-user">Balance: {balance.toFixed(2)} RPC</div>
       )}

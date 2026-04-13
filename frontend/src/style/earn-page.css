@@ -1,0 +1,275 @@
+/* Earn Page Container */
+.earn-page {
+  padding: 5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Header */
+.earn-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.earn-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+/* Messages */
+.earn-auth-msg {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Standard Daily Banner */
+.daily-banner {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  transition: all 0.2s ease;
+}
+
+.daily-banner:hover {
+  border-color: var(--amber);
+  background: var(--amber-glow);
+}
+
+.banner-content h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--white);
+}
+
+.banner-content p {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+  transition: color 0.2s ease;
+}
+
+.claim-btn {
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+/* Error State Daily Banner */
+.daily-banner.banner-error {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.daily-banner.banner-error:hover {
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.1);
+}
+
+.daily-banner.banner-error .banner-content h2 {
+  color: #ff6b6b;
+}
+
+.daily-banner.banner-error .banner-content p {
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .daily-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .claim-btn {
+    width: 100%;
+  }
+}
+
+/* --- Streak Badge Styles --- */
+.banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.banner-title-row h2 {
+  margin-bottom: 0; /* Override previous margin */
+}
+
+.streak-badge {
+  background: var(--amber-glow);
+  color: var(--amber);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.earn-claimed-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.claimed-streak {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* --- Developer Sandbox Tool --- */
+.dev-sandbox {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(20, 20, 20, 0.8);
+  border: 2px dashed var(--muted);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Optional: Warning stripes at the top */
+.dev-sandbox::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--amber),
+    var(--amber) 10px,
+    var(--black) 10px,
+    var(--black) 20px
+  );
+}
+
+.dev-sandbox-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.dev-badge {
+  background: var(--amber);
+  color: var(--black);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.dev-sandbox h3 {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--white);
+}
+
+.dev-desc {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.dev-input-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.dev-input {
+  flex: 1;
+  background: var(--black);
+  border: 1px solid var(--border);
+  color: var(--amber); /* Making the input text pop */
+  font-family: var(--font-mono);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  outline: none;
+}
+
+.dev-input:focus {
+  border-color: var(--amber);
+}
+
+.dev-btn {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 0 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dev-btn:hover:not(:disabled) {
+  background: var(--amber-glow);
+}
+
+.dev-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.dev-msg {
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+}
+
+.dev-msg.success {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.dev-msg.error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+@media (max-width: 600px) {
+  .dev-input-group {
+    flex-direction: column;
+  }
+  .dev-btn {
+    padding: 1rem;
+  }
+}
