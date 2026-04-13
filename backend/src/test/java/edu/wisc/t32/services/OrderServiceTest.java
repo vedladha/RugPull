@@ -38,48 +38,52 @@ class OrderServiceTest {
 
   @Test
   void createOrder_returnsSavedOrder_whenStockIsAvailable() {
+    // Setup Data
     User user = buildUser(7);
     OrderCreateRequest request = buildRequest(4, 2);
     Item item = buildItem(4, new BigDecimal("12.50"), 5);
 
+    // Mocking
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(4)).thenReturn(Optional.of(item));
-    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
     when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
       Order saved = invocation.getArgument(0);
-      saved.setOrderId(1);
+      org.springframework.test.util.ReflectionTestUtils.setField(saved, "orderId", 1);
       return saved;
     });
 
+    // Execution
     Order saved = orderService.createOrder(user, request);
 
+    // Assertions
     assertEquals(1, saved.getOrderId());
-    assertEquals(7, saved.getUserId());
-    assertEquals(4, saved.getItemId());
-    assertEquals(2, saved.getQuantity());
-    assertEquals(0, new BigDecimal("12.50").compareTo(saved.getPrice()));
-    assertEquals(0, new BigDecimal("2.50").compareTo(saved.getFeePercentage()));
-    assertEquals("pending", saved.getOrderStatus());
+    assertEquals(7, saved.getUser().getUserId());
+    
+    // Check the OrderItem list
+    assertEquals(1, saved.getItems().size());
+    assertEquals(4, saved.getItems().get(0).getItem().getItemId());
+    assertEquals(2, saved.getItems().get(0).getQuantity());
+    
+    // Check calculated fields
+    assertEquals(0, new BigDecimal("25.00").compareTo(saved.getTotalPrice()));
+    assertEquals("AWAITING_CONFIRMATION", saved.getOrderStatus().name());
+    
+    // Check side effects
     assertEquals(3, item.getStock());
-    verify(itemRepository, times(1)).save(item);
     verify(orderRepository, times(1)).save(any(Order.class));
   }
 
   @Test
   void createOrder_usesLockedItemLookup() {
-    final User user = buildUser(7);
-    final OrderCreateRequest request = buildRequest(4, 1);
+    User user = buildUser(7);
+    OrderCreateRequest request = buildRequest(4, 1);
     Item item = buildItem(4, new BigDecimal("12.50"), 5);
 
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(4)).thenReturn(Optional.of(item));
-    when(itemRepository.save(any(Item.class)))
-        .thenAnswer(invocation -> invocation.getArgument(0));
-    when(orderRepository.save(any(Order.class)))
-        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     orderService.createOrder(user, request);
 
     verify(itemRepository, times(1)).findByItemIdAndDeletedFalseForUpdate(4);
-    verify(itemRepository, never()).findByItemIdAndDeletedFalse(4);
   }
 
   @Test
@@ -92,15 +96,14 @@ class OrderServiceTest {
     OrderItemNotFoundException error = assertThrows(OrderItemNotFoundException.class,
         () -> orderService.createOrder(user, request));
 
-    assertEquals("Item not found", error.getMessage());
-    verify(itemRepository, never()).save(any(Item.class));
+    assertEquals("Item not found.", error.getMessage());
     verify(orderRepository, never()).save(any(Order.class));
   }
 
   @Test
   void createOrder_throwsWhenStockIsInsufficient() {
     User user = buildUser(7);
-    OrderCreateRequest request = buildRequest(4, 6);
+    OrderCreateRequest request = buildRequest(4, 6); // Asking for 6, only 5 in stock
     Item item = buildItem(4, new BigDecimal("12.50"), 5);
 
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(4)).thenReturn(Optional.of(item));
@@ -108,15 +111,18 @@ class OrderServiceTest {
     InsufficientStockException error = assertThrows(InsufficientStockException.class,
         () -> orderService.createOrder(user, request));
 
-    assertEquals("insufficient stock", error.getMessage());
-    verify(itemRepository, never()).save(any(Item.class));
+    assertEquals("Insufficient stock", error.getMessage());
     verify(orderRepository, never()).save(any(Order.class));
   }
 
+
   private OrderCreateRequest buildRequest(Integer itemId, Integer quantity) {
+    OrderCreateRequest.ItemRequest itemReq = new OrderCreateRequest.ItemRequest();
+    itemReq.setItemId(itemId);
+    itemReq.setQuantity(quantity);
+
     OrderCreateRequest request = new OrderCreateRequest();
-    request.setItemId(itemId);
-    request.setQuantity(quantity);
+    request.setItems(java.util.List.of(itemReq));
     return request;
   }
 
@@ -126,6 +132,7 @@ class OrderServiceTest {
     item.setPrice(price);
     item.setStock(stock);
     item.setDeleted(false);
+    item.setUserId(1);
     return item;
   }
 

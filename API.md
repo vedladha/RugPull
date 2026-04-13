@@ -1,7 +1,5 @@
 # Marketplace API Endpoints
 
-
-
 This document outlines the main API endpoints for the $RPC marketplace.
 
 
@@ -12,7 +10,6 @@ This document outlines the main API endpoints for the $RPC marketplace.
 
 ---
 
-
 ### 1. Users & Authentication
 
 Handles signup, login, logout, and authenticated user lookup.
@@ -22,58 +19,41 @@ Successful login sets an HTTP-only `jwt` cookie.
 Legacy `/api/users*` routes still exist in a separate controller, but they are not the primary
 frontend-backed API.
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/auth/register` | POST | Create a new user, profile, and wallet |
-| `/auth/login` | POST | Authenticate user and set the `jwt` cookie |
-| `/auth/profile` | GET | Fetch the logged in user's auth profile |
-| `/auth/logout` | POST | Logout and clear the `jwt` cookie |
-
-
+| Endpoint         | Method | Description                                |
+|------------------|--------|--------------------------------------------|
+| `/auth/register` | POST   | Create a new user, profile, and wallet     |
+| `/auth/login`    | POST   | Authenticate user and set the `jwt` cookie |
+| `/auth/profile`  | GET    | Fetch the logged in user's auth profile    |
+| `/auth/logout`   | POST   | Logout and clear the `jwt` cookie          |
 
 ---
-
-
 
 ### 2. User Profiles
 
 Manages display information for users.
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/profile/{userId}` | GET | Fetch profile info (`displayName`, `bio`) |
-| `/profile/me` | GET | Fetch profile info for current user |
-| `/profile/me` | PUT/PATCH | Update profile info for current user |
-
-
+| Endpoint            | Method    | Description                               |
+|---------------------|-----------|-------------------------------------------|
+| `/profile/{userId}` | GET       | Fetch profile info (`displayName`, `bio`) |
+| `/profile/me`       | GET       | Fetch profile info for current user       |
+| `/profile/me`       | PUT/PATCH | Update profile info for current user      |
 
 ---
-
-
 
 ### 3. Items
 
 Marketplace listings management.
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/items` | GET | List all non-deleted items |
-| `/items/{itemId}` | GET | Fetch single item details |
-| `/items` | POST | Create a new item listing |
-| `/items/{itemId}` | PUT | Update item info (name, description, price, stock) |
-| `/items/{itemId}` | DELETE | Soft delete an item |
-
-
+| Endpoint          | Method | Description                                        |
+|-------------------|--------|----------------------------------------------------|
+| `/items`          | GET    | List all non-deleted items                         |
+| `/items/{itemId}` | GET    | Fetch single item details                          |
+| `/items`          | POST   | Create a new item listing                          |
+| `/items/{itemId}` | PUT    | Update item info (name, description, price, stock) |
+| `/items/{itemId}` | DELETE | Soft delete an item                                |
+| `/items/batch`    | POST   | Fetch items using a bulk list of ids               |
 
 ---
-
-
 
 ### 4. Categories
 
@@ -83,8 +63,6 @@ No category endpoints are currently implemented in the backend controllers.
 
 ---
 
-
-
 ### 5. Tags
 
 No tag endpoints are currently implemented in the backend controllers.
@@ -93,49 +71,33 @@ No tag endpoints are currently implemented in the backend controllers.
 
 ---
 
-
-
 ### 6. Orders
 
 Buying and selling workflow.
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/orders` | GET | List authenticated user's orders |
-| `/orders/{orderId}` | GET | Get one authenticated user's order |
-| `/orders` | POST | Place a new order |
-
-
+| Endpoint            | Method | Description                        |
+|---------------------|--------|------------------------------------|
+| `/orders`           | GET    | List authenticated user's orders   |
+| `/orders/{orderId}` | GET    | Get one authenticated user's order |
+| `/orders`           | POST   | Place a new order                  |
 
 ---
-
-
 
 ### 7. Wishlist
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/wishlist` | GET | List items in the authenticated user's wishlist |
-| `/wishlist/{itemId}` | POST | Add item to wishlist |
-| `/wishlist/{itemId}` | DELETE | Remove item from wishlist |
-
-
+| Endpoint             | Method | Description                                     |
+|----------------------|--------|-------------------------------------------------|
+| `/wishlist`          | GET    | List items in the authenticated user's wishlist |
+| `/wishlist/{itemId}` | POST   | Add item to wishlist                            |
+| `/wishlist/{itemId}` | DELETE | Remove item from wishlist                       |
 
 ---
 
-
-
 ### 8. Crypto Transactions & Wallets
 
-
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/wallets` | GET | Fetch authenticated user's wallet balance |
+| Endpoint   | Method | Description                               |
+|------------|--------|-------------------------------------------|
+| `/wallets` | GET    | Fetch authenticated user's wallet balance |
 
 Deposit, withdraw, transfer, and transaction history endpoints are not currently implemented in
 the backend controllers.
@@ -143,8 +105,6 @@ the backend controllers.
 
 
 ---
-
-
 
 ### 9. Reviews
 
@@ -154,8 +114,6 @@ No review endpoints are currently implemented in the backend controllers.
 
 ---
 
-
-
 ### 10. Notifications
 
 No notification endpoints are currently implemented in the backend controllers.
@@ -164,12 +122,12 @@ No notification endpoints are currently implemented in the backend controllers.
 
 ### 11. Cart
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/cart` | GET | List items in the authenticated user's cart |
-| `/cart/{itemId}` | POST | Add item to cart |
-| `/cart/{itemId}` | PUT | Update item quantity in cart |
-| `/cart/{itemId}` | DELETE | Remove item from cart |
+| Endpoint         | Method | Description                                 |
+|------------------|--------|---------------------------------------------|
+| `/cart`          | GET    | List items in the authenticated user's cart |
+| `/cart/{itemId}` | POST   | Add item to cart                            |
+| `/cart/{itemId}` | PUT    | Update item quantity in cart                |
+| `/cart/{itemId}` | DELETE | Remove item from cart                       |
 
 ---
 
@@ -177,17 +135,14 @@ No notification endpoints are currently implemented in the backend controllers.
 
 These routes still exist in `UserController`, but they are older/testing endpoints.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/users` | GET | Return all users as raw `User` entities |
-| `/api/users/addUser` | POST | Create a user from query parameters |
-| `/api/users/{userId}/profile` | PUT | Create or update a profile from query parameters |
-| `/api/users/{userId}/profile` | GET | Return a raw `UserProfile` entity |
-
-
+| Endpoint                      | Method | Description                                      |
+|-------------------------------|--------|--------------------------------------------------|
+| `/api/users`                  | GET    | Return all users as raw `User` entities          |
+| `/api/users/addUser`          | POST   | Create a user from query parameters              |
+| `/api/users/{userId}/profile` | PUT    | Create or update a profile from query parameters |
+| `/api/users/{userId}/profile` | GET    | Return a raw `UserProfile` entity                |
 
 ---
-
 
 ## Detailed Endpoint Reference
 
@@ -200,14 +155,14 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| displayName | String | N | Optional user display name |
-| email | String | Y | User email |
-| password | String | Y | Password |
-
+| Field       | Type   | Required | Description                |
+|-------------|--------|----------|----------------------------|
+| displayName | String | N        | Optional user display name |
+| email       | String | Y        | User email                 |
+| password    | String | Y        | Password                   |
 
 #### Request Example
+
 ```json
 {
   "displayName": "User",
@@ -217,6 +172,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 ```
 
 #### Response Example
+
 ```json
 {
   "email": "user@example.com",
@@ -230,12 +186,13 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | String | Y | User email |
-| password | String | Y | User password |
+| Field    | Type   | Required | Description   |
+|----------|--------|----------|---------------|
+| email    | String | Y        | User email    |
+| password | String | Y        | User password |
 
 #### Request Example
+
 ```json
 {
   "email": "user@example.com",
@@ -244,6 +201,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 ```
 
 #### Response Example
+
 ```json
 {
   "email": "user@example.com",
@@ -256,6 +214,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 ### POST /auth/logout
 
 #### Response Example
+
 ```json
 {
   "message": "Logged out successfully"
@@ -269,6 +228,7 @@ Older `Authorization: Bearer` references in untouched legacy sections below are 
 Returns the authenticated user's basic auth profile.
 
 #### Response Example
+
 ```json
 {
   "user": {
@@ -287,11 +247,12 @@ Use `/auth/profile` for auth details or `/profile/me` for the full profile.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 {
   "id": 1,
@@ -309,32 +270,34 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| email | String | N | New email |
-| password | String | N | New password |
+| Field    | Type   | Required | Description  |
+|----------|--------|----------|--------------|
+| email    | String | N        | New email    |
+| password | String | N        | New password |
 
 #### Request Example
+
 ```json
 {
   "email": "newemail@example.com",
-  "password": "NewPassword321",
+  "password": "NewPassword321"
 }
 ```
 
 ---
 
 #### Response Example
+
 ```json
 {
   "id": 1,
-  "email": "newemail@example.com",
+  "email": "newemail@example.com"
 }
 ```
 
@@ -346,11 +309,12 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 {
   "message": "User account marked as deleted",
@@ -364,11 +328,12 @@ This route is not implemented in the current backend.
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userId | String | Y | ID of the user whose profile to fetch |
+| Parameter | Type   | Required | Description                           |
+|-----------|--------|----------|---------------------------------------|
+| userId    | String | Y        | ID of the user whose profile to fetch |
 
 #### Response Example
+
 ```json
 {
   "profile": {
@@ -385,11 +350,12 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 {
   "profile": {
@@ -406,18 +372,19 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| displayName | String | N | Update display name |
-| bio | String | N | Update bio |
+| Field       | Type   | Required | Description         |
+|-------------|--------|----------|---------------------|
+| displayName | String | N        | Update display name |
+| bio         | String | N        | Update bio          |
 
 #### Request Example
+
 ```json
 {
   "displayName": "NewUser",
@@ -426,6 +393,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "profile": {
@@ -442,8 +410,8 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 Returns all non-deleted items.
@@ -451,6 +419,7 @@ The filtering query parameters listed below were part of an older draft and are 
 implemented in the backend controller.
 
 #### Response Example
+
 ```json
 {
   "items": [
@@ -480,17 +449,18 @@ implemented in the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | String | Y | ID of the item |
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| itemId    | String | Y        | ID of the item |
 
 #### Response Example
+
 ```json
 {
   "item": {
@@ -511,20 +481,21 @@ implemented in the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | String | Y | Item name |
-| description | String | Y | Item description |
-| price | Number | Y | Price in crypto |
-| stock | Number | Y | Number of items available |
+| Field       | Type   | Required | Description               |
+|-------------|--------|----------|---------------------------|
+| name        | String | Y        | Item name                 |
+| description | String | Y        | Item description          |
+| price       | Number | Y        | Price in crypto           |
+| stock       | Number | Y        | Number of items available |
 
 #### Request Example
+
 ```json
 {
   "name": "Cool Box",
@@ -535,6 +506,7 @@ implemented in the backend controller.
 ```
 
 #### Response Example
+
 ```json
 {
   "item": {
@@ -555,24 +527,27 @@ implemented in the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | String | Y | ID of the item |
+
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| itemId    | String | Y        | ID of the item |
 
 #### Request Body
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | String | Y | Updated item name (non-empty) |
-| description | String | Y | Updated item description (non-empty) |
-| price | Number | Y | Updated price (must be non-negative) |
-| stock | Number | Y | Updated stock (must be non-negative) |
+
+| Field       | Type   | Required | Description                          |
+|-------------|--------|----------|--------------------------------------|
+| name        | String | Y        | Updated item name (non-empty)        |
+| description | String | Y        | Updated item description (non-empty) |
+| price       | Number | Y        | Updated price (must be non-negative) |
+| stock       | Number | Y        | Updated stock (must be non-negative) |
 
 #### Request Example
+
 ```json
 {
   "name": "Updated Name",
@@ -583,6 +558,7 @@ implemented in the backend controller.
 ```
 
 #### Response Example
+
 ```json
 {
   "item": {
@@ -598,6 +574,7 @@ implemented in the backend controller.
 ```
 
 #### Error Responses
+
 ```json
 {
   "error": "Item not found"
@@ -616,17 +593,18 @@ implemented in the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | String | Y | ID of the item |
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| itemId    | String | Y        | ID of the item |
 
 #### Response Example
+
 ```json
 {
   "message": "Item deleted",
@@ -635,11 +613,76 @@ implemented in the backend controller.
 ```
 
 #### Error Response
+
 ```json
 {
   "error": "Item not found"
 }
 ```
+
+### POST /items/batch
+
+Retrieves a list of items specified by an array of IDs provided in the request body. Only active (non-deleted) items are returned in the response.
+
+#### Headers
+
+| Header        | Value                   |
+|---------------|-------------------------|
+| Authorization | Bearer `<access_token>` |
+| Content-Type  | `application/json`      |
+
+#### Request Body
+
+A JSON array of integers representing the item IDs.
+
+```json
+[1, 2, 3]
+```
+
+#### Response Example
+
+The response returns a json array items with item objects inside.
+
+```json
+{
+  "items": [
+    {
+      "itemId": 1,
+      "userId": 7,
+      "name": "listing!",
+      "description": "list!",
+      "price": 1.00000000,
+      "stock": 1,
+      "createdAt": "2026-04-04T17:19:06",
+      "updatedAt": "2026-04-04T17:19:06",
+      "deleted": false
+    },
+    {
+      "itemId": 2,
+      "userId": 12,
+      "name": "Second Item",
+      "description": "Another description",
+      "price": 15.50,
+      "stock": 5,
+      "createdAt": "2026-04-04T18:00:00",
+      "updatedAt": "2026-04-04T18:00:00",
+      "deleted": false
+    }
+  ]
+}
+```
+
+#### Error Responses
+
+Returned if the request body is null, empty, or not a valid JSON array of integers.
+
+```json
+{
+  "error": "request body is empty or missing"
+}
+```
+
+---
 
 ---
 
@@ -648,20 +691,26 @@ implemented in the backend controller.
 This route is not implemented in the current backend.
 
 #### Headers
-| Header | Value |
-|--------|-------|
+
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
-| Content-Type | multipart/form-data |
+| Content-Type  | multipart/form-data     |
 
 #### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
+
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| item_id   | String | Y        | ID of the item |
 
 #### Response Example
+
 ```json
 {
-  "uploaded": ["image1.png", "image2.png"]
+  "uploaded": [
+    "image1.png",
+    "image2.png"
+  ]
 }
 ```
 
@@ -672,17 +721,20 @@ This route is not implemented in the current backend.
 This route is not implemented in the current backend.
 
 #### Headers
-| Header | Value |
-|--------|-------|
+
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
-| image_id | String | Y | ID of the image |
+
+| Parameter | Type   | Required | Description     |
+|-----------|--------|----------|-----------------|
+| item_id   | String | Y        | ID of the item  |
+| image_id  | String | Y        | ID of the image |
 
 #### Response Example
+
 ```json
 {
   "message": "Image successfully removed"
@@ -697,23 +749,24 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| item_id   | String | Y        | ID of the item |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| tag | String | Y | Tag to attach |
+| Field | Type   | Required | Description   |
+|-------|--------|----------|---------------|
+| tag   | String | Y        | Tag to attach |
 
 #### Request Example
+
 ```json
 {
   "tag": "Art"
@@ -721,6 +774,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "message": "Tag attached successfully"
@@ -734,17 +788,20 @@ This route is not implemented in the current backend.
 This route is not implemented in the current backend.
 
 #### Headers
-| Header | Value |
-|--------|-------|
+
+| Header        | Value                 |
+|---------------|-----------------------|
 | Authorization | Bearer <access_token> |
 
 #### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| item_id | String | Y | ID of the item |
-| tag | String | Y | Tag to remove |
+
+| Parameter | Type   | Required | Description    |
+|-----------|--------|----------|----------------|
+| item_id   | String | Y        | ID of the item |
+| tag       | String | Y        | Tag to remove  |
 
 #### Response Example
+
 ```json
 {
   "message": "Tag removed successfully"
@@ -759,30 +816,31 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of categories per page |
+| Parameter | Type   | Required | Description                   |
+|-----------|--------|----------|-------------------------------|
+| page      | Number | N        | Page number for pagination    |
+| limit     | Number | N        | Number of categories per page |
 
 #### Response Example
+
 ```json
 {
-  {
-    "id": 1,
-    "name": "Art",
-    "parent_id": null
-  },
-  {
-    "id": 2,
-    "name": "Digital Art",
-    "parent_id": 1
-  }
+{
+  "id": 1,
+  "name": "Art",
+  "parent_id": null
+},
+{
+"id": 2,
+"name": "Digital Art",
+"parent_id": 1
+}
 }
 ```
 
@@ -794,17 +852,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| category_id | Number | Y | ID of the category to fetch |
+| Parameter   | Type   | Required | Description                 |
+|-------------|--------|----------|-----------------------------|
+| category_id | Number | Y        | ID of the category to fetch |
 
 #### Response Example
+
 ```json
 {
   "id": 2,
@@ -822,18 +881,20 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | String | Y | Name of the category |
-| parent_id | Number | N | Parent category |
-| description | String | N | Description |
+
+| Field       | Type   | Required | Description          |
+|-------------|--------|----------|----------------------|
+| name        | String | Y        | Name of the category |
+| parent_id   | Number | N        | Parent category      |
+| description | String | N        | Description          |
 
 #### Request Example
+
 ```json
 {
   "name": "Sports",
@@ -842,6 +903,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 3,
@@ -859,24 +921,26 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| category_id | Number | Y | ID of the category to update |
+| Parameter   | Type   | Required | Description                  |
+|-------------|--------|----------|------------------------------|
+| category_id | Number | Y        | ID of the category to update |
 
 #### Request Body
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | String | Y | New name |
-| parent_id | Number | N | New parent category |
-| description | String | N | New description |
+
+| Field       | Type   | Required | Description         |
+|-------------|--------|----------|---------------------|
+| name        | String | Y        | New name            |
+| parent_id   | Number | N        | New parent category |
+| description | String | N        | New description     |
 
 #### Request Example
+
 ```json
 {
   "name": "New Digital Art",
@@ -885,6 +949,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 2,
@@ -902,17 +967,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| category_id | Number | Y | ID of the category to delete |
+| Parameter   | Type   | Required | Description                  |
+|-------------|--------|----------|------------------------------|
+| category_id | Number | Y        | ID of the category to delete |
 
 #### Response Example
+
 ```json
 {
   "message": "Category deleted",
@@ -928,18 +994,19 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of categories per page |
+| Parameter | Type   | Required | Description                   |
+|-----------|--------|----------|-------------------------------|
+| page      | Number | N        | Page number for pagination    |
+| limit     | Number | N        | Number of categories per page |
 
 #### Response Example
+
 ```json
 [
   {
@@ -961,16 +1028,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| tag_id | Number | Y | ID of the tag |
+
+| Parameter | Type   | Required | Description   |
+|-----------|--------|----------|---------------|
+| tag_id    | Number | Y        | ID of the tag |
 
 #### Response Example
+
 ```json
 {
   "id": 2,
@@ -986,17 +1055,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | String | Y | Name of the tag |
+| Field | Type   | Required | Description     |
+|-------|--------|----------|-----------------|
+| name  | String | Y        | Name of the tag |
 
 #### Request Example
+
 ```json
 {
   "name": "Red"
@@ -1004,6 +1074,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 4,
@@ -1019,17 +1090,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| tag_id | Number | Y | ID of the tag |
+| Parameter | Type   | Required | Description   |
+|-----------|--------|----------|---------------|
+| tag_id    | Number | Y        | ID of the tag |
 
 #### Response Example
+
 ```json
 {
   "message": "Tag successfully deleted"
@@ -1042,8 +1114,8 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
@@ -1051,13 +1123,14 @@ This route is not implemented in the current backend.
 The query parameters listed below were part of an older draft and are not currently implemented in
 the backend controller.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| status | String | N | Filter by status |
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of orders per page |
+| Parameter | Type   | Required | Description                |
+|-----------|--------|----------|----------------------------|
+| status    | String | N        | Filter by status           |
+| page      | Number | N        | Page number for pagination |
+| limit     | Number | N        | Number of orders per page  |
 
 #### Response Example
+
 ```json
 {
   "orders": [
@@ -1082,17 +1155,18 @@ the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| orderId | Number | Y | ID of the order |
+| Parameter | Type   | Required | Description     |
+|-----------|--------|----------|-----------------|
+| orderId   | Number | Y        | ID of the order |
 
 #### Response Example
+
 ```json
 {
   "order": {
@@ -1115,18 +1189,19 @@ the backend controller.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to purchase |
-| quantity | Number | Y | Quantity to purchase |
+| Field    | Type   | Required | Description                |
+|----------|--------|----------|----------------------------|
+| itemId   | Number | Y        | ID of the item to purchase |
+| quantity | Number | Y        | Quantity to purchase       |
 
 #### Request Example
+
 ```json
 {
   "itemId": 100,
@@ -1135,6 +1210,7 @@ the backend controller.
 ```
 
 #### Response Example
+
 ```json
 {
   "order": {
@@ -1157,23 +1233,24 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| order_id | Number | Y | ID of the order |
+| Parameter | Type   | Required | Description     |
+|-----------|--------|----------|-----------------|
+| order_id  | Number | Y        | ID of the order |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| status | String | Y | Update order status |
+| Field  | Type   | Required | Description         |
+|--------|--------|----------|---------------------|
+| status | String | Y        | Update order status |
 
 #### Request Example
+
 ```json
 {
   "status": "cancelled"
@@ -1181,6 +1258,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 5003,
@@ -1194,11 +1272,12 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 {
   "wishlist": [
@@ -1217,17 +1296,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to add |
+| Parameter | Type   | Required | Description           |
+|-----------|--------|----------|-----------------------|
+| itemId    | Number | Y        | ID of the item to add |
 
 #### Response Example
+
 ```json
 {
   "wishlist": {
@@ -1244,17 +1324,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to remove |
+| Parameter | Type   | Required | Description              |
+|-----------|--------|----------|--------------------------|
+| itemId    | Number | Y        | ID of the item to remove |
 
 #### Response Example
+
 ```json
 {
   "message": "Item removed from wishlist",
@@ -1268,11 +1349,12 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 250.75
 ```
@@ -1285,17 +1367,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| amount | Number | Y | Amount to deposit |
+| Field  | Type   | Required | Description       |
+|--------|--------|----------|-------------------|
+| amount | Number | Y        | Amount to deposit |
 
 #### Request Example
+
 ```json
 {
   "amount": 1.2
@@ -1303,6 +1386,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "message": "Deposit recorded and pending confirmation",
@@ -1319,17 +1403,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| amount | Number | Y | Amount to withdraw |
+| Field  | Type   | Required | Description        |
+|--------|--------|----------|--------------------|
+| amount | Number | Y        | Amount to withdraw |
 
 #### Request Example
+
 ```json
 {
   "amount": 1.2
@@ -1337,6 +1422,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "message": "Withdrawal recorded and pending confirmation",
@@ -1353,18 +1439,19 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| amount | Number | Y | Amount to withdraw |
-| recipient_user_id | Number | Y | ID of recipient user |
+| Field             | Type   | Required | Description          |
+|-------------------|--------|----------|----------------------|
+| amount            | Number | Y        | Amount to withdraw   |
+| recipient_user_id | Number | Y        | ID of recipient user |
 
 #### Request Example
+
 ```json
 {
   "amount": 2,
@@ -1373,6 +1460,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "message": "Transfer completed",
@@ -1391,20 +1479,21 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-------|------|----------|-------------|
-| type | String | N | Filter by type |
-| status | String | N | Filter by status |
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of transactions per page |
+| Parameter | Type   | Required | Description                     |
+|-----------|--------|----------|---------------------------------|
+| type      | String | N        | Filter by type                  |
+| status    | String | N        | Filter by status                |
+| page      | Number | N        | Page number for pagination      |
+| limit     | Number | N        | Number of transactions per page |
 
 #### Response Example
+
 ```json
 [
   {
@@ -1432,17 +1521,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-------|------|----------|-------------|
-| transaction_id | Number | Y | ID of the transaction |
+| Parameter      | Type   | Required | Description           |
+|----------------|--------|----------|-----------------------|
+| transaction_id | Number | Y        | ID of the transaction |
 
 #### Response Example
+
 ```json
 {
   "id": 9001,
@@ -1465,21 +1555,22 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
 
-| Parameters | Type | Required | Description |
-|------------|------|----------|-------------|
-| item_id | Number | N | Filters reviews by item |
-| user_id | Number | N | Filters reviews by user |
-| rating | Number | N | Filters review by rating |
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of reviews per page |
+| Parameters | Type   | Required | Description                |
+|------------|--------|----------|----------------------------|
+| item_id    | Number | N        | Filters reviews by item    |
+| user_id    | Number | N        | Filters reviews by user    |
+| rating     | Number | N        | Filters review by rating   |
+| page       | Number | N        | Page number for pagination |
+| limit      | Number | N        | Number of reviews per page |
 
 #### Response Example
+
 ```json
 [
   {
@@ -1509,17 +1600,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| review_id | Number | Y | ID of the review |
+| Parameter | Type   | Required | Description      |
+|-----------|--------|----------|------------------|
+| review_id | Number | Y        | ID of the review |
 
 #### Response Example
+
 ```json
 {
   "id": 7001,
@@ -1540,19 +1632,20 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| item_id | Number | Y | ID of the item being reviewed |
-| rating | Number | Y | Rating value |
-| Comment | String | N | Review text |
+| Field   | Type   | Required | Description                   |
+|---------|--------|----------|-------------------------------|
+| item_id | Number | Y        | ID of the item being reviewed |
+| rating  | Number | Y        | Rating value                  |
+| Comment | String | N        | Review text                   |
 
 #### Request Example
+
 ```json
 {
   "item_id": 101,
@@ -1562,6 +1655,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 7003,
@@ -1581,24 +1675,25 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| review_id | Number | Y | ID of the review |
+| Parameter | Type   | Required | Description      |
+|-----------|--------|----------|------------------|
+| review_id | Number | Y        | ID of the review |
 
 #### Request Body
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| rating | Number | Y | New rating value |
-| Comment | String | N | New review text |
+| Field   | Type   | Required | Description      |
+|---------|--------|----------|------------------|
+| rating  | Number | Y        | New rating value |
+| Comment | String | N        | New review text  |
 
 #### Request Example
+
 ```json
 {
   "rating": 4,
@@ -1607,6 +1702,7 @@ This route is not implemented in the current backend.
 ```
 
 #### Response Example
+
 ```json
 {
   "id": 7003,
@@ -1624,17 +1720,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| review_id | Number | Y | ID of the review |
+| Parameter | Type   | Required | Description      |
+|-----------|--------|----------|------------------|
+| review_id | Number | Y        | ID of the review |
 
 #### Response Example
+
 ```json
 {
   "message": "Review successfully deleted",
@@ -1650,18 +1747,20 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Query Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| unread | Boolean | N | Filter by unread |
-| page | Number | N | Page number for pagination |
-| limit | Number | N | Number of notifications per page |
+
+| Parameter | Type    | Required | Description                      |
+|-----------|---------|----------|----------------------------------|
+| unread    | Boolean | N        | Filter by unread                 |
+| page      | Number  | N        | Page number for pagination       |
+| limit     | Number  | N        | Number of notifications per page |
 
 #### Response Example
+
 ```json
 [
   {
@@ -1691,17 +1790,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| notification_id | Number | Y | ID of the notification |
+| Parameter       | Type   | Required | Description            |
+|-----------------|--------|----------|------------------------|
+| notification_id | Number | Y        | ID of the notification |
 
 #### Response Example
+
 ```json
 {
   "id": 8001,
@@ -1724,18 +1824,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| notification_id | Number | Y | ID of the notification |
-
+| Parameter       | Type   | Required | Description            |
+|-----------------|--------|----------|------------------------|
+| notification_id | Number | Y        | ID of the notification |
 
 #### Response Example
+
 ```json
 {
   "id": 8001,
@@ -1750,11 +1850,12 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Response Example
+
 ```json
 {
   "cart": [
@@ -1775,23 +1876,24 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to add |
+| Parameter | Type   | Required | Description           |
+|-----------|--------|----------|-----------------------|
+| itemId    | Number | Y        | ID of the item to add |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| quantity | Number | N | Quantity to add; defaults to `1` |
+| Parameter | Type   | Required | Description                      |
+|-----------|--------|----------|----------------------------------|
+| quantity  | Number | N        | Quantity to add; defaults to `1` |
 
 #### Response Example
+
 ```json
 {
   "cart": {
@@ -1810,23 +1912,24 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to update |
+| Parameter | Type   | Required | Description              |
+|-----------|--------|----------|--------------------------|
+| itemId    | Number | Y        | ID of the item to update |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| quantity | Number | Y | New quantity |
+| Parameter | Type   | Required | Description  |
+|-----------|--------|----------|--------------|
+| quantity  | Number | Y        | New quantity |
 
 #### Response Example
+
 ```json
 {
   "cart": {
@@ -1845,17 +1948,18 @@ This route is not implemented in the current backend.
 
 #### Headers
 
-| Header | Value |
-|--------|-------|
+| Header        | Value                   |
+|---------------|-------------------------|
 | Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| itemId | Number | Y | ID of the item to remove |
+| Parameter | Type   | Required | Description              |
+|-----------|--------|----------|--------------------------|
+| itemId    | Number | Y        | ID of the item to remove |
 
 #### Response Example
+
 ```json
 {
   "message": "Item removed from cart",
@@ -1870,6 +1974,7 @@ This route is not implemented in the current backend.
 Returns all users as raw `User` entities.
 
 #### Response Example
+
 ```json
 [
   {
@@ -1889,12 +1994,13 @@ Creates a user from request parameters, not a JSON body.
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| email | String | Y | User email |
-| passwordHash | String | Y | Password hash to save directly |
+| Parameter    | Type   | Required | Description                    |
+|--------------|--------|----------|--------------------------------|
+| email        | String | Y        | User email                     |
+| passwordHash | String | Y        | Password hash to save directly |
 
 #### Response Example
+
 ```json
 {
   "userId": 2,
@@ -1912,18 +2018,19 @@ Creates or updates a profile using request parameters.
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userId | Number | Y | ID of the user whose profile to update |
+| Parameter | Type   | Required | Description                            |
+|-----------|--------|----------|----------------------------------------|
+| userId    | Number | Y        | ID of the user whose profile to update |
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| displayName | String | N | New display name |
-| bio | String | N | New bio |
+| Parameter   | Type   | Required | Description      |
+|-------------|--------|----------|------------------|
+| displayName | String | N        | New display name |
+| bio         | String | N        | New bio          |
 
 #### Response Example
+
 ```json
 {
   "userId": 2,
@@ -1940,11 +2047,12 @@ Returns the stored profile for the given user ID.
 
 #### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| userId | Number | Y | ID of the user whose profile to fetch |
+| Parameter | Type   | Required | Description                           |
+|-----------|--------|----------|---------------------------------------|
+| userId    | Number | Y        | ID of the user whose profile to fetch |
 
 #### Response Example
+
 ```json
 {
   "userId": 2,

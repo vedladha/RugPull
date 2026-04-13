@@ -108,15 +108,22 @@
 |----------------|-------------------------|---------------------------------------|
 | order_id       | INT, primary key, auto-increment | Unique order identifier             |
 | user_id        | INT, foreign key → Users.user_id | User who placed the order           |
-| item_id        | INT, foreign key → Items.item_id | Item being ordered                  |
-| quantity       | INT, default 1           | Amount of item being ordered         |
-| price          | DECIMAL(30,8), not NULL  | Price in crypto amount               |
-| fee_percentage | DECIMAL(5, 2), default 2.5 | Marketplace fee percentage placed on order |
-| order_status   | ENUM('pending','completed','cancelled'), default 'pending' | Status of order completion |
+| order_status   | ENUM('PENDING', 'AWAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED', 'FAILED'), default 'pending' | Status of order completion |
 | created_at     | DATETIME, default current timestamp |                                 |
 | updated_at     | DATETIME, default current timestamp |                                 |
 
 ---
+
+### Order Items
+**Stores items within an order**
+
+| Column | Type | Notes |
+|--------|------|-------|
+| order_item_id | INT, primary key, auto-increment | Unique order item identifier |
+| order_id | INT foreign key → orders.order_id | Order this item is a part of |
+| item_id | INT foreign key → items.item_id | Item being ordered |
+| quantity | INT, default 1 | Number of this item being ordered |
+| unit_price | DECIMAL(30, 8), not NULL | Price of one unit of the item in crypto |
 
 ## Cart
 **Stores list of items for checkout**

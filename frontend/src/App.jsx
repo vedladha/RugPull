@@ -8,6 +8,8 @@ import SellPage from "./SellPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
+import CartPage from "./Pages/CartPage";
+import OrderPage from "./Pages/OrderPage.jsx";
 import History from "./History.jsx";
 
 export default function App() {
@@ -49,6 +51,25 @@ export default function App() {
             <AuthPage />
           }
         />
+<<<<<<< HEAD
+=======
+        <Route path="/profile" element={
+          <ProfilePage />
+        } />
+        <Route path="/cart" element={
+          <CartPage />
+        } />
+        <Route path="/order" element={
+          <OrderPage />
+        } />
+        <Route path="/login" element={
+          <AuthPage />
+        } />
+        <Route path="/signup" element={
+          // AuthPage checks path to decide what to show
+          <AuthPage />
+        } />
+>>>>>>> main
       </Routes>
       <Footer />
     </>
