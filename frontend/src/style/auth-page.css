@@ -1,0 +1,146 @@
+/* auth-page.css - 100% Isolated Component Styles */
+
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px); /* Keeps it vertically centered under the nav */
+    background: var(--black);
+    padding: 2rem 1rem;
+}
+
+.auth-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2.5rem 3.5rem; 
+    width: 100%;
+    max-width: 540px; 
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem; /* Reduced from 3rem to save vertical space */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.auth-header h1 {
+    font-family: var(--font-head);
+    font-size: 2.8rem; /* Scaled down slightly so it naturally fits on one line */
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0;
+    /* Removed white-space: nowrap to prevent horizontal hanging bugs entirely */
+}
+
+.auth-header p {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+.auth-banner-error {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: #ff6b6b;
+    padding: 0.8rem 1rem; /* Trimmed */
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 107, 107, 0.08);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem; /* Tightened from 1.5rem to pull the inputs closer together */
+}
+
+.auth-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.auth-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: rgba(240, 236, 228, 0.8);
+    letter-spacing: 0.1em; 
+    text-transform: uppercase;
+}
+
+.auth-input {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.9rem 1rem; /* Trimmed vertical padding slightly */
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--white);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s ease;
+}
+
+.auth-input:focus {
+    border-color: var(--amber);
+}
+
+.auth-submit-btn {
+    width: 100%;
+    background: var(--amber);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem; /* Tightened to keep it close to the password field */
+    transition: opacity 0.15s;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.auth-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem; /* Reduced from 3rem to pull the link right up under the button */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.auth-toggle-link {
+    background: none;
+    border: none;
+    color: var(--amber);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    margin-left: 0.5rem;
+    transition: opacity 0.15s;
+}
+
+.auth-toggle-link:hover {
+    opacity: 0.8;
+}

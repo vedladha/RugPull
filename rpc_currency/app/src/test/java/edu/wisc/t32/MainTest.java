@@ -3,6 +3,7 @@ package edu.wisc.t32;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.TokenDeleteTransaction;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -23,6 +25,17 @@ public class MainTest extends AbstractCryptoTest {
 
   @TempDir
   Path tempDir;
+
+  @Test
+  public void testGetEnvOrThrow() {
+    assertDoesNotThrow(() -> Main.getenvOrThrow(Main.OPERATOR_ID_ENV),
+        "get env or throw throws on present variable");
+    assertDoesNotThrow(() -> Main.getenvOrThrow(Main.OPERATOR_KEY_ENV),
+        "get env or throw throws on present variable");
+    assertThrows(IllegalArgumentException.class,
+        () -> Main.getenvOrThrow(UUID.randomUUID().toString()),
+        "getEnvOrThrow does not throw when accessing environment variable that is not present");
+  }
 
   @Test
   public void testCreateCurrency() {

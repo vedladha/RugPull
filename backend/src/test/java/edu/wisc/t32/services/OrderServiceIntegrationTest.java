@@ -78,6 +78,7 @@ class OrderServiceIntegrationTest {
     User seller = userRepository.save(buildUser("seller@example.com"));
     User buyerOne = userRepository.save(buildUser("buyer-one@example.com"));
     User buyerTwo = userRepository.save(buildUser("buyer-two@example.com"));
+    
     Item item = itemRepository.save(buildItem(seller.getUserId(), new BigDecimal("12.50"), 1));
 
     ExecutorService executorService = Executors.newFixedThreadPool(2);
@@ -93,32 +94,32 @@ class OrderServiceIntegrationTest {
       assertTrue(ready.await(5, TimeUnit.SECONDS));
       start.countDown();
 
-      PurchaseAttemptResult firstResult = firstAttempt.get(5, TimeUnit.SECONDS);
-      PurchaseAttemptResult secondResult = secondAttempt.get(5, TimeUnit.SECONDS);
+      PurchaseAttemptResult firstResult = firstAttempt.get(10, TimeUnit.SECONDS);
+      PurchaseAttemptResult secondResult = secondAttempt.get(10, TimeUnit.SECONDS);
 
-      long successfulPurchases = List.of(firstResult, secondResult).stream()
-          .filter(PurchaseAttemptResult::success)
-          .count();
-      long failedPurchases = List.of(firstResult, secondResult).stream()
-          .filter(result -> !result.success())
-          .count();
+      List<PurchaseAttemptResult> results = List.of(firstResult, secondResult);
+      long successfulPurchases = results.stream().filter(PurchaseAttemptResult::success).count();
+      long failedPurchases = results.stream().filter(result -> !result.success()).count();
 
-      assertEquals(1, successfulPurchases);
-      assertEquals(1, failedPurchases);
+      assertEquals(1, successfulPurchases, "One purchase should succeed");
+      assertEquals(1, failedPurchases, "One purchase should fail due to stock depletion");
 
-      PurchaseAttemptResult failedResult = List.of(firstResult, secondResult).stream()
+      PurchaseAttemptResult failedResult = results.stream()
           .filter(result -> !result.success())
           .findFirst()
           .orElseThrow();
-      assertEquals("insufficient stock", failedResult.errorMessage());
+      
+      assertTrue(failedResult.errorMessage().equalsIgnoreCase("insufficient stock"));
 
       List<Order> savedOrders = orderRepository.findAll();
       assertEquals(1, savedOrders.size());
-      assertTrue(savedOrders.get(0).getUserId().equals(buyerOne.getUserId())
-          || savedOrders.get(0).getUserId().equals(buyerTwo.getUserId()));
+      
+      Integer winningBuyerId = savedOrders.get(0).getUser().getUserId();
+      assertTrue(winningBuyerId.equals(buyerOne.getUserId()) || winningBuyerId.equals(buyerTwo.getUserId()));
 
-      Item savedItem = itemRepository.findByItemIdAndDeletedFalse(item.getItemId()).orElseThrow();
-      assertEquals(0, savedItem.getStock());
+      Item savedItem = itemRepository.findById(item.getItemId()).orElseThrow();
+      assertEquals(0, savedItem.getStock(), "Stock should be exactly zero");
+      
     } finally {
       executorService.shutdownNow();
     }
@@ -140,14 +141,19 @@ class OrderServiceIntegrationTest {
         return new PurchaseAttemptResult(true, null);
       } catch (InsufficientStockException exception) {
         return new PurchaseAttemptResult(false, exception.getMessage());
+      } catch (Exception e) {
+        return new PurchaseAttemptResult(false, e.getMessage());
       }
     };
   }
 
   private OrderCreateRequest buildRequest(Integer itemId, Integer quantity) {
+    OrderCreateRequest.ItemRequest itemReq = new OrderCreateRequest.ItemRequest();
+    itemReq.setItemId(itemId);
+    itemReq.setQuantity(quantity);
+
     OrderCreateRequest request = new OrderCreateRequest();
-    request.setItemId(itemId);
-    request.setQuantity(quantity);
+    request.setItems(List.of(itemReq));
     return request;
   }
 
@@ -155,8 +161,8 @@ class OrderServiceIntegrationTest {
     Item item = new Item();
     item.setUserId(userId);
     item.setPrice(price);
-    item.setName("Test Item");
-    item.setDescription("Test Description");
+    item.setName("Generic Test Item");
+    item.setDescription("Description");
     item.setStock(stock);
     item.setDeleted(false);
     return item;

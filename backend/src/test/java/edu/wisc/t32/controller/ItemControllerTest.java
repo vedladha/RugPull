@@ -1,6 +1,7 @@
 package edu.wisc.t32.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,7 +10,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import edu.wisc.t32.dto.ItemBatchRequest;
 import edu.wisc.t32.dto.ItemCreateRequest;
+import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
@@ -433,6 +436,67 @@ class ItemControllerTest {
     assertNotNull(body);
     assertEquals("You do not own this item", body.get("error"));
     verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  @Test
+  void getItemsBatch_returnsItems_whenIdsAreValid() {
+    List<Integer> ids = List.of(1, 2);
+
+    Item item1 = buildItem(1, 7, "Item One", "Description", new BigDecimal("10.00"), 3, false);
+    Item item2 = buildItem(2, 8, "Item Two", "Description", new BigDecimal("20.00"), 5, false);
+    List<Item> mockItems = List.of(item1, item2);
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(mockItems);
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ItemBatchRequest batchResponse =
+        assertInstanceOf(ItemBatchRequest.class, responseEntity.getBody(),
+            "response body should be an item batch request");
+    assertNotNull(batchResponse);
+
+    List<ItemModelDto> items = batchResponse.getItems();
+    assertEquals(2, items.size());
+    assertEquals(1, items.getFirst().getItemId());
+    assertEquals("Item One", items.getFirst().getName());
+
+    verify(itemRepository).findByItemIdInAndDeletedFalse(ids);
+  }
+
+  @Test
+  void getItemsBatch_returnsItems_whenIdsAreInvalid() {
+    List<Integer> ids = List.of(1, 2);
+    when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(List.of());
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
+
+    assertNotNull(body);
+    assertEquals("No item's founding matching input list", body.get("error"));
+    verify(itemRepository).findByItemIdInAndDeletedFalse(any());
+  }
+
+
+  @Test
+  void getItemsBatch_returnsBadRequest_whenIdsListIsNull() {
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(null);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
+    assertNotNull(body);
+    assertEquals("request body is empty or missing", body.get("error"));
+
+    verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
+  }
+
+  @Test
+  void getItemsBatch_returnsBadRequest_whenIdsListIsEmpty() {
+    ResponseEntity<?> responseEntity = itemController.getItemsBatch(List.of());
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) responseEntity.getBody();
+    assertNotNull(body);
+    assertEquals("request body is empty or missing", body.get("error"));
+
+    verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
   }
 
   private ItemCreateRequest buildCreateRequest(String name, String description, String price,

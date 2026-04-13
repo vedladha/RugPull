@@ -3,6 +3,7 @@ package edu.wisc.t32.controller;
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.repository.OrderItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.services.OrderService;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
+  private final OrderItemRepository orderItemRepository;
   private final OrderRepository orderRepository;
   private final OrderService orderService;
   private final CurrentUserService currentUserService;
@@ -33,14 +35,17 @@ public class OrderController {
   /**
    * Constructs an OrderController with the dependencies needed to place orders.
    *
+   * @param orderItemRepository repository used for saving individual items in an order
    * @param orderRepository repository used for saving orders
    * @param orderService service used for locked purchase processing
    * @param currentUserService service used to resolve the authenticated user
    */
   public OrderController(
+      OrderItemRepository orderItemRepository,
       OrderRepository orderRepository,
       OrderService orderService,
       CurrentUserService currentUserService) {
+    this.orderItemRepository = orderItemRepository;
     this.orderRepository = orderRepository;
     this.orderService = orderService;
     this.currentUserService = currentUserService;
@@ -86,8 +91,7 @@ public class OrderController {
           .body(Map.of("error", "Authentication required"));
     }
 
-    List<Order> orders =
-        orderRepository.findByUserIdOrderByCreatedAtDesc(currentUser.get().getUserId());
+    List<Order> orders = orderService.getOrderHistory(currentUser.get());
     return ResponseEntity.ok(Map.of("orders", orders));
   }
 
@@ -108,8 +112,8 @@ public class OrderController {
           .body(Map.of("error", "Authentication required"));
     }
 
-    Optional<Order> existing =
-        orderRepository.findByOrderIdAndUserId(orderId, currentUser.get().getUserId());
+    Optional<Order> existing = 
+        orderRepository.findByOrderIdAndUser(orderId, currentUser.get());
     if (existing.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Order not found"));
     }
@@ -125,17 +129,17 @@ public class OrderController {
    */
   private String validate(OrderCreateRequest request) {
     if (request == null) {
-      return "Request body is required";
+      return "Request body is required.";
     }
-    if (request.getItemId() == null) {
-      return "itemId is required";
+    if (request.getItems() == null || request.getItems().isEmpty()) {
+      return "Items are required.";
     }
-    if (request.getQuantity() == null) {
-      return "quantity is required";
+    for (OrderCreateRequest.ItemRequest itemRequest : request.getItems()) {
+      if (itemRequest.getItemId() == null) { return "An itemId is required for all items."; }
+      if (itemRequest.getQuantity() == null) { return "Quantity is required for all items."; }
+      if (itemRequest.getQuantity() <= 0) { return "Quantity must be greater than 0 for all items."; }
     }
-    if (request.getQuantity() <= 0) {
-      return "quantity must be greater than 0";
-    }
+
     return null;
   }
 }

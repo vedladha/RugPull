@@ -31,6 +31,14 @@ public interface WalletService extends AutoCloseable {
   Wallet createWallet(String accountId, String privateKey) throws IllegalArgumentException;
 
   /**
+   * Funds the given accountId with amount of tokens.
+   *
+   * @param wallet the account to fund.
+   * @throws IllegalArgumentException thrown if the amount is invalid.
+   */
+  void fundWallet(Wallet wallet, float amount) throws IllegalArgumentException;
+
+  /**
    * Creates a transfer between to accounts. The sender and receiver.
    *
    * <p>The sender must have enough balance provided to amount to send to the receiver otherwise

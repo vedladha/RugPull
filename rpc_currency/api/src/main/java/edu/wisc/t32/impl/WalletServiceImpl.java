@@ -15,7 +15,6 @@ import com.hedera.hashgraph.sdk.TokenAssociateTransaction;
 import com.hedera.hashgraph.sdk.TokenId;
 import com.hedera.hashgraph.sdk.TokenInfo;
 import com.hedera.hashgraph.sdk.TokenInfoQuery;
-import com.hedera.hashgraph.sdk.TokenTransfer;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransactionResponse;
 import com.hedera.hashgraph.sdk.TransferTransaction;
@@ -107,6 +106,22 @@ public class WalletServiceImpl implements WalletService {
     PrivateKey hederaKey = PrivateKey.fromStringDER(privateKey);
     AccountId hederaId = AccountId.fromString(accountId);
     return new WalletImpl(hederaId, hederaKey);
+  }
+
+  @Override
+  public void fundWallet(Wallet wallet, float amount) throws IllegalArgumentException {
+    assertNotNull(wallet, "WalletServiceImpl", "wallet", "fundWallet");
+    if (amount <= 0) {
+      throw new IllegalArgumentException(
+          "can not fund a wallet with amounts less than or equal to 0");
+    }
+
+    // Wallet is actually just a accountId and privateKey let's make one for our operator
+    final Wallet operatorWallet =
+        new WalletImpl(this.client.getOperatorAccountId(), this.operatorKey);
+
+    // delegate to our transferBalance method
+    transferBalance(operatorWallet, wallet, amount);
   }
 
   @Override

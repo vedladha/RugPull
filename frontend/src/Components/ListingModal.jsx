@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../style/listing-modal.css"
 
+const API = "http://localhost:3001";
 export default function ListingModal({
   listing,
   onClose,
@@ -10,6 +12,8 @@ export default function ListingModal({
   wishlistError = "",
   wishlistSuccess = "",
 }) {
+  const navigate = useNavigate();
+  const [addingToCart, setAddingToCart] = useState(false)
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();
@@ -26,6 +30,15 @@ export default function ListingModal({
   }, [onClose]);
 
   if (!listing) return null;
+
+  const addToCart = async () => {
+    setAddingToCart(true);
+
+    await fetch(`${API}/cart/${listing.itemId}`, {
+      method: "POST",
+      credentials: "include"
+    }).then(() => setAddingToCart(false));
+  }
 
   return (
     <div className="listing-modal-overlay" onClick={onClose} role="presentation">
@@ -71,11 +84,26 @@ export default function ListingModal({
         )}
 
         <div className="listing-modal-actions">
-          <button type="button" className="listing-action-btn listing-action-btn-primary">
-            Buy
+          <button
+            type="button"
+            className="listing-action-btn listing-action-btn-primary"
+            onClick={() => navigate("/order", {
+              state: {
+                source: "listing",
+                items: [
+                  {
+                    ...listing,
+                    quantity: 1,
+                    fromCart: false,
+                  },
+                ],
+              },
+            })}
+          >
+            Buy It Now
           </button>
-          <button type="button" className="listing-action-btn listing-action-btn-secondary">
-            Add to Cart
+          <button type="button" className="listing-action-btn listing-action-btn-secondary" onClick={addToCart}>
+            {addingToCart ? "Adding to your Cart" : "Add to Cart"}
           </button>
           <button
             type="button"

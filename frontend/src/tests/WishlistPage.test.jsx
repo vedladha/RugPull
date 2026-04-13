@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import WishlistPage from "../WishlistPage.jsx";
 
@@ -10,6 +11,12 @@ const mockUseAuth = vi.fn();
 vi.mock("../Auth/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }));
+
+const renderWishlistPage = () => render(
+  <MemoryRouter>
+    <WishlistPage />
+  </MemoryRouter>,
+);
 
 describe("WishlistPage", () => {
   beforeEach(() => {
@@ -29,7 +36,7 @@ describe("WishlistPage", () => {
       removeFromWishlist: mockRemoveFromWishlist,
     });
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     expect(screen.getByText("Sign in to view your wishlist.")).toBeInTheDocument();
   });
@@ -37,7 +44,7 @@ describe("WishlistPage", () => {
   it("shows loading state initially", () => {
     mockGetWishlistItems.mockReturnValue(new Promise(() => {}));
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     expect(screen.getByText("Loading wishlist...")).toBeInTheDocument();
   });
@@ -45,7 +52,7 @@ describe("WishlistPage", () => {
   it("shows empty state when no items are returned", async () => {
     mockGetWishlistItems.mockResolvedValue([]);
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     await waitFor(() => {
       expect(screen.getByText("Your wishlist is empty.")).toBeInTheDocument();
@@ -57,7 +64,7 @@ describe("WishlistPage", () => {
       { itemId: 1, name: "Guitar", description: "Great condition", price: 5.2, sellerName: "john" },
     ]);
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     await waitFor(() => {
       expect(screen.getByText("Guitar")).toBeInTheDocument();
@@ -70,7 +77,7 @@ describe("WishlistPage", () => {
       { itemId: 1, name: "Guitar", description: "Great condition", price: 5.2, sellerName: "john" },
     ]);
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /view details for guitar/i })).toBeInTheDocument();
@@ -81,7 +88,7 @@ describe("WishlistPage", () => {
     await waitFor(() => {
       const dialog = screen.getByRole("dialog", { name: "Guitar" });
       expect(dialog).toBeInTheDocument();
-      expect(within(dialog).getByRole("button", { name: "Buy" })).toBeInTheDocument();
+      expect(within(dialog).getByRole("button", { name: "Buy It Now" })).toBeInTheDocument();
       expect(within(dialog).getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
       expect(within(dialog).getByRole("button", { name: "Remove from Wishlist" }))
         .toBeInTheDocument();
@@ -94,7 +101,7 @@ describe("WishlistPage", () => {
     ]);
     mockRemoveFromWishlist.mockResolvedValue({ message: "Item removed from wishlist", itemId: 1 });
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     await waitFor(() => {
       expect(screen.getByText("Guitar")).toBeInTheDocument();
@@ -115,7 +122,7 @@ describe("WishlistPage", () => {
     ]);
     mockRemoveFromWishlist.mockRejectedValue(new Error("Could not remove item"));
 
-    render(<WishlistPage />);
+    renderWishlistPage();
 
     await waitFor(() => {
       expect(screen.getByText("Guitar")).toBeInTheDocument();

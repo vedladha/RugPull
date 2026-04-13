@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Listings from "../Listings.jsx";
 
@@ -24,12 +25,20 @@ beforeEach(() => {
     });
 });
 
+function renderListings() {
+    return render(
+        <MemoryRouter>
+            <Listings />
+        </MemoryRouter>,
+    );
+}
+
 describe("Listings", () => {
     // Tests that loading state is shown initially
     it("shows loading state initially", async () => {
         let resolve;
         vi.stubGlobal("fetch", vi.fn(() => new Promise((r) => { resolve = r; }))); // never resolves
-        render(<Listings />);
+        renderListings();
         expect(screen.getByText("Loading listings...")).toBeInTheDocument();
 
         resolve({ ok: true, json: () => Promise.resolve({ items: [] })})
@@ -43,7 +52,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings();
 
         await waitFor(() => {
             expect(screen.getByText("Guitar")).toBeInTheDocument();
@@ -59,7 +68,7 @@ describe("Listings", () => {
             status: 500,
         }));
 
-        render(<Listings />);
+        renderListings();
 
         await waitFor(() => {
             expect(screen.getByText(/Error loading listings/)).toBeInTheDocument();
@@ -73,7 +82,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: [] }),
         }));
 
-        render(<Listings />);
+        renderListings();
 
         await waitFor(() => {
             expect(screen.getByText("No listings found matching your filters.")).toBeInTheDocument();
@@ -87,7 +96,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings();
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.type(screen.getByPlaceholderText("0"), "8");
@@ -105,7 +114,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings();
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.type(screen.getByPlaceholderText("No limit"), "7");
@@ -123,7 +132,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings();
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.type(screen.getByPlaceholderText("Search listings..."), "Guitar");
@@ -140,13 +149,13 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings();
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: /view details for guitar/i }));
 
         expect(screen.getByRole("dialog", { name: "Guitar" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Buy" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Buy It Now" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Add to Wishlist" })).toBeInTheDocument();
 
@@ -172,7 +181,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
         await waitFor(() => expect(getWishlist).toHaveBeenCalled());
 
@@ -203,7 +212,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
         await waitFor(() => expect(getWishlist).toHaveBeenCalled());
 
@@ -227,7 +236,7 @@ describe("Listings", () => {
             json: () => Promise.resolve({ items: mockListings }),
         }));
 
-        render(<Listings />);
+        renderListings(); // <--- FIXED HERE
         await waitFor(() => expect(screen.getByText("Guitar")).toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: /view details for guitar/i }));

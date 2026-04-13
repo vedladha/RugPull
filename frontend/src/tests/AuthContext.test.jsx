@@ -322,7 +322,6 @@ describe("AuthProvider - wishlist", () => {
         await act(async () => { screen.getByText("Get Wishlist Items").click(); });
         await waitFor(() => expect(wishlistItems[0].name).toBe("Guitar"));
     });
-
     it("returns saved row after successful addToWishlist", async () => {
         vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false })
@@ -401,7 +400,6 @@ describe("AuthProvider - wishlist", () => {
         await act(async () => { screen.getByText("Remove Wishlist").click(); });
         await waitFor(() => expect(result.itemId).toBe(10));
     });
-
     it("throws backend error when getWishlistItems fails", async () => {
         vi.stubGlobal("fetch", vi.fn()
             .mockResolvedValueOnce({ ok: false })
@@ -428,7 +426,6 @@ describe("AuthProvider - wishlist", () => {
         await waitFor(() => expect(error).toBe("Authentication required"));
     });
 });
-
 describe("AuthProvider - changePassword", () => {
     it("returns success message after successful changePassword", async () => {
         vi.stubGlobal("fetch", vi.fn()

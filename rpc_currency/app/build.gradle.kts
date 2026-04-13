@@ -1,7 +1,8 @@
 plugins {
-    jacoco
-    checkstyle
     application
+    id("environment-preset")
+    id("checkstyle-preset")
+    id("jacoco-preset")
     alias(libs.plugins.shadow)
 }
 
@@ -16,13 +17,10 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.hedera.hashgraph)
     implementation(libs.slf4j)
+    implementation(libs.slf4j.simple)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.launcher)
-}
-
-jacoco {
-    toolVersion = "0.8.14"
 }
 
 java {
@@ -35,33 +33,8 @@ application {
     mainClass = main
 }
 
-checkstyle {
-    toolVersion = "13.2.0"
-    configFile = rootProject.file("config").resolve("checkstyle.xml")
-}
-
-tasks.named<Test>("test") {
-    environment(env.allVariables())
+tasks.test {
     useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.named<JavaExec>("run") {
-    environment(env.allVariables())
-}
-
-tasks.named<JavaExec>("runShadow") {
-    environment(env.allVariables())
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-
-    reports {
-        xml.required = true
-        csv.required = true
-        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
-    }
 }
 
 val copyJars by tasks.registering(Copy::class) {

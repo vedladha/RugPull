@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context";
 import { useEffect, useState } from "react";
 
-export default function Navbar({ onSignInClick, currentPage }) {
+export default function Navbar({ currentPage }) {
   const { user, walletBalance, signOut } = useAuth();
   const [balance, setBalance] = useState(null);
   const navigate = useNavigate();
@@ -52,6 +52,10 @@ export default function Navbar({ onSignInClick, currentPage }) {
         </button>
         <button className="nav-btn">About</button>
       </div>
+      {user && <Link to="/cart" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="nav-btn">Cart</div>
+      </Link>
+      }
       {user && balance !== null && (
         <div className="nav-user">Balance: {balance.toFixed(2)} RPC</div>
       )}
@@ -67,7 +71,9 @@ export default function Navbar({ onSignInClick, currentPage }) {
           Sign Out
         </button>
       ) : (
-        <button className="nav-signin" onClick={onSignInClick}>
+        <button className="nav-signin" onClick={() => {
+          navigate("/login");
+        }}>
           Sign In
         </button>
       )}

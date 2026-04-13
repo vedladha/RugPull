@@ -27,6 +27,8 @@ public class Main {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+  public static final String OPERATOR_ID_ENV = "OPERATOR_ID";
+  public static final String OPERATOR_KEY_ENV = "OPERATOR_KEY";
   private static final String TOKEN_NAME = "Rug Pull Coin";
   private static final String TOKEN_SYMBOL = "RPC";
   private static final int DECIMAL_LENGTH = 2;
@@ -39,8 +41,8 @@ public class Main {
    */
   @SuppressWarnings("null")
   public static void main(String[] args) {
-    AccountId operatorId = AccountId.fromString(getenvOrThrow("OPERATOR_ID"));
-    PrivateKey operatorKey = PrivateKey.fromStringECDSA(getenvOrThrow("OPERATOR_KEY"));
+    AccountId operatorId = AccountId.fromString(getenvOrThrow(OPERATOR_ID_ENV));
+    PrivateKey operatorKey = PrivateKey.fromStringECDSA(getenvOrThrow(OPERATOR_KEY_ENV));
 
     try (Client client = Client.forTestnet().setOperator(operatorId, operatorKey)) {
       final CryptoCreationResult createResult = createCurrency(client, Path.of("rpc_keys.txt"));
@@ -115,7 +117,7 @@ public class Main {
    * @return the environment variable
    * @throws IllegalArgumentException thrown if the environment variable can't be found
    */
-  private static String getenvOrThrow(String key) throws IllegalArgumentException {
+  public static String getenvOrThrow(String key) throws IllegalArgumentException {
     final String out = System.getenv(key);
     if (out == null) {
       throw new IllegalArgumentException(

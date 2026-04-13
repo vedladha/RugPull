@@ -21,7 +21,7 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
    *
    * @param itemId the unique identifier of the item to search for
    * @return an {@link Optional} containing the item if it exists and is not deleted, or an empty
-   *         Optional otherwise
+   * Optional otherwise
    */
   Optional<Item> findByItemIdAndDeletedFalse(Integer itemId);
 
