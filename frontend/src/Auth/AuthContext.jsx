@@ -126,6 +126,22 @@ async function walletBalance() {
     return data.profile;
   }
 
+  async function changePassword(currentPassword, newPassword) {
+    const response = await fetch(`${API}/auth/password`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.error || "Failed to update password");
+    }
+
+    return response.json();
+  }
+
   async function getWishlist() {
     const response = await fetch(`${API}/wishlist`, {
       method: "GET",
@@ -139,6 +155,21 @@ async function walletBalance() {
 
     const data = await response.json();
     return data.wishlist || [];
+  }
+
+  async function getWishlistItems() {
+    const response = await fetch(`${API}/wishlist/items`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch wishlist items");
+    }
+
+    const data = await response.json();
+    return data.wishlistItems || [];
   }
 
   async function addToWishlist(itemId) {
@@ -170,22 +201,6 @@ async function walletBalance() {
     return response.json();
   }
 
-  async function changePassword(currentPassword, newPassword) {
-    const response = await fetch(`${API}/auth/password`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword }),
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || errorData.error || "Failed to update password");
-    }
-
-    return response.json();
-  }
-
   return (
     <AuthContext.Provider value={{
       user,
@@ -196,6 +211,7 @@ async function walletBalance() {
       updateProfile,
       changePassword,
       getWishlist,
+      getWishlistItems,
       addToWishlist,
       removeFromWishlist,
       register,

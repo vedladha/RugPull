@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import "../style/listing-modal.css";
 
 const API = "http://localhost:3001";
-
 export default function ListingModal({
   listing,
   onClose,
@@ -22,7 +21,6 @@ export default function ListingModal({
   const [quantity, setQuantity] = useState(
     stock !== null && stock > 0 ? "1" : "0",
   );
-
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();

@@ -6,6 +6,7 @@ import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
 import SellPage from "./SellPage.jsx"
 import ProfilePage from "./ProfilePage.jsx"
+import WishlistPage from "./WishlistPage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
 import CartPage from "./Pages/CartPage";
@@ -44,6 +45,9 @@ export default function App() {
         />
         <Route path="/profile" element={
           <ProfilePage />
+        } />
+        <Route path="/wishlist" element={
+          <WishlistPage />
         } />
         <Route path="/cart" element={
           <CartPage />

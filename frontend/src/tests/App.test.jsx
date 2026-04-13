@@ -9,12 +9,13 @@ vi.mock("../Auth/auth-context");
 
 beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({
-        user: null, 
-        signOut: vi.fn(), 
+        user: null,
+        signOut: vi.fn(),
         walletBalance: vi.fn().mockResolvedValue(-999.99),
-        // Providing default mocks for profile functions to prevent undefined errors
         profileDetails: vi.fn().mockResolvedValue({ profile: {} }),
-        updateProfile: vi.fn()
+        updateProfile: vi.fn(),
+        getWishlistItems: vi.fn().mockResolvedValue([]),
+        removeFromWishlist: vi.fn(),
     });
 
     // Stub window.scrollTo since JSDOM doesn't implement a real window
@@ -96,12 +97,32 @@ describe("App", () => {
             }),
             updateProfile: vi.fn(),
             signOut: vi.fn(),
-            walletBalance: vi.fn().mockResolvedValue(-999.99)
+            walletBalance: vi.fn().mockResolvedValue(-999.99),
+            getWishlistItems: vi.fn().mockResolvedValue([]),
+            removeFromWishlist: vi.fn(),
         });
 
         renderApp("/profile");
         await waitFor(() => {
             expect(screen.getByText("Your Profile")).toBeInTheDocument();
+        });
+    });
+
+    it("renders wishlist page at /wishlist", async () => {
+        vi.mocked(useAuth).mockReturnValue({
+            user: { email: "test@example.com", displayName: "Test User" },
+            signOut: vi.fn(),
+            walletBalance: vi.fn().mockResolvedValue(-999.99),
+            profileDetails: vi.fn().mockResolvedValue({ profile: {} }),
+            updateProfile: vi.fn(),
+            getWishlistItems: vi.fn().mockResolvedValue([]),
+            removeFromWishlist: vi.fn(),
+        });
+
+        renderApp("/wishlist");
+
+        await waitFor(() => {
+            expect(screen.getByText("Your Wishlist")).toBeInTheDocument();
         });
     });
 });

@@ -2,14 +2,19 @@ package edu.wisc.t32.controller;
 
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.model.Wishlist;
 import edu.wisc.t32.model.WishlistId;
 import edu.wisc.t32.repository.ItemRepository;
+import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.WishlistRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -29,6 +34,7 @@ public class WishlistController {
 
   private final WishlistRepository wishlistRepository;
   private final ItemRepository itemRepository;
+  private final UserProfileRepository userProfileRepository;
   private final CurrentUserService currentUserService;
 
   /**
@@ -36,14 +42,17 @@ public class WishlistController {
    *
    * @param wishlistRepository repository used for wishlist rows
    * @param itemRepository repository used to validate item existence
+   * @param userProfileRepository repository used to look up seller display names
    * @param currentUserService service used to resolve the authenticated user
    */
   public WishlistController(
       WishlistRepository wishlistRepository,
       ItemRepository itemRepository,
+      UserProfileRepository userProfileRepository,
       CurrentUserService currentUserService) {
     this.wishlistRepository = wishlistRepository;
     this.itemRepository = itemRepository;
+    this.userProfileRepository = userProfileRepository;
     this.currentUserService = currentUserService;
   }
 
@@ -63,6 +72,53 @@ public class WishlistController {
 
     List<Wishlist> wishlist = wishlistRepository.findByUserId(currentUser.get().getUserId());
     return ResponseEntity.ok(Map.of("wishlist", wishlist));
+  }
+
+  /**
+   * GETS all wishlisted items with item details for the authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @return a list of wishlist items with item details for the current user
+   */
+  @GetMapping("/items")
+  public ResponseEntity<?> getWishlistItems(
+      @CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+
+    List<Wishlist> wishlist = wishlistRepository.findByUserId(currentUser.get().getUserId());
+    if (wishlist.isEmpty()) {
+      return ResponseEntity.ok(Map.of("wishlistItems", List.of()));
+    }
+
+    List<Integer> itemIds = wishlist.stream()
+        .map(Wishlist::getItemId)
+        .toList();
+
+    Map<Integer, Item> itemsById = itemRepository.findByItemIdInAndDeletedFalse(itemIds).stream()
+        .collect(Collectors.toMap(Item::getItemId, Function.identity()));
+
+    List<Map<String, Object>> wishlistItems = itemIds.stream()
+        .map(itemsById::get)
+        .filter(item -> item != null)
+        .map(item -> {
+          Map<String, Object> map = new HashMap<>();
+          map.put("itemId", item.getItemId());
+          map.put("name", item.getName());
+          map.put("description", item.getDescription());
+          map.put("price", item.getPrice());
+          map.put("stock", item.getStock());
+
+          UserProfile seller = userProfileRepository.findByUserId(item.getUserId());
+          map.put("sellerName", seller != null ? seller.getDisplayName() : "Unknown seller");
+          return map;
+        })
+        .toList();
+
+    return ResponseEntity.ok(Map.of("wishlistItems", wishlistItems));
   }
 
   /**
@@ -134,4 +190,3 @@ public class WishlistController {
     return ResponseEntity.ok(Map.of("message", "Item removed from wishlist", "itemId", itemId));
   }
 }
-

@@ -26,6 +26,14 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
   Optional<Item> findByItemIdAndDeletedFalse(Integer itemId);
 
   /**
+   * Retrieves all active items whose IDs are included in the given list.
+   *
+   * @param itemIds the item IDs to look up
+   * @return a list of active items matching the provided IDs
+   */
+  List<Item> findByItemIdInAndDeletedFalse(List<Integer> itemIds);
+
+  /**
    * Retrieves and locks an active item row for purchase processing.
    *
    * <p>This method applies a pessimistic write lock so concurrent purchase requests for the same
@@ -37,14 +45,6 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT item FROM Item item WHERE item.itemId = :itemId AND item.deleted = false")
   Optional<Item> findByItemIdAndDeletedFalseForUpdate(@Param("itemId") Integer itemId);
-
-  /**
-   * Retrieves a list of items based on the provided items. Excluding deleted records.
-   *
-   * @param itemIds the list of item ids to check for
-   * @return a {@link List} of matching non-deleted items
-   */
-  List<Item> findByItemIdInAndDeletedFalse(List<Integer> itemIds);
 
   /**
    * Retrieves all active items from the database.
