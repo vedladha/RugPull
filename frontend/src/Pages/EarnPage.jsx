@@ -303,7 +303,12 @@ export default function EarnPage() {
   const [streak, setStreak] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(10);
 
-  // Dev Minting State
+  // --- Watch Ad State ---
+  const [adStatus, setAdStatus] = useState("idle"); // idle | loading_ad | watching | claiming | done
+  const [adData, setAdData] = useState(null);
+  const [adError, setAdError] = useState(null);
+
+  // --- Dev Minting State ---
   const [fundAmount, setFundAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [fundMsg, setFundMsg] = useState({ text: "", type: "" });
@@ -474,6 +479,60 @@ export default function EarnPage() {
     }
   };
 
+  // --- Handlers: Watch Ad ---
+  const handleWatchAd = async () => {
+    setAdStatus("loading_ad");
+    setAdError(null);
+
+    try {
+      const startRes = await fetch(`${API}/ads/start`, { credentials: "include" });
+
+      if (!startRes.ok) {
+        throw new Error("Failed to secure an ad session.");
+      }
+
+      const data = await startRes.json();
+      console.log(JSON.stringify(data.session, null, 2));
+      setAdData(data.session);
+      setAdStatus("watching");
+
+    } catch (err) {
+      setAdError(err.message);
+      setAdStatus("idle");
+    }
+  };
+
+  const finishAdAndClaim = async () => {
+    setAdStatus("claiming");
+    setAdError(null);
+
+    try {
+      const claimRes = await fetch(`${API}/ads/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sessionId: adData.sessionId })
+      });
+
+      if (!claimRes.ok) {
+        const errData = await claimRes.json().catch(() => ({}));
+        throw new Error(errData.error || "Server rejected the ad claim.");
+      }
+
+      setAdStatus("done");
+      updateWalletBalance();
+    } catch (err) {
+      setAdError(`Claim Error: ${err.message}`);
+      setAdStatus("idle");
+    }
+  };
+
+  const resetAdViewer = () => {
+    setAdStatus("idle");
+    setAdData(null);
+  };
+
+  // --- Handlers: Dev Mint ---
   const handleDevMint = async () => {
     setFundMsg({ text: "", type: "" });
     const amount = parseFloat(fundAmount);
@@ -687,6 +746,62 @@ export default function EarnPage() {
         </div>
       )}
 
+      {/* --- Section 2: Watch Ad to Earn --- */}
+      <div className="ad-section">
+        <h2>Sponsored Rewards</h2>
+        <p>Watch short messages from our partners to earn extra tokens.</p>
+
+        {adError && <div className="dev-msg error">{adError}</div>}
+
+        {adStatus === "idle" && (
+          <button className="btn-primary" onClick={handleWatchAd}>
+            Watch Ad to Earn
+          </button>
+        )}
+
+        {adStatus === "loading_ad" && (
+          <div className="loading">Securing ad session...</div>
+        )}
+
+        {adStatus === "watching" && adData && (
+          <div className="video-wrapper" style={{ marginTop: "1rem" }}>
+            <h3>{adData.title}</h3>
+            <p className="reward-hint">Reward: {adData.rewardAmount} $RPC</p>
+
+            <video
+              src={`${import.meta.env.BASE_URL}${adData.videoUrl.replace(/^\//, '')}`}
+              autoPlay
+              controls={false}
+              disablePictureInPicture
+              onEnded={finishAdAndClaim}
+              className="ad-video-player"
+            />
+          </div>
+        )}
+
+        {adStatus === "claiming" && (
+          <div className="loading">Verifying view and processing payout...</div>
+        )}
+
+        {adStatus === "done" && adData && (
+          <div className="success-card">
+            <div className="success-icon">🏆</div>
+            <div className="success-amount">
+              +{adData.rewardAmount} <span className="currency-badge">$RPC</span>
+            </div>
+            <h2 className="success-title">SUCCESS!</h2>
+            <p className="success-subtext">
+              Your tokens have been successfully deposited in your wallet.
+            </p>
+            <button className="success-btn" onClick={resetAdViewer}>
+              Watch Another Ad
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* --- Section 3: Developer Minting Tool --- */}
+      <div className="dev-sandbox" style={{ marginTop: "2rem" }}>
       <div className="slot-machine-card">
         <div className="slot-machine-header">
           <span className="slot-machine-badge">Game</span>
@@ -1005,7 +1120,7 @@ export default function EarnPage() {
           <h3>Arbitrary Minting Tool</h3>
         </div>
         <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
-
+        
         <div className="dev-input-group">
           <input
             type="number"
