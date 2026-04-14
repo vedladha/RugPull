@@ -28,14 +28,16 @@ describe("OrderPage", () => {
 
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn().mockResolvedValue(250),
+      userBalance: 250,
+      updateUserBalance: vi.fn()
     });
   });
 
   it("renders a sign-in prompt when the user is not authenticated", () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      walletBalance: vi.fn(),
+      userBalance: null,
+      updateUserBalance: vi.fn(),
     });
 
     renderOrderPage({
@@ -60,7 +62,8 @@ describe("OrderPage", () => {
   it("renders the empty checkout state when opened without order data", () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn(() => new Promise(() => {})),
+      userBalance: 250,
+      updateUserBalance: vi.fn(),
     });
 
     renderOrderPage(undefined);
@@ -336,7 +339,12 @@ describe("OrderPage", () => {
   it("shows an unavailable wallet state when the balance request fails", async () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn().mockRejectedValue(new Error("Wallet unavailable")),
+      userBalance: 250,
+      // THE FIX: Synchronous throw forces the catch block to execute instantly, 
+      // preventing the unhandled rejection crash in Vitest.
+      updateUserBalance: vi.fn().mockImplementation(() => {
+        throw new Error("Wallet unavailable");
+      }),
     });
 
     renderOrderPage({
