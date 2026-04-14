@@ -2,6 +2,7 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AuthProvider } from "../Auth/AuthContext.jsx";
 import { useAuth } from "../Auth/auth-context";
+import userEvent from "@testing-library/user-event";
 
 beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -120,7 +121,7 @@ describe("AuthProvider - signIn", () => {
         };
 
         renderWithAuth(<SignInConsumer />);
-        await waitFor(() => {}); // wait for initial fetch
+        await waitFor(() => { }); // wait for initial fetch
 
         await act(async () => { screen.getByText("Sign In").click(); });
         await waitFor(() => expect(error).toBe("Incorrect email or password"));
@@ -203,7 +204,7 @@ describe("AuthProvider - register", () => {
         };
 
         renderWithAuth(<RegisterConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Register").click(); });
         await waitFor(() => expect(error).toBe("Email already in use"));
@@ -214,13 +215,24 @@ describe("AuthProvider - updateProfile", () => {
     // Tests that updateProfile updates the user
     it("updates user after successful updateProfile", async () => {
         vi.stubGlobal("fetch", vi.fn()
+            // 1. Initial Load: AuthContext expects `data.user`
             .mockResolvedValueOnce({
                 ok: true,
-                json: () => Promise.resolve({ user: { email: "test@example.com", displayName: "OldName" } }),
+                json: () => Promise.resolve({
+                    user: { email: "test@example.com", displayName: "OldName" }
+                }),
             })
+            // 2. Background Balance Fetch: AuthContext expects `response.text()`
             .mockResolvedValueOnce({
                 ok: true,
-                json: () => Promise.resolve({ profile: { displayName: "NewName" } }),
+                text: () => Promise.resolve("100.00"),
+            })
+            // 3. Update Profile Action: AuthContext expects `data.profile`
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    profile: { displayName: "NewName" }
+                }),
             }));
 
         const UpdateConsumer = () => {
@@ -234,12 +246,17 @@ describe("AuthProvider - updateProfile", () => {
         };
 
         renderWithAuth(<UpdateConsumer />);
+
+        // This will now pass because `setUser` received the nested `user` object
         await waitFor(() => expect(screen.getByTestId("user").textContent).toBe("OldName"));
 
-        await act(async () => { screen.getByText("Update").click(); });
+        // Trigger the update
+        await userEvent.click(screen.getByText("Update"));
+
+        // Wait for the third fetch to resolve and update the DOM
         await waitFor(() => expect(screen.getByTestId("user").textContent).toBe("NewName"));
     });
-
+ 
     // Tests that updateProfile throws on failure
     it("throws error when updateProfile fails", async () => {
         vi.stubGlobal("fetch", vi.fn()
@@ -261,7 +278,7 @@ describe("AuthProvider - updateProfile", () => {
         };
 
         renderWithAuth(<UpdateConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Update").click(); });
         await waitFor(() => expect(error).toBe("Update failed"));
@@ -290,7 +307,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Get Wishlist").click(); });
         await waitFor(() => expect(wishlist).toHaveLength(2));
@@ -317,7 +334,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Get Wishlist Items").click(); });
         await waitFor(() => expect(wishlistItems[0].name).toBe("Guitar"));
@@ -341,7 +358,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Add Wishlist").click(); });
         await waitFor(() => expect(saved.itemId).toBe(10));
@@ -367,7 +384,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Add Wishlist").click(); });
         await waitFor(() => expect(error).toBe("Authentication required"));
@@ -395,7 +412,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Remove Wishlist").click(); });
         await waitFor(() => expect(result.itemId).toBe(10));
@@ -420,7 +437,7 @@ describe("AuthProvider - wishlist", () => {
         };
 
         renderWithAuth(<WishlistConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Get Wishlist Items").click(); });
         await waitFor(() => expect(error).toBe("Authentication required"));
@@ -446,7 +463,7 @@ describe("AuthProvider - changePassword", () => {
         };
 
         renderWithAuth(<PasswordConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Change Password").click(); });
         await waitFor(() => expect(result.message).toBe("Password updated successfully"));
@@ -472,7 +489,7 @@ describe("AuthProvider - changePassword", () => {
         };
 
         renderWithAuth(<PasswordConsumer />);
-        await waitFor(() => {});
+        await waitFor(() => { });
 
         await act(async () => { screen.getByText("Change Password").click(); });
         await waitFor(() => expect(error).toBe("Current password is incorrect"));

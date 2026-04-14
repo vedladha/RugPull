@@ -11,15 +11,14 @@ vi.mock("../Auth/auth-context", () => ({
 }));
 
 describe("EarnPage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.stubGlobal("fetch", vi.fn());
-    mockWalletBalance.mockResolvedValue(250);
-    mockUseAuth.mockReturnValue({
-      user: { email: "test@example.com", id: 1 },
-      walletBalance: mockWalletBalance,
+    beforeEach(() => {
+        vi.stubGlobal("fetch", vi.fn());
+        // Default auth state for most tests
+        mockUseAuth.mockReturnValue({
+            user: { email: "test@example.com", id: 1 },
+            updateUserBalance: vi.fn()
+        });
     });
-  });
 
   it("shows logged out message when no user is present", () => {
     mockUseAuth.mockReturnValue({ user: null, walletBalance: mockWalletBalance });

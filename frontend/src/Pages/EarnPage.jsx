@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../Auth/auth-context";
 import "../style/earn-page.css";
 
-const API = "http://localhost:3001";
+  const API = "http://localhost:3001";
 const SLOT_SYMBOLS = ["CHERRY", "LEMON", "BAR", "STAR", "SEVEN"];
 const DEFAULT_REELS = ["CHERRY", "BAR", "SEVEN"];
 const SPIN_TICK_MS = 90;
@@ -94,7 +94,7 @@ function buildSpinMessage(spin) {
 }
 
 export default function EarnPage() {
-  const { user, walletBalance } = useAuth();
+  const { user, updateUserBalance } = useAuth();
   const spinTimersRef = useRef([]);
 
   const [canClaim, setCanClaim] = useState(false);
@@ -104,10 +104,7 @@ export default function EarnPage() {
   const [streak, setStreak] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(10);
 
-  const [balance, setBalance] = useState(null);
-  const [balanceLoading, setBalanceLoading] = useState(false);
-  const [balanceError, setBalanceError] = useState("");
-
+  // Dev Minting State
   const [fundAmount, setFundAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [fundMsg, setFundMsg] = useState({ text: "", type: "" });
@@ -224,44 +221,9 @@ export default function EarnPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  useEffect(() => {
-    if (!user || !walletBalance) {
-      setBalance(null);
-      setBalanceError("");
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadBalance() {
-      setBalanceLoading(true);
-      setBalanceError("");
-      try {
-        const nextBalance = await walletBalance();
-        if (!cancelled) {
-          setBalance(nextBalance);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setBalanceError(err.message || "Unable to load wallet balance.");
-        }
-      } finally {
-        if (!cancelled) {
-          setBalanceLoading(false);
-        }
-      }
-    }
-
-    loadBalance();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, walletBalance]);
-
-  useEffect(() => () => {
-    clearSpinTimers();
-  }, []);
+    useEffect(() => () => {
+      clearSpinTimers();
+    }, []);
 
   const handleClaim = async () => {
     setIsClaiming(true);
@@ -277,7 +239,7 @@ export default function EarnPage() {
 
       setCanClaim(false);
       setStreak((prev) => prev + 1);
-      await refreshBalance();
+      updateUserBalance();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -312,8 +274,8 @@ export default function EarnPage() {
       }
 
       setFundMsg({ text: `Successfully minted ${amount} $RPC!`, type: "success" });
-      setFundAmount("");
-      await refreshBalance();
+      setFundAmount(""); 
+      updateUserBalance();
     } catch (err) {
       setFundMsg({ text: `Mint Error: ${err.message}`, type: "error" });
     } finally {
