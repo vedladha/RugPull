@@ -15,7 +15,6 @@ export default function ListingCard({
       return url.startsWith("blob:") ? url : `http://localhost:3001${url}`;
     };
 
-
   return (
     <button
       type="button"

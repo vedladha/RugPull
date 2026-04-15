@@ -829,3 +829,21 @@ footer {
   color: #888;
   font-size: 0.9rem;
 }
+
+.listing-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.listing-modal {
+  background: white;
+  z-index: 10000;
+  min-width: 300px;
+  min-height: 200px;
+  color: black;
+}
