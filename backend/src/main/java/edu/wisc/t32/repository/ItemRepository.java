@@ -47,6 +47,14 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
   Optional<Item> findByItemIdAndDeletedFalseForUpdate(@Param("itemId") Integer itemId);
 
   /**
+   * Finds a list of items by the given user id.
+   *
+   * @param userId the user id
+   * @return the items that belong to the given user
+   */
+  List<Item> findByUserId(Integer userId);
+
+  /**
    * Retrieves all active items from the database.
    * Filters out any records that have been marked as soft-deleted.
    *

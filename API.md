@@ -52,6 +52,7 @@ Marketplace listings management.
 | `/items/{itemId}` | PUT    | Update item info (name, description, price, stock) |
 | `/items/{itemId}` | DELETE | Soft delete an item                                |
 | `/items/batch`    | POST   | Fetch items using a bulk list of ids               |
+| `/items/me`       | GET    | Fetch items by your user                           |
 
 ---
 
@@ -685,6 +686,57 @@ Returned if the request body is null, empty, or not a valid JSON array of intege
 ```json
 {
   "error": "request body is empty or missing"
+}
+```
+
+### GET /items/me
+
+Retrieves all items posted by the authenticated user. The user is identified via the `jwt` cookie.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value                   |
+|--------|-------|-------------------------|
+| Cookie | `jwt` | `<jwt_token>`           |
+
+#### Responses
+
+**200 OK**
+Returns a JSON array of items associated with the authenticated user.
+
+```json
+{
+  "items": [
+    {
+      "itemId": 1,
+      "userId": 7,
+      "name": "listing!",
+      "description": "list!",
+      "price": 1.00000000,
+      "stock": 1,
+      "createdAt": "2026-04-04T17:19:06",
+      "updatedAt": "2026-04-04T17:19:06",
+      "deleted": false
+    }
+  ]
+}
+```
+
+**401 Unauthorized**
+Returned if the `jwt` cookie is missing or the token is invalid.
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+**404 Not Found**
+Returned if the authenticated user has not posted any items.
+
+```json
+{
+  "error": "No item's founding matching input list"
 }
 ```
 

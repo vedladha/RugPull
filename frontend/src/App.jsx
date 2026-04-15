@@ -4,7 +4,7 @@ import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
 import Listings from "./Listings.jsx";
-import SellPage from "./SellPage.jsx"
+import SellPage from "./Pages/SellPage.jsx"
 import ProfilePage from "./ProfilePage.jsx"
 import WishlistPage from "./WishlistPage.jsx";
 import Footer from "./Components/Footer.jsx";

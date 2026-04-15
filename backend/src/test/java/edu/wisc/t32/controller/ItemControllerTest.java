@@ -368,6 +368,117 @@ class ItemControllerTest {
     verify(itemRepository, never()).save(any(Item.class));
   }
 
+  // Checks that a valid partial item patch saves new values and should return 200.
+  @Test
+  void patchItem_returnsUpdatedItem_whenPartialRequestIsValid() {
+    Item existing = buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
+
+    // Only update price and stock, leave name and description null
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setPrice(new BigDecimal("49.95"));
+    request.setStock(12);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
+    when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+    when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 1, request);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    Item saved = (Item) body.get("item");
+
+    assertNotNull(saved);
+    assertEquals(1, saved.getItemId());
+    assertEquals(7, saved.getUserId());
+    assertEquals("Old Name", saved.getName()); // Should remain unchanged
+    assertEquals("Old Description", saved.getDescription()); // Should remain unchanged
+    assertEquals(0, new BigDecimal("49.95").compareTo(saved.getPrice())); // Should be updated
+    assertEquals(12, saved.getStock()); // Should be updated
+
+    verify(itemRepository).save(any(Item.class));
+  }
+
+  // Checks that patching a missing item id is handled and should return 404.
+  @Test
+  void patchItem_returnsNotFound_whenItemDoesNotExist() {
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setPrice(new BigDecimal("49.95"));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
+    when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 99, request);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Item not found", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  // Checks that invalid patch data is rejected and should return 400.
+  @Test
+  void patchItem_returnsBadRequest_whenValidationFails() {
+    Item existing = buildItem(5, 8, "Name", "Description", new BigDecimal("2.00"), 3, false);
+
+    // Provide a negative stock to trigger validation failure
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setStock(-5);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(8)));
+    when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
+
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 5, request);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("stock must be non-negative", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  // Checks that patching an item without auth returns 401.
+  @Test
+  void patchItem_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setPrice(new BigDecimal("49.95"));
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = itemController.patchItem(null, 1, request);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+    verify(itemRepository, never()).findByItemIdAndDeletedFalse(any());
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
+  // Checks that patching another user's item returns 403.
+  @Test
+  void patchItem_returnsForbidden_whenUserDoesNotOwnItem() {
+    Item existing = buildItem(12, 20, "Name", "Description", new BigDecimal("4.00"), 2, false);
+    ItemUpdateRequest request = new ItemUpdateRequest();
+    request.setPrice(new BigDecimal("49.95"));
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(21)));
+    when(itemRepository.findByItemIdAndDeletedFalse(12)).thenReturn(Optional.of(existing));
+
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 12, request);
+
+    assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("You do not own this item", body.get("error"));
+    verify(itemRepository, never()).save(any(Item.class));
+  }
+
   // Checks that deleting an existing item marks it deleted and should return 200.
   @Test
   void deleteItem_returnsOk_andMarksDeleted_whenItemExists() {
@@ -496,6 +607,50 @@ class ItemControllerTest {
     assertEquals("request body is empty or missing", body.get("error"));
 
     verify(itemRepository, never()).findByItemIdInAndDeletedFalse(any());
+  }
+
+  // Checks that getMyItems returns the user's items
+  @Test
+  void getMyItems_returnsItems_whenAuthenticatedAndHasItems() {
+    Item item1 = buildItem(1, 7, "My Item One", "Description", new BigDecimal("10.00"), 3, false);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(itemRepository.findByUserId(7)).thenReturn(List.of(item1));
+
+    ResponseEntity<?> response = itemController.getMyItems(VALID_TOKEN);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ItemBatchRequest batchResponse = assertInstanceOf(ItemBatchRequest.class, response.getBody());
+    assertNotNull(batchResponse);
+    assertEquals(1, batchResponse.getItems().size());
+    assertEquals(1, batchResponse.getItems().getFirst().getItemId());
+    assertEquals("My Item One", batchResponse.getItems().getFirst().getName());
+  }
+
+  // Checks that getMyItems returns 401 when unauthenticated
+  @Test
+  void getMyItems_returnsUnauthorized_whenUserIsNotAuthenticated() {
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = itemController.getMyItems(null);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("Authentication required", body.get("error"));
+  }
+
+  // Checks that getMyItems returns 404 when user has no items
+  @Test
+  void getMyItems_returnsNotFound_whenUserHasNoItems() {
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(itemRepository.findByUserId(7)).thenReturn(List.of());
+
+    ResponseEntity<?> response = itemController.getMyItems(VALID_TOKEN);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    Map<?, ?> body = (Map<?, ?>) response.getBody();
+    assertNotNull(body);
+    assertEquals("No item's founding matching input list", body.get("error"));
   }
 
   private ItemCreateRequest buildCreateRequest(String name, String description, String price,
