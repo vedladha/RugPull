@@ -44,6 +44,18 @@ public class AdController {
           8,
           5.0f,
           "ads/synapse_ad.mp4"
+      ),
+      new Ad(
+          "Smart Mug",
+          8,
+          5.0f,
+          "ads/smartmug_ad.mp4"
+      ),
+      new Ad(
+          "Aura Sound",
+          8,
+          5.0f,
+          "ads/aura_sound_ad.mp4"
       )
   );
 
