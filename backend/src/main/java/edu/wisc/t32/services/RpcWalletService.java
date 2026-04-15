@@ -1,8 +1,12 @@
 package edu.wisc.t32.services;
 
+import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import edu.wisc.t32.api.TokenSupplyService;
+import edu.wisc.t32.api.TransferResponse;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
+import edu.wisc.t32.impl.WalletImpl;
 import edu.wisc.t32.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,6 +141,67 @@ public class RpcWalletService {
     } catch (Exception e) {
       throw new IllegalStateException("Failed to fetch wallet balance: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Transfers RPC from the user's wallet to the operator wallet.
+   *
+   * @param userWallet the user wallet sending RPC
+   * @param amount the amount of RPC to transfer
+   */
+  public void transferToOperator(UserWallet userWallet, float amount) {
+    transferBetweenUserAndOperator(userWallet, amount, true);
+  }
+
+  /**
+   * Transfers RPC from the operator wallet to the user's wallet.
+   *
+   * @param userWallet the user wallet receiving RPC
+   * @param amount the amount of RPC to transfer
+   */
+  public void transferFromOperator(UserWallet userWallet, float amount) {
+    transferBetweenUserAndOperator(userWallet, amount, false);
+  }
+
+  private void transferBetweenUserAndOperator(
+      UserWallet userWallet,
+      float amount,
+      boolean toOperator) {
+    if (userWallet == null) {
+      throw new IllegalArgumentException("null user wallet is not valid for transfer");
+    }
+
+    try (WalletService walletService = WalletService.getService(operatorId, operatorKey,
+        currencyId)) {
+      Wallet operatorWallet = buildOperatorWallet();
+      Wallet userRpcWallet = walletService.createWallet(
+          userWallet.getWalletAddress(),
+          userWallet.getWalletPrivateKey()
+      );
+
+      Wallet sender = toOperator ? userRpcWallet : operatorWallet;
+      Wallet receiver = toOperator ? operatorWallet : userRpcWallet;
+
+      TransferResponse response = walletService.transferBalance(sender, receiver, amount);
+      if (response == TransferResponse.SUCCESS) {
+        return;
+      }
+      if (response == TransferResponse.INSUFFICIENT_BALANCE) {
+        throw new IllegalArgumentException("Insufficient balance");
+      }
+      throw new IllegalStateException("Failed to transfer balance: " + response.name());
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to transfer balance: " + e.getMessage(), e);
+    }
+  }
+
+  private Wallet buildOperatorWallet() {
+    return new WalletImpl(
+        AccountId.fromString(operatorId),
+        PrivateKey.fromStringECDSA(operatorKey)
+    );
   }
 
   /**

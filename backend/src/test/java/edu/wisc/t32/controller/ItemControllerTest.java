@@ -474,7 +474,6 @@ class ItemControllerTest {
     verify(itemRepository).findByItemIdInAndDeletedFalse(any());
   }
 
-
   @Test
   void getItemsBatch_returnsBadRequest_whenIdsListIsNull() {
     ResponseEntity<?> responseEntity = itemController.getItemsBatch(null);

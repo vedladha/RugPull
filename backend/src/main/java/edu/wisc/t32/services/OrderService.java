@@ -6,15 +6,11 @@ import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.exception.OrderItemNotFoundException;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
-import edu.wisc.t32.model.OrderItem;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
-
-import java.math.BigDecimal;
 import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +42,7 @@ public class OrderService {
   /**
    * Creates a new order for the supplied authenticated user.
    *
-   * The item row is locked for the duration of the transaction so stock can be checked and
+   * <p>The item row is locked for the duration of the transaction so stock can be checked and
    * decremented safely under concurrent purchase attempts.
    *
    * @param currentUser the authenticated user placing the order
@@ -75,14 +71,14 @@ public class OrderService {
 
     // Ensure the order contains all the information
     order.finalizeOrder();
-      
+
     // Save the order and all the OrderItems
     return orderRepository.save(order);
   }
 
   /**
    * Gets all orders previously placed by a user.
-   * 
+   *
    * @param currentUser the authenticated user to get the order history of
    * @return a list containing all orders placed by the user
    */
@@ -93,7 +89,7 @@ public class OrderService {
   /**
    * Checks that the quantity is valid for the current stock of an item
    * and reduces the stock by that quantity.
-   * 
+   *
    * @param item The item to check the stock of
    * @param quantity The quantity of the item wanted
    * @throws InsufficientStockException when there is less stock than the quantity requested
@@ -120,7 +116,7 @@ public class OrderService {
     if (request == null) {
       throw new IllegalArgumentException("Order request cannot be null.");
     }
-      
+
     if (request.getItems() == null || request.getItems().isEmpty()) {
       throw new IllegalArgumentException("Order must contain at least one item.");
     }
