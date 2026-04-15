@@ -4,24 +4,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import EarnPage from "../Pages/EarnPage.jsx";
 
 const mockUseAuth = vi.fn();
-const mockWalletBalance = vi.fn();
+const mockUpdateUserBalance = vi.fn();
 
 vi.mock("../Auth/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
 describe("EarnPage", () => {
-    beforeEach(() => {
-        vi.stubGlobal("fetch", vi.fn());
-        // Default auth state for most tests
-        mockUseAuth.mockReturnValue({
-            user: { email: "test@example.com", id: 1 },
-            updateUserBalance: vi.fn()
-        });
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+    mockUpdateUserBalance.mockClear();
+    // Default auth state for most tests
+    mockUseAuth.mockReturnValue({
+      user: { email: "test@example.com", id: 1 },
+      userBalance: 250,
+      updateUserBalance: mockUpdateUserBalance,
     });
+  });
 
   it("shows logged out message when no user is present", () => {
-    mockUseAuth.mockReturnValue({ user: null, walletBalance: mockWalletBalance });
+    mockUseAuth.mockReturnValue({ user: null, userBalance: null, updateUserBalance: mockUpdateUserBalance });
 
     render(<EarnPage />);
 
@@ -63,7 +65,7 @@ describe("EarnPage", () => {
       expect(
         screen.getByText("Check in today to claim your free 14.0 $RPC tokens!"),
       ).toBeInTheDocument();
-      expect(screen.getByText("250.00 RPC")).toBeInTheDocument();
+      expect(screen.getByText("$250.00 RPC")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Spin Slots" })).toBeInTheDocument();
     });
   });
@@ -87,7 +89,7 @@ describe("EarnPage", () => {
     });
   });
 
-  it("handles claim success and refreshes the wallet balance", async () => {
+  it("handles claim success and calls updateUserBalance", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -100,9 +102,6 @@ describe("EarnPage", () => {
         json: () => Promise.resolve({}),
       });
 
-    mockWalletBalance
-      .mockResolvedValueOnce(250)
-      .mockResolvedValueOnce(260);
     vi.stubGlobal("fetch", fetchMock);
 
     render(<EarnPage />);
@@ -115,7 +114,7 @@ describe("EarnPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("🔥 Current Streak: 3 Days")).toBeInTheDocument();
-      expect(screen.getByText("260.00 RPC")).toBeInTheDocument();
+      expect(mockUpdateUserBalance).toHaveBeenCalled();
       expect(screen.queryByRole("button", { name: "Claim Tokens" })).toBeNull();
     });
   });
@@ -170,7 +169,7 @@ describe("EarnPage", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("successfully mints tokens via the developer tool", async () => {
+  it("successfully mints tokens via the developer tool and calls updateUserBalance", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -181,9 +180,6 @@ describe("EarnPage", () => {
         json: () => Promise.resolve({}),
       });
 
-    mockWalletBalance
-      .mockResolvedValueOnce(250)
-      .mockResolvedValueOnce(400);
     vi.stubGlobal("fetch", fetchMock);
 
     render(<EarnPage />);
@@ -197,7 +193,7 @@ describe("EarnPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Successfully minted 150 $RPC!")).toBeInTheDocument();
-      expect(screen.getByText("400.00 RPC")).toBeInTheDocument();
+      expect(mockUpdateUserBalance).toHaveBeenCalled();
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -253,7 +249,7 @@ describe("EarnPage", () => {
     expect(screen.getByText("Enter a wager before spinning.")).toBeInTheDocument();
   });
 
-  it("shows the slot spin result and updates the displayed balance", async () => {
+  it("shows the slot spin result and calls updateUserBalance", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -290,8 +286,12 @@ describe("EarnPage", () => {
     await waitFor(() => {
       expect(screen.getByText("You won 90.00 RPC.")).toBeInTheDocument();
       expect(screen.getByText("+90.00 RPC")).toBeInTheDocument();
-      expect(screen.getAllByText("340.00 RPC")).toHaveLength(2);
+      // Original static balance in header
+      expect(screen.getByText("$250.00 RPC")).toBeInTheDocument();
+      // New balance from the spin result payload
+      expect(screen.getByText("340.00 RPC")).toBeInTheDocument();
       expect(screen.getAllByLabelText("Seven")).toHaveLength(3);
+      expect(mockUpdateUserBalance).toHaveBeenCalled();
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
