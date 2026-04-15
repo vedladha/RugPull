@@ -66,7 +66,7 @@ public class ItemController {
    * @param token   the JWT token extracted from the HTTP-only cookie
    * @param request the data transfer object containing the new item details
    * @return a {@link ResponseEntity} with status 201 (CREATED) containing the saved item,
-   * or a 400 (BAD REQUEST) with an error message if validation fails
+   *     or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
   public ResponseEntity<?> createItem(@CookieValue(name = "jwt", required = false) String token,
@@ -147,7 +147,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   * does not exist or is marked as deleted
+   *     does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
@@ -166,7 +166,7 @@ public class ItemController {
    * @param itemId  the unique identifier of the item to update
    * @param request the data transfer object containing the updated item details
    * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
-   * if validation fails,  or a 404 NOT FOUND if the item does not exist
+   *     if validation fails, or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
   public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
@@ -211,7 +211,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to delete
    * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does
-   * not exist
+   *     not exist
    */
   @DeleteMapping("/{itemId}")
   public ResponseEntity<?> deleteItem(@CookieValue(name = "jwt", required = false) String token,
@@ -244,7 +244,7 @@ public class ItemController {
    *
    * @param request the creation request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   * valid
+   *     valid
    */
   private String validateCreate(ItemCreateRequest request) {
     if (request == null) {
@@ -276,7 +276,7 @@ public class ItemController {
    *
    * @param request the update request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   * valid
+   *     valid
    */
   private String validate(ItemUpdateRequest request) {
     if (request == null) {

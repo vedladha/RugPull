@@ -57,16 +57,16 @@ class OrderServiceTest {
     // Assertions
     assertEquals(1, saved.getOrderId());
     assertEquals(7, saved.getUser().getUserId());
-    
+
     // Check the OrderItem list
     assertEquals(1, saved.getItems().size());
     assertEquals(4, saved.getItems().get(0).getItem().getItemId());
     assertEquals(2, saved.getItems().get(0).getQuantity());
-    
+
     // Check calculated fields
     assertEquals(0, new BigDecimal("25.00").compareTo(saved.getTotalPrice()));
     assertEquals("AWAITING_CONFIRMATION", saved.getOrderStatus().name());
-    
+
     // Check side effects
     assertEquals(3, item.getStock());
     verify(orderRepository, times(1)).save(any(Order.class));
@@ -79,7 +79,8 @@ class OrderServiceTest {
     Item item = buildItem(4, new BigDecimal("12.50"), 5);
 
     when(itemRepository.findByItemIdAndDeletedFalseForUpdate(4)).thenReturn(Optional.of(item));
-    when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(orderRepository.save(any(Order.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     orderService.createOrder(user, request);
 
@@ -114,7 +115,6 @@ class OrderServiceTest {
     assertEquals("Insufficient stock", error.getMessage());
     verify(orderRepository, never()).save(any(Order.class));
   }
-
 
   private OrderCreateRequest buildRequest(Integer itemId, Integer quantity) {
     OrderCreateRequest.ItemRequest itemReq = new OrderCreateRequest.ItemRequest();

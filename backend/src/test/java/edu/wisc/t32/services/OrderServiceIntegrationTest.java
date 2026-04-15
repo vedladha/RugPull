@@ -108,18 +108,21 @@ class OrderServiceIntegrationTest {
           .filter(result -> !result.success())
           .findFirst()
           .orElseThrow();
-      
+
       assertTrue(failedResult.errorMessage().equalsIgnoreCase("insufficient stock"));
 
       List<Order> savedOrders = orderRepository.findAll();
       assertEquals(1, savedOrders.size());
-      
+
       Integer winningBuyerId = savedOrders.get(0).getUser().getUserId();
-      assertTrue(winningBuyerId.equals(buyerOne.getUserId()) || winningBuyerId.equals(buyerTwo.getUserId()));
+      assertTrue(
+          winningBuyerId.equals(buyerOne.getUserId())
+              || winningBuyerId.equals(buyerTwo.getUserId())
+      );
 
       Item savedItem = itemRepository.findById(item.getItemId()).orElseThrow();
       assertEquals(0, savedItem.getStock(), "Stock should be exactly zero");
-      
+
     } finally {
       executorService.shutdownNow();
     }
