@@ -3,7 +3,7 @@ SET time_zone = '+00:00';
 
 START TRANSACTION;
 
-CREATE TABLE itemimages (
+CREATE TABLE item_images (
     image_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     user_id INT NOT NULL,
     item_id INT NOT NULL,

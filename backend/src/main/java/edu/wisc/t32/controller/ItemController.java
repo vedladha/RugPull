@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -110,14 +109,9 @@ public class ItemController {
 
     // Create item image if there is one
     if (files != null && !files.isEmpty()) {
-      try {
-        for (int i = 0; i < files.size(); i++) {
-          itemImageService.addImageToItem(files.get(i), savedItem.getItemId(),
-              currentUser.get().getUserId(), i);
-        }
-      } catch (RuntimeException e) {
-        return ResponseEntity.badRequest()
-            .body(Map.of("error", "Image upload failed: " + e.getMessage()));
+      for (int i = 0; i < files.size(); i++) {
+        itemImageService.addImageToItem(files.get(i), savedItem.getItemId(),
+            currentUser.get().getUserId(), i);
       }
     }
 
@@ -138,11 +132,17 @@ public class ItemController {
           Map<String, Object> map = new HashMap<>();
           map.put("itemId", item.getItemId());
           map.put("name", item.getName());
-          map.put("description", item.getDescription());
           map.put("price", item.getPrice());
-          map.put("stock", item.getStock());
-          UserProfile seller = userProfileRepository.findByUserId(item.getUserId());
-          map.put("sellerName", seller.getDisplayName());
+          map.put("sellerName",
+              userProfileRepository.findByUserId(item.getUserId()).getDisplayName());
+
+          List<ItemImage> images =
+              itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+          if (!images.isEmpty()) {
+            map.put("thumbnailUrl", images.get(0).getImageUrl());
+          } else {
+            map.put("thumbnailUrl", null); // Or a placeholder image link
+          }
           return map;
         })
         .collect(Collectors.toList());
@@ -178,31 +178,42 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   *     does not exist or is marked as deleted
+   *         does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+
     if (existing.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
-          "Item not found"));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "Item not found"));
     }
-    return ResponseEntity.ok(Map.of("item", existing.get()));
+
+    Item item = existing.get();
+
+    // Fetch all images for this specific item
+    List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("item", item);
+    response.put("images", images);
+
+    return ResponseEntity.ok(response);
   }
 
   /**
    * Retrieves an ItemImage list of images associated with the itemId.
-   * 
+   *
    * @param itemId item to find the images for
    * @return a {@link ResponseEntity} containing a list of ItemImages, or a 404 NOT FOUND
-   *         if there are no images
+   * if there are no images
    */
   @GetMapping("/{itemId}/images")
   public ResponseEntity<?> getItemImages(@PathVariable Integer itemId) {
     List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
     if (images.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
-       "Item not found"));
+          "Item not found"));
     }
     return ResponseEntity.ok(Map.of("images", images));
   }
@@ -214,7 +225,7 @@ public class ItemController {
    * @param itemId  the unique identifier of the item to update
    * @param request the data transfer object containing the updated item details
    * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
-   *     if validation fails, or a 404 NOT FOUND if the item does not exist
+   * if validation fails, or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
   public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
@@ -312,7 +323,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to delete
    * @return a {@link ResponseEntity} confirming the deletion, or a 404 NOT FOUND if the item does
-   *     not exist
+   * not exist
    */
   @DeleteMapping("/{itemId}")
   public ResponseEntity<?> deleteItem(@CookieValue(name = "jwt", required = false) String token,
@@ -373,7 +384,7 @@ public class ItemController {
    *
    * @param request the creation request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   *     valid
+   * valid
    */
   private String validateCreate(ItemCreateRequest request) {
     if (request == null) {
@@ -405,7 +416,7 @@ public class ItemController {
    *
    * @param request the update request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
-   *     valid
+   * valid
    */
   private String validate(ItemUpdateRequest request) {
     if (request == null) {
