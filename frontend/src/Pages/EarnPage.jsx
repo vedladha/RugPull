@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../Auth/auth-context";
 import "../style/earn-page.css";
 
-  const API = "http://localhost:3001";
+const API = "http://localhost:3001";
 const SLOT_SYMBOLS = ["CHERRY", "LEMON", "BAR", "STAR", "SEVEN"];
 const DEFAULT_REELS = ["CHERRY", "BAR", "SEVEN"];
 const SPIN_TICK_MS = 90;
@@ -94,7 +94,7 @@ function buildSpinMessage(spin) {
 }
 
 export default function EarnPage() {
-  const { user, updateUserBalance } = useAuth();
+  const { user, userBalance, updateUserBalance } = useAuth();
   const spinTimersRef = useRef([]);
 
   const [canClaim, setCanClaim] = useState(false);
@@ -186,23 +186,6 @@ export default function EarnPage() {
     });
   }
 
-  async function refreshBalance() {
-    if (!user || !walletBalance) {
-      return;
-    }
-
-    setBalanceLoading(true);
-    setBalanceError("");
-    try {
-      const nextBalance = await walletBalance();
-      setBalance(nextBalance);
-    } catch (err) {
-      setBalanceError(err.message || "Unable to load wallet balance.");
-    } finally {
-      setBalanceLoading(false);
-    }
-  }
-
   useEffect(() => {
     if (!user) {
       return;
@@ -221,9 +204,9 @@ export default function EarnPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-    useEffect(() => () => {
-      clearSpinTimers();
-    }, []);
+  useEffect(() => () => {
+    clearSpinTimers();
+  }, []);
 
   const handleClaim = async () => {
     setIsClaiming(true);
@@ -274,7 +257,7 @@ export default function EarnPage() {
       }
 
       setFundMsg({ text: `Successfully minted ${amount} $RPC!`, type: "success" });
-      setFundAmount(""); 
+      setFundAmount("");
       updateUserBalance();
     } catch (err) {
       setFundMsg({ text: `Mint Error: ${err.message}`, type: "error" });
@@ -321,8 +304,6 @@ export default function EarnPage() {
       await finishSpinAnimation(spin.reels);
       setSlotResult(spin);
       setSlotMsg(buildSpinMessage(spin));
-      setBalance(Number(spin.balance));
-      setBalanceError("");
       setSlotWager("");
     } catch (err) {
       clearSpinTimers();
@@ -330,6 +311,7 @@ export default function EarnPage() {
       setSettledReels([true, true, true]);
       setSlotMsg({ text: err.message || "Failed to spin slot machine.", type: "error" });
     } finally {
+      updateUserBalance();
       setIsSpinning(false);
     }
   };
@@ -356,15 +338,8 @@ export default function EarnPage() {
       <div className="earn-balance-card">
         <span className="earn-balance-label">Wallet Balance</span>
         <div className="earn-balance-value">
-          {balanceLoading
-            ? "Loading..."
-            : balance !== null
-              ? `${formatRpc(balance)} RPC`
-              : "Unavailable"}
+          ${formatRpc(userBalance)} RPC
         </div>
-        <p className="earn-balance-note">
-          {balanceError || "Daily rewards, slot spins, and dev minting update this balance."}
-        </p>
       </div>
 
       {loading ? (
