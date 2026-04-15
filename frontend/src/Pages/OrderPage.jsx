@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/order-page.css";
@@ -46,14 +46,25 @@ function normalizeItems(state) {
 export default function OrderPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, walletBalance } = useAuth();
+  const { user, userBalance, updateUserBalance } = useAuth();
 
   const [orderItems, setOrderItems] = useState(() => normalizeItems(location.state));
-  const [wallet, setWallet] = useState(null);
   const [walletError, setWalletError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [successfulOrder, setSuccessfulOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // 1. Wrap reloadWallet in useCallback so its identity is stable
+  const reloadWallet = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      await updateUserBalance();
+      setWalletError("");
+    } catch (error) {
+      setWalletError(error.message || "Unable to load wallet balance");
+    }
+  }, [user, updateUserBalance]);
 
   useEffect(() => {
     setOrderItems(normalizeItems(location.state));
@@ -61,22 +72,13 @@ export default function OrderPage() {
     setSuccessfulOrder(null);
   }, [location.state]);
 
+  // 2. Safely include reloadWallet in the dependency array (no eslint-disable needed)
   useEffect(() => {
     if (!user) {
-      setWallet(null);
       return;
     }
-
-    walletBalance()
-      .then((balance) => {
-        setWallet(balance);
-        setWalletError("");
-      })
-      .catch((error) => {
-        setWallet(null);
-        setWalletError(error.message || "Unable to load wallet balance");
-      });
-  }, [user, walletBalance]);
+    reloadWallet();
+  }, [user, reloadWallet]);
 
   const subtotal = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const total = subtotal;
@@ -120,19 +122,6 @@ export default function OrderPage() {
       setSubmissionError("");
     } catch (error) {
       setSubmissionError(error.message || "Failed to remove item");
-    }
-  };
-
-  const reloadWallet = async () => {
-    if (!user) return;
-
-    try {
-      const balance = await walletBalance();
-      setWallet(balance);
-      setWalletError("");
-    } catch (error) {
-      setWallet(null);
-      setWalletError(error.message || "Unable to load wallet balance");
     }
   };
 
@@ -376,13 +365,13 @@ export default function OrderPage() {
               <strong>
                 {walletError
                   ? "Unavailable"
-                  : wallet !== null
-                    ? `${wallet.toFixed(2)} RPC`
+                  : userBalance !== null
+                    ? `${userBalance} RPC`
                     : "Loading..."}
               </strong>
               <p>
-                {wallet !== null
-                  ? `After this order: ${(wallet - total).toFixed(2)} RPC`
+                {userBalance !== null
+                  ? `After this order: ${(userBalance - total)} RPC`
                   : "The wallet total refreshes again after successful checkout."}
               </p>
             </div>

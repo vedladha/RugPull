@@ -10,6 +10,8 @@ vi.mock("../Auth/auth-context");
 beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({
         user: null,
+        userBalance: -99.99,
+        updateUserBalance: vi.fn(),
         signOut: vi.fn(),
         walletBalance: vi.fn().mockResolvedValue(-999.99),
         profileDetails: vi.fn().mockResolvedValue({ profile: {} }),

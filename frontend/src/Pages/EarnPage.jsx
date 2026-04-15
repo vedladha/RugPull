@@ -94,7 +94,7 @@ function buildSpinMessage(spin) {
 }
 
 export default function EarnPage() {
-  const { user, walletBalance } = useAuth();
+  const { user, userBalance, updateUserBalance } = useAuth();
   const spinTimersRef = useRef([]);
 
   const [canClaim, setCanClaim] = useState(false);
@@ -104,10 +104,7 @@ export default function EarnPage() {
   const [streak, setStreak] = useState(0);
   const [rewardAmount, setRewardAmount] = useState(10);
 
-  const [balance, setBalance] = useState(null);
-  const [balanceLoading, setBalanceLoading] = useState(false);
-  const [balanceError, setBalanceError] = useState("");
-
+  // Dev Minting State
   const [fundAmount, setFundAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [fundMsg, setFundMsg] = useState({ text: "", type: "" });
@@ -189,23 +186,6 @@ export default function EarnPage() {
     });
   }
 
-  async function refreshBalance() {
-    if (!user || !walletBalance) {
-      return;
-    }
-
-    setBalanceLoading(true);
-    setBalanceError("");
-    try {
-      const nextBalance = await walletBalance();
-      setBalance(nextBalance);
-    } catch (err) {
-      setBalanceError(err.message || "Unable to load wallet balance.");
-    } finally {
-      setBalanceLoading(false);
-    }
-  }
-
   useEffect(() => {
     if (!user) {
       return;
@@ -223,41 +203,6 @@ export default function EarnPage() {
       .catch((err) => console.error("Error fetching daily status:", err))
       .finally(() => setLoading(false));
   }, [user]);
-
-  useEffect(() => {
-    if (!user || !walletBalance) {
-      setBalance(null);
-      setBalanceError("");
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadBalance() {
-      setBalanceLoading(true);
-      setBalanceError("");
-      try {
-        const nextBalance = await walletBalance();
-        if (!cancelled) {
-          setBalance(nextBalance);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setBalanceError(err.message || "Unable to load wallet balance.");
-        }
-      } finally {
-        if (!cancelled) {
-          setBalanceLoading(false);
-        }
-      }
-    }
-
-    loadBalance();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, walletBalance]);
 
   useEffect(() => () => {
     clearSpinTimers();
@@ -277,7 +222,7 @@ export default function EarnPage() {
 
       setCanClaim(false);
       setStreak((prev) => prev + 1);
-      await refreshBalance();
+      updateUserBalance();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -313,7 +258,7 @@ export default function EarnPage() {
 
       setFundMsg({ text: `Successfully minted ${amount} $RPC!`, type: "success" });
       setFundAmount("");
-      await refreshBalance();
+      updateUserBalance();
     } catch (err) {
       setFundMsg({ text: `Mint Error: ${err.message}`, type: "error" });
     } finally {
@@ -359,8 +304,6 @@ export default function EarnPage() {
       await finishSpinAnimation(spin.reels);
       setSlotResult(spin);
       setSlotMsg(buildSpinMessage(spin));
-      setBalance(Number(spin.balance));
-      setBalanceError("");
       setSlotWager("");
     } catch (err) {
       clearSpinTimers();
@@ -368,6 +311,7 @@ export default function EarnPage() {
       setSettledReels([true, true, true]);
       setSlotMsg({ text: err.message || "Failed to spin slot machine.", type: "error" });
     } finally {
+      updateUserBalance();
       setIsSpinning(false);
     }
   };
@@ -394,15 +338,8 @@ export default function EarnPage() {
       <div className="earn-balance-card">
         <span className="earn-balance-label">Wallet Balance</span>
         <div className="earn-balance-value">
-          {balanceLoading
-            ? "Loading..."
-            : balance !== null
-              ? `${formatRpc(balance)} RPC`
-              : "Unavailable"}
+          ${formatRpc(userBalance)} RPC
         </div>
-        <p className="earn-balance-note">
-          {balanceError || "Daily rewards, slot spins, and dev minting update this balance."}
-        </p>
       </div>
 
       {loading ? (

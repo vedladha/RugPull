@@ -3,14 +3,13 @@ import "./style/profile-page.css";
 import { useAuth } from "./Auth/auth-context";
 
 export default function ProfilePage() {
-    const { user, walletBalance, profileDetails, updateProfile, changePassword } = useAuth();
+    const { user, userBalance, profileDetails, updateProfile, changePassword } = useAuth();
     const [displayName, setDisplayName] = useState("")
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [balance, setBalance] = useState(0);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -25,11 +24,7 @@ export default function ProfilePage() {
                 setDisplayName(profileData.displayName)
                 setBio(profileData.bio)
             })
-
-        walletBalance().then((balance) => {
-            setBalance(balance)
-        })
-    }, [user, walletBalance, profileDetails]);
+    }, [user, profileDetails]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -73,7 +68,7 @@ export default function ProfilePage() {
             setError(err.message);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        
+
     };
 
     return (
@@ -87,7 +82,7 @@ export default function ProfilePage() {
                 <div className="balance-info">
                     <span className="balance-label">Current Balance</span>
                     <div className="balance-amount">
-                        {balance.toFixed(2)} <span>$RPC</span>
+                        {userBalance} <span>$RPC</span>
                     </div>
                 </div>
                 {/* TODO: Add a link or modal trigger here to redirect to wallet/deposit if needed */}

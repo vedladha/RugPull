@@ -6,6 +6,7 @@ const API = "http://localhost:3001";
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userBalance, setUserBalance] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/auth/profile`, {
@@ -16,6 +17,14 @@ export function AuthProvider({ children }) {
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      updateUserBalance();
+    } else {
+      setUserBalance(null);
+    }
+  }, [user])
 
   async function register(displayName, email, password) {
     const response = await fetch(`${API}/auth/register`, {
@@ -55,24 +64,29 @@ export function AuthProvider({ children }) {
     const data = await loginResponse.json();
 
     setUser(data);
+    updateUserBalance();
     return data;
   }
 
-async function walletBalance() {
-    const response = await fetch(
-      `${API}/wallets`,
-      {
+  async function updateUserBalance() {
+    try {
+      const response = await fetch(`${API}/wallets`, {
         method: "GET",
         credentials: "include"
       });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Failed to fetch balance");
-    }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setUserBalance(null);
+        throw new Error(errorData.error || "Failed to fetch balance");
+      }
 
-    const balance = await response.text();
-    return Number(balance);
+      const balance = await response.text();
+      setUserBalance(Number(balance));
+    } catch (err) {
+      console.error(err);
+      setUserBalance(null);
+    }
   }
 
   async function signOut() {
@@ -194,7 +208,7 @@ async function walletBalance() {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await response.json().catch(() => ({}))
       throw new Error(errorData.error || "Failed to remove item from wishlist");
     }
 
@@ -204,9 +218,10 @@ async function walletBalance() {
   return (
     <AuthContext.Provider value={{
       user,
+      userBalance,
       signIn,
       signOut,
-      walletBalance,
+      updateUserBalance,
       profileDetails,
       updateProfile,
       changePassword,
