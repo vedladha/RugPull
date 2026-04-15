@@ -1,9 +1,12 @@
 package edu.wisc.t32.services;
 
+import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import edu.wisc.t32.api.TokenSupplyService;
 import edu.wisc.t32.api.TransferResponse;
 import edu.wisc.t32.api.Wallet;
 import edu.wisc.t32.api.WalletService;
+import edu.wisc.t32.impl.WalletImpl;
 import edu.wisc.t32.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,7 +173,7 @@ public class RpcWalletService {
 
     try (WalletService walletService = WalletService.getService(operatorId, operatorKey,
         currencyId)) {
-      Wallet operatorWallet = walletService.createWallet(operatorId, operatorKey);
+      Wallet operatorWallet = buildOperatorWallet();
       Wallet userRpcWallet = walletService.createWallet(
           userWallet.getWalletAddress(),
           userWallet.getWalletPrivateKey()
@@ -192,6 +195,13 @@ public class RpcWalletService {
     } catch (Exception e) {
       throw new IllegalStateException("Failed to transfer balance: " + e.getMessage(), e);
     }
+  }
+
+  private Wallet buildOperatorWallet() {
+    return new WalletImpl(
+        AccountId.fromString(operatorId),
+        PrivateKey.fromStringECDSA(operatorKey)
+    );
   }
 
   /**
