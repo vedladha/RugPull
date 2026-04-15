@@ -8,6 +8,13 @@ export default function ListingCard({
 }) {
   const quantity = Number.isFinite(Number(stock)) ? Number(stock) : null;
   const isSoldOut = quantity !== null && quantity <= 0;
+    const getImageUrl = (url) => {
+      if (!url) return null;
+      // If it's a local preview (blob:), return it directly.
+      // Otherwise, append the backend API prefix.
+      return url.startsWith("blob:") ? url : `http://localhost:3001${url}`;
+    };
+
 
   return (
     <button
@@ -16,6 +23,17 @@ export default function ListingCard({
       onClick={onClick}
       aria-label={`View details for ${name}`}
     >
+          <div className="card-image-container">
+            {thumbnail_url ? (
+              <img
+                src={getImageUrl(thumbnail_url)}
+                alt={name}
+                className="card-image"
+              />
+            ) : (
+              <div className="placeholder-image">No Image Available</div>
+            )}
+          </div>
       <div className="listing-card-header">
         <div className="listing-title">{name}</div>
         <div className={`listing-status ${isSoldOut ? "listing-status-sold-out" : ""}`}>

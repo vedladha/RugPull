@@ -238,12 +238,13 @@ export default function Listings() {
         ) : (
           filteredListings.map((listing) => (
             <ListingCard
-              key={listing.id}
+              key={listing.itemId}
               name={listing.name}
               description={listing.description}
               price={listing.price}
               stock={listing.stock}
               seller={listing.sellerName}
+              thumbnail_url={listing.thumbnailUrl}
               onClick={() => handleOpenListing(listing)}
             />
           ))

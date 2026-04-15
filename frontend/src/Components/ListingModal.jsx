@@ -16,7 +16,7 @@ export default function ListingModal({
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartFeedback, setCartFeedback] = useState("");
   const [cartError, setCartError] = useState("");
-  const stock = Number.isFinite(Number(listing?.stock)) ? Number(listing.stock) : null;
+  const stock = Number.isFinite(Number(item?.stock)) ? Number(item.stock) : null;
   const isSoldOut = stock !== null && stock <= 0;
   const [quantity, setQuantity] = useState(
     stock !== null && stock > 0 ? "1" : "0",
@@ -44,6 +44,7 @@ export default function ListingModal({
   }, [listing?.itemId, stock]);
 
   if (!listing) return null;
+  const { item, images } = listing;
 
   const maxQuantity = stock !== null && stock > 0 ? stock : null;
   const parsedQuantity = Number(quantity);
@@ -100,7 +101,7 @@ export default function ListingModal({
         : Array.isArray(cartPayload)
           ? cartPayload
           : [];
-      const existingCartItem = cartItems.find((item) => item.itemId === listing.itemId);
+      const existingCartItem = cartItems.find((item) => item.itemId === item.itemId);
       const nextQuantity = existingCartItem
         ? existingCartItem.quantity + selectedQuantity
         : selectedQuantity;
@@ -110,7 +111,7 @@ export default function ListingModal({
       }
 
       const response = await fetch(
-        `${API}/cart/${listing.itemId}?quantity=${nextQuantity}`,
+        `${API}/cart/${item.itemId}?quantity=${nextQuantity}`,
         {
           method: existingCartItem ? "PUT" : "POST",
           credentials: "include",
@@ -149,20 +150,36 @@ export default function ListingModal({
           onClick={onClose}
           aria-label="Close listing details"
         >
-          X
+          &times;
         </button>
 
-        <h3 id="listing-modal-title" className="listing-modal-title">
-          {listing.name}
-        </h3>
+        <div className="listing-modal-gallery">
+          {images && images.length > 0 ? (
+            images.map((img) => (
+              <img
+                key={img.imageId}
+                src={img.imageUrl}
+                alt={item.name}
+                className="modal-image"
+              />
+            ))
+          ) : (
+            <div className="placeholder-image">No images available</div>
+          )}
+        </div>
 
-        <p className="listing-modal-description">
-          {listing.description || "No description provided."}
-        </p>
+        <div className="listing-modal-content">
+          <h3 id="listing-modal-title" className="listing-modal-title">
+            {item.name}
+          </h3>
+
+          <p className="listing-modal-description">
+            {item.description || "No description provided."}
+          </p>
 
         <div className="listing-modal-meta">
-          <div className="listing-modal-price">{listing.price}</div>
-          <div className="listing-modal-seller">Seller: {listing.sellerName}</div>
+          <div className="listing-modal-price">{item.price}</div>
+          <div className="listing-modal-seller">Seller: {item.sellerName}</div>
         </div>
 
         <div className="listing-modal-stock-row">

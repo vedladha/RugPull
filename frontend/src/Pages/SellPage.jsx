@@ -10,7 +10,7 @@ export default function SellPage() {
   const formRef = useRef(null);
 
   // --- Form & Submission State ---
-  const [form, setForm] = useState({ title: "", bio: "", price: "", quantity: "1" });
+  const [form, setForm] = useState({ title: "", bio: "", price: "", quantity: "1", image: null });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -60,6 +60,25 @@ export default function SellPage() {
     );
   }
 
+  const handleFileChange = (field, file) => {
+    if (!file) return;
+
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    if (file.size > MAX_SIZE) {
+      // Set a proper UI error instead of an alert
+      setErrors((prev) => ({
+        ...prev,
+        image: "This file is too large! Please choose an image under 5MB."
+      }));
+      return;
+    }
+
+    // Update the form state using your existing logic
+    handleChange(field, file);
+  };
+
+
   const validate = () => {
     const errs = {};
     if (!form.title.trim()) errs.title = "Title is required";
@@ -89,7 +108,6 @@ export default function SellPage() {
     try {
       const url = isEditMode ? `${API}/items/${editItemId}` : `${API}/items`;
       const method = isEditMode ? "PATCH" : "POST";
-
       let payload = {};
 
       // 1. THE FIX: If editing, only send fields that have actually changed!
@@ -121,6 +139,12 @@ export default function SellPage() {
           price: parseFloat(form.price),
           stock: Number(form.quantity),
         };
+      }
+
+      const formData = new FormData();
+      formData.append("item", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+      if (form.image) {
+        formData.append("file", form.image);
       }
 
       const response = await fetch(url, {
@@ -237,7 +261,7 @@ export default function SellPage() {
 
         <div className="sell-field">
           <label className="sell-label">Item Photo</label>
-          <ImageUploadBox onImageUpload={(file) => handleChange("image", file)} />
+          <ImageUploadBox onImageUpload={(file) => handleFileChange("image", file)} />
           {errors.image && <span className="sell-error-msg">{errors.image}</span>}
         </div>
 
