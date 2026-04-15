@@ -286,11 +286,13 @@ describe("EarnPage", () => {
     await userEvent.type(screen.getByPlaceholderText("Enter RPC wager"), "10");
     await userEvent.click(screen.getByRole("button", { name: "Spin Slots" }));
 
+    expect(screen.getByRole("button", { name: "Spinning..." })).toBeInTheDocument();
+
     await waitFor(() => {
       expect(screen.getByText("You won 90.00 RPC.")).toBeInTheDocument();
       expect(screen.getByText("+90.00 RPC")).toBeInTheDocument();
       expect(screen.getAllByText("340.00 RPC")).toHaveLength(2);
-      expect(screen.getAllByText("SEVEN")).toHaveLength(3);
+      expect(screen.getAllByLabelText("Seven")).toHaveLength(3);
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -345,5 +347,21 @@ describe("EarnPage", () => {
     await userEvent.type(wagerInput, "10.239");
 
     expect(wagerInput).toHaveValue("10.23");
+  });
+
+  it("renders slot machine tiles with real symbols before a spin", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: { claimed: true } }),
+    }));
+
+    render(<EarnPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Match all three reels to win.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Cherry")).toBeInTheDocument();
+      expect(screen.getByLabelText("Bar")).toBeInTheDocument();
+      expect(screen.getByLabelText("Seven")).toBeInTheDocument();
+    });
   });
 });

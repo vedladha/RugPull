@@ -1,11 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../Auth/auth-context";
 import "../style/earn-page.css";
 
 const API = "http://localhost:3001";
+const SLOT_SYMBOLS = ["CHERRY", "LEMON", "BAR", "STAR", "SEVEN"];
+const DEFAULT_REELS = ["CHERRY", "BAR", "SEVEN"];
+const SPIN_TICK_MS = 90;
+const REEL_STOP_DELAYS_MS = [240, 420, 620];
+const SYMBOL_META = {
+  CHERRY: {
+    icon: "🍒",
+    label: "Cherry",
+    accentClass: "cherry",
+  },
+  LEMON: {
+    icon: "🍋",
+    label: "Lemon",
+    accentClass: "lemon",
+  },
+  BAR: {
+    icon: "BAR",
+    label: "Bar",
+    accentClass: "bar",
+  },
+  STAR: {
+    icon: "★",
+    label: "Star",
+    accentClass: "star",
+  },
+  SEVEN: {
+    icon: "7",
+    label: "Seven",
+    accentClass: "seven",
+  },
+};
+const PAYOUT_ROWS = [
+  { symbol: "SEVEN", multiplier: "x10" },
+  { symbol: "STAR", multiplier: "x6" },
+  { symbol: "BAR", multiplier: "x4" },
+  { symbol: "CHERRY", multiplier: "x3" },
+  { symbol: "LEMON", multiplier: "x2" },
+];
 
 function formatRpc(amount) {
   return Number(amount).toFixed(2);
+}
+
+function pickRandomSymbol() {
+  return SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
+}
+
+function prefersReducedMotion() {
+  return typeof window !== "undefined"
+    && typeof window.matchMedia === "function"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function normalizeWagerInput(value) {
@@ -47,6 +95,7 @@ function buildSpinMessage(spin) {
 
 export default function EarnPage() {
   const { user, walletBalance } = useAuth();
+  const spinTimersRef = useRef([]);
 
   const [canClaim, setCanClaim] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -67,6 +116,78 @@ export default function EarnPage() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [slotMsg, setSlotMsg] = useState({ text: "", type: "" });
   const [slotResult, setSlotResult] = useState(null);
+  const [displayedReels, setDisplayedReels] = useState(DEFAULT_REELS);
+  const [settledReels, setSettledReels] = useState([true, true, true]);
+
+  function clearSpinTimers() {
+    for (const timerId of spinTimersRef.current) {
+      window.clearInterval(timerId);
+      window.clearTimeout(timerId);
+    }
+    spinTimersRef.current = [];
+  }
+
+  function beginSpinAnimation() {
+    if (prefersReducedMotion()) {
+      return;
+    }
+
+    clearSpinTimers();
+    setSettledReels([false, false, false]);
+    setDisplayedReels([pickRandomSymbol(), pickRandomSymbol(), pickRandomSymbol()]);
+
+    const spinInterval = window.setInterval(() => {
+      setDisplayedReels([pickRandomSymbol(), pickRandomSymbol(), pickRandomSymbol()]);
+    }, SPIN_TICK_MS);
+
+    spinTimersRef.current.push(spinInterval);
+  }
+
+  function finishSpinAnimation(finalReels) {
+    if (prefersReducedMotion()) {
+      clearSpinTimers();
+      setDisplayedReels(finalReels);
+      setSettledReels([true, true, true]);
+      return Promise.resolve();
+    }
+
+    clearSpinTimers();
+    let revealed = [false, false, false];
+
+    return new Promise((resolve) => {
+      const spinInterval = window.setInterval(() => {
+        setDisplayedReels(
+          finalReels.map((symbol, index) => (revealed[index] ? symbol : pickRandomSymbol())),
+        );
+      }, SPIN_TICK_MS);
+
+      spinTimersRef.current.push(spinInterval);
+
+      REEL_STOP_DELAYS_MS.forEach((delay, index) => {
+        const stopTimer = window.setTimeout(() => {
+          revealed = revealed.map((isSettled, reelIndex) => (
+            reelIndex === index ? true : isSettled
+          ));
+
+          setSettledReels([...revealed]);
+          setDisplayedReels(
+            finalReels.map((symbol, reelIndex) => (
+              revealed[reelIndex] ? symbol : pickRandomSymbol()
+            )),
+          );
+
+          if (index === finalReels.length - 1) {
+            clearSpinTimers();
+            setDisplayedReels(finalReels);
+            setSettledReels([true, true, true]);
+            resolve();
+          }
+        }, delay);
+
+        spinTimersRef.current.push(stopTimer);
+      });
+    });
+  }
 
   async function refreshBalance() {
     if (!user || !walletBalance) {
@@ -138,6 +259,10 @@ export default function EarnPage() {
     };
   }, [user, walletBalance]);
 
+  useEffect(() => () => {
+    clearSpinTimers();
+  }, []);
+
   const handleClaim = async () => {
     setIsClaiming(true);
     setError(null);
@@ -198,6 +323,7 @@ export default function EarnPage() {
 
   const handleSpin = async () => {
     setSlotMsg({ text: "", type: "" });
+    setSlotResult(null);
 
     if (!slotWager.trim()) {
       setSlotMsg({ text: "Enter a wager before spinning.", type: "error" });
@@ -211,6 +337,7 @@ export default function EarnPage() {
     }
 
     setIsSpinning(true);
+    beginSpinAnimation();
 
     try {
       const response = await fetch(`${API}/slots/spin`, {
@@ -229,12 +356,16 @@ export default function EarnPage() {
 
       const data = await response.json();
       const spin = data.spin;
+      await finishSpinAnimation(spin.reels);
       setSlotResult(spin);
       setSlotMsg(buildSpinMessage(spin));
       setBalance(Number(spin.balance));
       setBalanceError("");
       setSlotWager("");
     } catch (err) {
+      clearSpinTimers();
+      setDisplayedReels(DEFAULT_REELS);
+      setSettledReels([true, true, true]);
       setSlotMsg({ text: err.message || "Failed to spin slot machine.", type: "error" });
     } finally {
       setIsSpinning(false);
@@ -252,8 +383,6 @@ export default function EarnPage() {
       </div>
     );
   }
-
-  const displayedReels = slotResult?.reels ?? ["?", "?", "?"];
 
   return (
     <div className="earn-page">
@@ -319,19 +448,45 @@ export default function EarnPage() {
         </div>
 
         <div className="slot-machine-payouts">
-          <span>SEVEN x10</span>
-          <span>STAR x6</span>
-          <span>BAR x4</span>
-          <span>CHERRY x3</span>
-          <span>LEMON x2</span>
+          {PAYOUT_ROWS.map(({ symbol, multiplier }) => {
+            const meta = SYMBOL_META[symbol];
+            return (
+              <span
+                key={symbol}
+                className={`slot-payout slot-payout-${meta.accentClass}`}
+              >
+                <span aria-hidden="true" className="slot-payout-icon">{meta.icon}</span>
+                <span>{meta.label}</span>
+                <strong>{multiplier}</strong>
+              </span>
+            );
+          })}
         </div>
 
         <div className="slot-reels" aria-label="Slot machine reels">
-          {displayedReels.map((reel, index) => (
-            <div className="slot-reel" key={`${reel}-${index}`}>
-              {reel}
-            </div>
-          ))}
+          {displayedReels.map((reel, index) => {
+            const meta = SYMBOL_META[reel];
+            const isSettled = settledReels[index];
+            return (
+              <div
+                className={`slot-reel slot-reel-${meta.accentClass} ${isSettled
+                  ? "is-settled"
+                  : "is-spinning"}`}
+                key={`${index}-${reel}`}
+              >
+                <div className="slot-reel-track">
+                  <span
+                    aria-label={meta.label}
+                    className="slot-reel-icon"
+                    role="img"
+                  >
+                    {meta.icon}
+                  </span>
+                  <span className="slot-reel-name">{meta.label}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="slot-controls">
