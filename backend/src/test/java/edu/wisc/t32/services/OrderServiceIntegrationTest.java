@@ -9,9 +9,11 @@ import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
+import edu.wisc.t32.model.UserWallet;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import edu.wisc.t32.repository.UserRepository;
+import edu.wisc.t32.repository.UserWalletRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,6 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -50,6 +53,12 @@ class OrderServiceIntegrationTest {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired
+  private UserWalletRepository userWalletRepository;
+
+  @MockitoBean
+  private RpcWalletService walletService;
+
   @TestConfiguration
   static class TestCorsConfiguration {
     @Bean
@@ -69,6 +78,7 @@ class OrderServiceIntegrationTest {
   @BeforeEach
   void clearDatabase() {
     orderRepository.deleteAll();
+    userWalletRepository.deleteAll();
     itemRepository.deleteAll();
     userRepository.deleteAll();
   }
@@ -78,7 +88,10 @@ class OrderServiceIntegrationTest {
     User seller = userRepository.save(buildUser("seller@example.com"));
     User buyerOne = userRepository.save(buildUser("buyer-one@example.com"));
     User buyerTwo = userRepository.save(buildUser("buyer-two@example.com"));
-    
+    userWalletRepository.save(buildWallet(seller.getUserId()));
+    userWalletRepository.save(buildWallet(buyerOne.getUserId()));
+    userWalletRepository.save(buildWallet(buyerTwo.getUserId()));
+
     Item item = itemRepository.save(buildItem(seller.getUserId(), new BigDecimal("12.50"), 1));
 
     ExecutorService executorService = Executors.newFixedThreadPool(2);
@@ -178,6 +191,14 @@ class OrderServiceIntegrationTest {
     user.setStatus(UserStatus.ACTIVE);
     user.setDeleted(false);
     return user;
+  }
+
+  private UserWallet buildWallet(Integer userId) {
+    UserWallet wallet = new UserWallet();
+    wallet.setUserId(userId);
+    wallet.setWalletAddress("wallet-" + userId);
+    wallet.setWalletPrivateKey("private-key-" + userId);
+    return wallet;
   }
 
   private record PurchaseAttemptResult(boolean success, String errorMessage) {

@@ -82,10 +82,13 @@ export function AuthProvider({ children }) {
       }
 
       const balance = await response.text();
-      setUserBalance(Number(balance));
+      const parsedBalance = Number(balance);
+      setUserBalance(parsedBalance);
+      return parsedBalance;
     } catch (err) {
       console.error(err);
       setUserBalance(null);
+      return null;
     }
   }
 
