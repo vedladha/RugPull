@@ -73,26 +73,43 @@ describe("WishlistPage", () => {
   });
 
   it("opens the listing modal when a wishlist item is clicked", async () => {
-    mockGetWishlistItems.mockResolvedValue([
-      { itemId: 1, name: "Guitar", description: "Great condition", price: 5.2, sellerName: "john" },
-    ]);
+    const guitarItem = { 
+      itemId: 1, 
+      name: "Guitar", 
+      description: "Great condition", 
+      price: 5.2, 
+      sellerName: "john" 
+    };
+
+    // Mock the global fetch so ListingModal gets the right data
+    vi.stubGlobal("fetch", vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ 
+          item: guitarItem, 
+          images: [], 
+          sellerName: "john" 
+        }),
+      })
+    ));
+
+    mockGetWishlistItems.mockResolvedValue([guitarItem]);
 
     renderWishlistPage();
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /view details for guitar/i })).toBeInTheDocument();
-    });
+    // Wait for the card to appear
+    const openButton = await screen.findByRole("button", { name: /view details for guitar/i });
+    await userEvent.click(openButton);
 
-    await userEvent.click(screen.getByRole("button", { name: /view details for guitar/i }));
-
-    await waitFor(() => {
-      const dialog = screen.getByRole("dialog", { name: "Guitar" });
-      expect(dialog).toBeInTheDocument();
-      expect(within(dialog).getByRole("button", { name: "Buy It Now" })).toBeInTheDocument();
-      expect(within(dialog).getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
-      expect(within(dialog).getByRole("button", { name: "Remove from Wishlist" }))
-        .toBeInTheDocument();
-    });
+    // Wait for the Modal to finish its internal fetch and render
+    const dialog = await screen.findByRole("dialog", { name: /guitar/i });
+    
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: /buy it now/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: /add to cart/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: /remove from wishlist/i })).toBeInTheDocument();
+    
+    vi.unstubAllGlobals();
   });
 
   it("removes an item from the page after successful removal", async () => {
