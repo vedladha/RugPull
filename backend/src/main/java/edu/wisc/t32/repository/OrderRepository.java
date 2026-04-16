@@ -30,4 +30,12 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
    * @return the matching order if it belongs to the given user
    */
   Optional<Order> findByOrderIdAndUser(Integer orderId, User user);
+
+  /**
+   * Retrieves all order for a given user where they are the seller
+   * 
+   * @param user the user object
+   * @return the user's orders sorted by creation time in descending order
+   */
+  List<Order> findDistinctByItemsUserUserIdOrderByCreatedAtDesc(User user);
 }

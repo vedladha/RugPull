@@ -1,28 +1,28 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./style/history.css";
- 
+
 const SORT_OPTIONS = [
   { value: "date-desc", label: "Newest first" },
   { value: "date-asc", label: "Oldest first" },
   { value: "amount-desc", label: "Amount: high → low" },
   { value: "amount-asc", label: "Amount: low → high" },
 ];
- 
+
 export default function History() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("date-desc");
- 
+
   /*useEffect(() => {
     const mockData = [
-      { id: 1, type: "buy",  itemName: "Nike Air Force 1",     amount: 120.00, date: "2024-03-15", quantity: 1, counterParty: "SneakerHead123" },
-      { id: 2, type: "sell", itemName: "Jordan 1 Retro High",  amount: 350.00, date: "2024-03-10", quantity: 1, counterParty: "SneakerFan456" },
-      { id: 3, type: "buy",  itemName: "New Balance 550",      amount: 90.00,  date: "2024-03-08", quantity: 2, counterParty: "SneakerHead123" },
-      { id: 4, type: "sell", itemName: "Yeezy Boost 350",      amount: 280.00, date: "2024-02-28", quantity: 1, counterParty: "SneakerFan456" },
-      { id: 5, type: "buy",  itemName: "Adidas Samba OG",      amount: 100.00, date: "2024-02-20", quantity: 1, counterParty: "SneakerHead123" },
-      { id: 6, type: "sell", itemName: "Nike Dunk Low Panda",  amount: 160.00, date: "2024-02-14", quantity: 2, counterParty: "SneakerFan456" },
+      {type: "buy",  itemName: "Nike Air Force 1",     amount: 120.00, date: "2024-03-15", quantity: 1, counterParty: "SneakerHead123" },
+      {type: "sell", itemName: "Jordan 1 Retro High",  amount: 350.00, date: "2024-03-10", quantity: 1, counterParty: "SneakerFan456" },
+      { type: "buy",  itemName: "New Balance 550",      amount: 90.00,  date: "2024-03-08", quantity: 2, counterParty: "SneakerHead123" },
+      {type: "sell", itemName: "Yeezy Boost 350",      amount: 280.00, date: "2024-02-28", quantity: 1, counterParty: "SneakerFan456" },
+      {type: "buy",  itemName: "Adidas Samba OG",      amount: 100.00, date: "2024-02-20", quantity: 1, counterParty: "SneakerHead123" },
+      { type: "sell", itemName: "Nike Dunk Low Panda",  amount: 160.00, date: "2024-02-14", quantity: 2, counterParty: "SneakerFan456" },
     ];
 
     setHistory(mockData);
@@ -34,29 +34,29 @@ export default function History() {
       try {
         setLoading(true);
         setError(null);
- 
+
         const token = localStorage.getItem("token");
         if (!token) {
           setError("You must be signed in to view your history.");
           return;
         }
- 
-        const response = await fetch("/api/history", {
+
+        const response = await fetch("/api/orders", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
- 
+
         if (response.status === 401) {
           setError("Session expired. Please sign in again.");
           return;
         }
- 
+
         if (!response.ok) {
           throw new Error(`Server error: ${response.status}`);
         }
- 
+
         const data = await response.json();
         setHistory(data);
       } catch (err) {
@@ -66,7 +66,7 @@ export default function History() {
         setLoading(false);
       }
     };
- 
+
     fetchHistory();
   }, []);
 
@@ -79,10 +79,11 @@ export default function History() {
       .reduce((sum, i) => sum + i.amount, 0);
     return { totalSpent, totalEarned, net: totalEarned - totalSpent };
   }, [history]);
- 
+
   const filtered = useMemo(() => {
-    let result = filter === "all" ? history : history.filter((i) => i.type === filter);
- 
+    let result =
+      filter === "all" ? history : history.filter((i) => i.type === filter);
+
     result = [...result].sort((a, b) => {
       switch (sort) {
         case "date-asc":
@@ -97,18 +98,25 @@ export default function History() {
           return 0;
       }
     });
- 
+
     return result;
   }, [history, filter, sort]);
- 
+
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
- 
+
   const formatAmount = (amount) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
- 
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+
   if (loading) {
     return (
       <div className="history-page">
@@ -116,7 +124,7 @@ export default function History() {
       </div>
     );
   }
- 
+
   if (error) {
     return (
       <div className="history-page">
@@ -124,28 +132,36 @@ export default function History() {
       </div>
     );
   }
- 
+
   return (
     <div className="history-page">
       {/* Header */}
       <div className="history-header">
         <div className="hero-tag">Account</div>
         <h1>Transaction History</h1>
-        <p className="history-subtitle">Your complete record of purchases and sales.</p>
+        <p className="history-subtitle">
+          Your complete record of purchases and sales.
+        </p>
       </div>
- 
+
       {/* Summary stats */}
       <div className="history-stats">
         <div className="history-stat">
-          <span className="history-stat-val sell">{formatAmount(stats.totalEarned)}</span>
+          <span className="history-stat-val sell">
+            {formatAmount(stats.totalEarned)}
+          </span>
           <span className="history-stat-lbl">Total earned</span>
         </div>
         <div className="history-stat">
-          <span className="history-stat-val buy">{formatAmount(stats.totalSpent)}</span>
+          <span className="history-stat-val buy">
+            {formatAmount(stats.totalSpent)}
+          </span>
           <span className="history-stat-lbl">Total spent</span>
         </div>
         <div className="history-stat">
-          <span className={`history-stat-val ${stats.net >= 0 ? "sell" : "buy"}`}>
+          <span
+            className={`history-stat-val ${stats.net >= 0 ? "sell" : "buy"}`}
+          >
             {stats.net >= 0 ? "+" : ""}
             {formatAmount(stats.net)}
           </span>
@@ -156,7 +172,7 @@ export default function History() {
           <span className="history-stat-lbl">Transactions</span>
         </div>
       </div>
- 
+
       {/* Controls */}
       <div className="history-controls">
         <div className="filter-buttons">
@@ -170,7 +186,7 @@ export default function History() {
             </button>
           ))}
         </div>
- 
+
         <div className="sort-wrap">
           <label className="sort-label">Sort</label>
           <select
@@ -186,7 +202,7 @@ export default function History() {
           </select>
         </div>
       </div>
- 
+
       {/* List */}
       <div className="history-list">
         {filtered.length === 0 ? (
@@ -194,18 +210,23 @@ export default function History() {
         ) : (
           filtered.map((item) => (
             <div key={item.id} className={`history-item ${item.type}`}>
-              <div className="item-type-chip">{item.type === "buy" ? "Purchase" : "Sale"}</div>
+              <div className="item-type-chip">
+                {item.type === "buy" ? "Purchase" : "Sale"}
+              </div>
               <div className="item-header">
                 <span className="item-title">{item.itemName}</span>
                 <span className={`item-amount ${item.type}`}>
-                  {item.type === "buy" ? "−" : "+"}{formatAmount(item.amount)}
+                  {item.type === "buy" ? "−" : "+"}
+                  {formatAmount(item.amount)}
                 </span>
               </div>
               <div className="item-details">
-                <span className="item-date">{formatDate(item.date)}</span>
+                <span className="item-date">{formatDate(item.createdAt)}</span>
                 <span className="item-qty">Qty {item.quantity}</span>
                 <span className="item-counterparty">
-                  {item.type === "buy" ? `From ${item.counterParty}` : `To ${item.counterParty}`}
+                  {item.type === "buy"
+                    ? `From ${item.sellerName}`
+                    : `To ${item.buyerName}`}
                 </span>
               </div>
             </div>

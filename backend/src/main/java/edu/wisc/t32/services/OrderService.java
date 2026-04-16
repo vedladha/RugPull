@@ -13,6 +13,8 @@ import edu.wisc.t32.repository.OrderItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -89,6 +91,26 @@ public class OrderService {
   public List<Order> getOrderHistory(User currentUser) {
     return orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
   }
+
+  /**
+   * Gets all transactions related to the user.
+   * 
+   * @param currentUser the authenticated user to get the sales history of
+   * @return a list containing all orders where the user is the seller
+   */
+  public List<Order> getAllRelatedOrders(User currentUser) {
+    List<Order> buyerOrders = orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+    List<Order> sellerOrders = orderRepository.findDistinctByItemsUserUserIdOrderByCreatedAtDesc(currentUser);
+
+    HashSet<Order> allOrders = new HashSet<>();
+    allOrders.addAll(buyerOrders);
+    allOrders.addAll(sellerOrders);
+
+    return allOrders.stream()
+          .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
+          .toList();
+  }
+
 
   /**
    * Checks that the quantity is valid for the current stock of an item
