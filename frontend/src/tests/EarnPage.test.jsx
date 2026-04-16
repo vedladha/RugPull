@@ -369,7 +369,30 @@ describe("EarnPage", () => {
     });
   });
 
-  it("requires a roulette color before spinning", async () => {
+  it("switches roulette bet modes and renders the number board", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: { claimed: true } }),
+    }));
+
+    render(<EarnPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /straight up/i })).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: /straight up/i }));
+
+    expect(screen.getByRole("group", { name: "Roulette number board" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Number 0" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Number 17" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /dozens/i }));
+
+    expect(screen.getByRole("button", { name: /1 - 12/i })).toBeInTheDocument();
+  });
+
+  it("requires a roulette selection before spinning", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ status: { claimed: true } }),
@@ -384,10 +407,19 @@ describe("EarnPage", () => {
     await userEvent.type(screen.getByPlaceholderText("Enter roulette wager"), "10");
     await userEvent.click(screen.getByRole("button", { name: "Spin Roulette" }));
 
-    expect(screen.getByText("Choose red or black before spinning.")).toBeInTheDocument();
+    expect(screen.getByText("Choose a roulette bet before spinning.")).toBeInTheDocument();
   });
 
   it("shows the roulette spin result and calls updateUserBalance", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation(() => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })));
+
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
@@ -397,16 +429,16 @@ describe("EarnPage", () => {
         ok: true,
         json: () => Promise.resolve({
           spin: {
-            winningNumber: 19,
-            winningColor: "RED",
-            betType: "COLOR",
-            betValue: "RED",
-            wager: 10.0,
-            payout: 20.0,
-            netChange: 10.0,
-            balance: 260.0,
+            winningNumber: 17,
+            winningColor: "BLACK",
+            betType: "NUMBER",
+            betValue: "17",
+            wager: 5.0,
+            payout: 180.0,
+            netChange: 175.0,
+            balance: 425.0,
             won: true,
-            message: "You won. The wheel landed on 19 RED.",
+            message: "You won. The wheel landed on 17 BLACK.",
           },
         }),
       });
@@ -416,18 +448,19 @@ describe("EarnPage", () => {
     render(<EarnPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /red/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /straight up/i })).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /red/i }));
-    await userEvent.type(screen.getByPlaceholderText("Enter roulette wager"), "10");
+    await userEvent.click(screen.getByRole("button", { name: /straight up/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Number 17" }));
+    await userEvent.type(screen.getByPlaceholderText("Enter roulette wager"), "5");
     await userEvent.click(screen.getByRole("button", { name: "Spin Roulette" }));
 
     await waitFor(() => {
-      expect(screen.getByText("You won 10.00 RPC. Ball landed on 19 RED.")).toBeInTheDocument();
-      expect(screen.getByText("19 RED")).toBeInTheDocument();
-      expect(screen.getByText("+10.00 RPC")).toBeInTheDocument();
-      expect(screen.getByText("260.00 RPC")).toBeInTheDocument();
+      expect(screen.getByText("You won 175.00 RPC. Ball landed on 17 BLACK.")).toBeInTheDocument();
+      expect(screen.getByText("+175.00 RPC")).toBeInTheDocument();
+      expect(screen.getByText("180.00 RPC")).toBeInTheDocument();
+      expect(screen.getByText("425.00 RPC")).toBeInTheDocument();
       expect(mockUpdateUserBalance).toHaveBeenCalled();
     });
 
@@ -436,9 +469,9 @@ describe("EarnPage", () => {
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
-          wager: 10,
-          betType: "COLOR",
-          betValue: "RED",
+          wager: 5,
+          betType: "NUMBER",
+          betValue: "17",
         }),
       }),
     );
@@ -460,10 +493,11 @@ describe("EarnPage", () => {
     render(<EarnPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /black/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /columns/i })).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /black/i }));
+    await userEvent.click(screen.getByRole("button", { name: /columns/i }));
+    await userEvent.click(screen.getByRole("button", { name: /column 3/i }));
     await userEvent.type(screen.getByPlaceholderText("Enter roulette wager"), "500");
     await userEvent.click(screen.getByRole("button", { name: "Spin Roulette" }));
 

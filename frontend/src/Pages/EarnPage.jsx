@@ -41,18 +41,139 @@ const PAYOUT_ROWS = [
   { symbol: "CHERRY", multiplier: "x3" },
   { symbol: "LEMON", multiplier: "x2" },
 ];
-const ROULETTE_BET_OPTIONS = [
+const ROULETTE_RED_NUMBERS = new Set([
+  1, 3, 5, 7, 9, 12, 14, 16, 18,
+  19, 21, 23, 25, 27, 30, 32, 34, 36,
+]);
+const ROULETTE_WHEEL_ORDER = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34,
+  6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
+  24, 16, 33, 1, 20, 14, 31, 9, 22, 18,
+  29, 7, 28, 12, 35, 3, 26,
+];
+const ROULETTE_SLICE_ANGLE = 360 / ROULETTE_WHEEL_ORDER.length;
+const ROULETTE_WHEEL_SPIN_MS = 2200;
+const ROULETTE_NUMBER_ROWS = Array.from({ length: 12 }, (_, rowIndex) => ([
+  rowIndex * 3 + 1,
+  rowIndex * 3 + 2,
+  rowIndex * 3 + 3,
+]));
+const ROULETTE_BET_TYPES = [
   {
-    value: "RED",
-    label: "Red",
-    desc: "Pays 2x total",
+    type: "COLOR",
+    label: "Color",
+    desc: "Red or black",
   },
   {
-    value: "BLACK",
-    label: "Black",
-    desc: "Pays 2x total",
+    type: "PARITY",
+    label: "Odd / Even",
+    desc: "Even-money outside bet",
+  },
+  {
+    type: "RANGE",
+    label: "Low / High",
+    desc: "1-18 or 19-36",
+  },
+  {
+    type: "DOZEN",
+    label: "Dozens",
+    desc: "12-number blocks",
+  },
+  {
+    type: "COLUMN",
+    label: "Columns",
+    desc: "Table columns",
+  },
+  {
+    type: "NUMBER",
+    label: "Straight Up",
+    desc: "Single number",
   },
 ];
+const ROULETTE_BET_OPTIONS = {
+  COLOR: [
+    {
+      value: "RED",
+      label: "Red",
+      desc: "Pays 2x total",
+      tone: "red",
+    },
+    {
+      value: "BLACK",
+      label: "Black",
+      desc: "Pays 2x total",
+      tone: "black",
+    },
+  ],
+  PARITY: [
+    {
+      value: "ODD",
+      label: "Odd",
+      desc: "Pays 2x total",
+      tone: "gold",
+    },
+    {
+      value: "EVEN",
+      label: "Even",
+      desc: "Pays 2x total",
+      tone: "ivory",
+    },
+  ],
+  RANGE: [
+    {
+      value: "LOW",
+      label: "1 - 18",
+      desc: "Low numbers",
+      tone: "green",
+    },
+    {
+      value: "HIGH",
+      label: "19 - 36",
+      desc: "High numbers",
+      tone: "blue",
+    },
+  ],
+  DOZEN: [
+    {
+      value: "FIRST12",
+      label: "1 - 12",
+      desc: "Pays 3x total",
+      tone: "green",
+    },
+    {
+      value: "SECOND12",
+      label: "13 - 24",
+      desc: "Pays 3x total",
+      tone: "blue",
+    },
+    {
+      value: "THIRD12",
+      label: "25 - 36",
+      desc: "Pays 3x total",
+      tone: "gold",
+    },
+  ],
+  COLUMN: [
+    {
+      value: "FIRST",
+      label: "Column 1",
+      desc: "1, 4, 7...",
+      tone: "green",
+    },
+    {
+      value: "SECOND",
+      label: "Column 2",
+      desc: "2, 5, 8...",
+      tone: "blue",
+    },
+    {
+      value: "THIRD",
+      label: "Column 3",
+      desc: "3, 6, 9...",
+      tone: "gold",
+    },
+  ],
+};
 
 function formatRpc(amount) {
   return Number(amount).toFixed(2);
@@ -127,9 +248,53 @@ function buildRouletteMessage(spin) {
   };
 }
 
+function getRouletteNumberColor(number) {
+  if (number === 0) {
+    return "green";
+  }
+
+  return ROULETTE_RED_NUMBERS.has(number) ? "red" : "black";
+}
+
+function getRouletteBetTypeLabel(betType) {
+  return ROULETTE_BET_TYPES.find(({ type }) => type === betType)?.label || betType;
+}
+
+function getRouletteWheelTargetRotation(currentRotation, winningNumber) {
+  const pocketIndex = ROULETTE_WHEEL_ORDER.indexOf(winningNumber);
+  if (pocketIndex === -1) {
+    return currentRotation;
+  }
+
+  const desiredRotation = -(pocketIndex * ROULETTE_SLICE_ANGLE);
+  const currentNormalized = ((currentRotation % 360) + 360) % 360;
+  const desiredNormalized = ((desiredRotation % 360) + 360) % 360;
+  const adjustment = (currentNormalized - desiredNormalized + 360) % 360;
+
+  return currentRotation - (5 * 360) - adjustment;
+}
+
+function getRouletteBetValueLabel(betType, betValue) {
+  if (!betValue) {
+    return "";
+  }
+
+  const optionMatch = ROULETTE_BET_OPTIONS[betType]?.find(({ value }) => value === betValue);
+  if (optionMatch) {
+    return optionMatch.label;
+  }
+
+  if (betType === "NUMBER") {
+    return `Number ${betValue}`;
+  }
+
+  return betValue;
+}
+
 export default function EarnPage() {
   const { user, userBalance, updateUserBalance } = useAuth();
   const spinTimersRef = useRef([]);
+  const rouletteSpinTimeoutRef = useRef(null);
 
   const [canClaim, setCanClaim] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -150,10 +315,17 @@ export default function EarnPage() {
   const [displayedReels, setDisplayedReels] = useState(DEFAULT_REELS);
   const [settledReels, setSettledReels] = useState([true, true, true]);
   const [rouletteWager, setRouletteWager] = useState("");
-  const [selectedRouletteBet, setSelectedRouletteBet] = useState("");
+  const [selectedRouletteBetType, setSelectedRouletteBetType] = useState("COLOR");
+  const [selectedRouletteBetValue, setSelectedRouletteBetValue] = useState("");
   const [isRouletteSpinning, setIsRouletteSpinning] = useState(false);
   const [rouletteMsg, setRouletteMsg] = useState({ text: "", type: "" });
   const [rouletteResult, setRouletteResult] = useState(null);
+  const [rouletteWheelRotation, setRouletteWheelRotation] = useState(0);
+  const [rouletteWheelTransitionMs, setRouletteWheelTransitionMs] = useState(0);
+  const selectedRouletteTypeMeta = ROULETTE_BET_TYPES.find(
+    ({ type }) => type === selectedRouletteBetType,
+  ) || ROULETTE_BET_TYPES[0];
+  const activeRouletteOptions = ROULETTE_BET_OPTIONS[selectedRouletteBetType] || [];
 
   function clearSpinTimers() {
     for (const timerId of spinTimersRef.current) {
@@ -161,6 +333,13 @@ export default function EarnPage() {
       window.clearTimeout(timerId);
     }
     spinTimersRef.current = [];
+  }
+
+  function clearRouletteSpinTimer() {
+    if (rouletteSpinTimeoutRef.current) {
+      window.clearTimeout(rouletteSpinTimeoutRef.current);
+      rouletteSpinTimeoutRef.current = null;
+    }
   }
 
   function beginSpinAnimation() {
@@ -225,6 +404,31 @@ export default function EarnPage() {
     });
   }
 
+  function animateRouletteWheel(winningNumber) {
+    clearRouletteSpinTimer();
+
+    const targetRotation = getRouletteWheelTargetRotation(
+        rouletteWheelRotation,
+        winningNumber,
+    );
+
+    if (prefersReducedMotion()) {
+      setRouletteWheelTransitionMs(0);
+      setRouletteWheelRotation(targetRotation);
+      return Promise.resolve();
+    }
+
+    setRouletteWheelTransitionMs(ROULETTE_WHEEL_SPIN_MS);
+    setRouletteWheelRotation(targetRotation);
+
+    return new Promise((resolve) => {
+      rouletteSpinTimeoutRef.current = window.setTimeout(() => {
+        rouletteSpinTimeoutRef.current = null;
+        resolve();
+      }, ROULETTE_WHEEL_SPIN_MS);
+    });
+  }
+
   useEffect(() => {
     if (!user) {
       return;
@@ -245,6 +449,7 @@ export default function EarnPage() {
 
   useEffect(() => () => {
     clearSpinTimers();
+    clearRouletteSpinTimer();
   }, []);
 
   const handleClaim = async () => {
@@ -359,8 +564,8 @@ export default function EarnPage() {
     setRouletteMsg({ text: "", type: "" });
     setRouletteResult(null);
 
-    if (!selectedRouletteBet) {
-      setRouletteMsg({ text: "Choose red or black before spinning.", type: "error" });
+    if (!selectedRouletteBetValue) {
+      setRouletteMsg({ text: "Choose a roulette bet before spinning.", type: "error" });
       return;
     }
 
@@ -386,8 +591,8 @@ export default function EarnPage() {
         credentials: "include",
         body: JSON.stringify({
           wager,
-          betType: "COLOR",
-          betValue: selectedRouletteBet,
+          betType: selectedRouletteBetType,
+          betValue: selectedRouletteBetValue,
         }),
       });
 
@@ -398,15 +603,27 @@ export default function EarnPage() {
 
       const data = await response.json();
       const spin = data.spin;
+      await animateRouletteWheel(spin.winningNumber);
       setRouletteResult(spin);
       setRouletteMsg(buildRouletteMessage(spin));
       setRouletteWager("");
+      updateUserBalance();
     } catch (err) {
       setRouletteMsg({ text: err.message || "Failed to spin roulette.", type: "error" });
     } finally {
-      updateUserBalance();
       setIsRouletteSpinning(false);
     }
+  };
+
+  const handleRouletteBetTypeChange = (betType) => {
+    setSelectedRouletteBetType(betType);
+    setSelectedRouletteBetValue("");
+    setRouletteMsg({ text: "", type: "" });
+  };
+
+  const handleRouletteBetValueChange = (betValue) => {
+    setSelectedRouletteBetValue(betValue);
+    setRouletteMsg({ text: "", type: "" });
   };
 
   if (!user) {
@@ -574,32 +791,142 @@ export default function EarnPage() {
         <div className="slot-machine-header">
           <span className="slot-machine-badge">Table</span>
           <h2>Roulette</h2>
-          <p className="slot-machine-desc">
-            Pick red or black. Zero is green and loses both color bets.
-          </p>
         </div>
 
         <div
-          aria-label="Roulette color selection"
-          className="roulette-bet-options"
+          aria-label="Roulette wheel"
+          className={`roulette-wheel-stage ${isRouletteSpinning ? "is-spinning" : ""}`}
+        >
+          <div aria-hidden="true" className="roulette-wheel-pointer" />
+          <div className="roulette-wheel-shell">
+            <div
+              className="roulette-wheel-face"
+              style={{
+                transform: `rotate(${rouletteWheelRotation}deg)`,
+                transitionDuration: `${rouletteWheelTransitionMs}ms`,
+              }}
+            >
+              {ROULETTE_WHEEL_ORDER.map((number, index) => {
+                const color = getRouletteNumberColor(number);
+                const isWinningPocket = rouletteResult?.winningNumber === number;
+                return (
+                  <div
+                    className="roulette-wheel-pocket"
+                    key={number}
+                    style={{ "--pocket-angle": `${index * ROULETTE_SLICE_ANGLE}deg` }}
+                  >
+                    <span
+                      className={`roulette-wheel-pocket-label roulette-wheel-pocket-${color} ${
+                        isWinningPocket ? "is-winning" : ""
+                      }`}
+                    >
+                      {number}
+                    </span>
+                  </div>
+                );
+              })}
+              <div aria-hidden="true" className="roulette-wheel-center-ring" />
+              <div aria-hidden="true" className="roulette-wheel-hub" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          aria-label="Roulette bet types"
+          className="roulette-type-tabs"
           role="group"
         >
-          {ROULETTE_BET_OPTIONS.map(({ value, label, desc }) => (
+          {ROULETTE_BET_TYPES.map(({ type, label, desc }) => (
             <button
-              aria-pressed={selectedRouletteBet === value}
-              className={`roulette-bet-btn roulette-bet-btn-${value.toLowerCase()} ${
-                selectedRouletteBet === value ? "is-selected" : ""
+              aria-pressed={selectedRouletteBetType === type}
+              className={`roulette-type-btn ${
+                selectedRouletteBetType === type ? "is-selected" : ""
               }`}
               disabled={isRouletteSpinning}
-              key={value}
-              onClick={() => setSelectedRouletteBet(value)}
+              key={type}
+              onClick={() => handleRouletteBetTypeChange(type)}
               type="button"
             >
-              <span className="roulette-bet-label">{label}</span>
-              <span className="roulette-bet-desc">{desc}</span>
+              <span className="roulette-type-label">{label}</span>
+              <span className="roulette-type-desc">{desc}</span>
             </button>
           ))}
         </div>
+
+        <div className="roulette-selection-summary">
+          <span className="slot-label">Current Bet</span>
+          <strong>{getRouletteBetTypeLabel(selectedRouletteBetType)}</strong>
+          <p className="slot-machine-desc">
+            {selectedRouletteBetValue
+              ? `Selected: ${getRouletteBetValueLabel(
+                selectedRouletteBetType,
+                selectedRouletteBetValue,
+              )}`
+              : `Choose a ${selectedRouletteTypeMeta.label.toLowerCase()} bet option below.`}
+          </p>
+        </div>
+
+        {selectedRouletteBetType === "NUMBER" ? (
+          <div className="roulette-number-board" role="group" aria-label="Roulette number board">
+            <button
+              aria-label="Number 0"
+              aria-pressed={selectedRouletteBetValue === "0"}
+              className={`roulette-number-pocket roulette-number-pocket-green ${
+                selectedRouletteBetValue === "0" ? "is-selected" : ""
+              }`}
+              disabled={isRouletteSpinning}
+              onClick={() => handleRouletteBetValueChange("0")}
+              type="button"
+            >
+              0
+            </button>
+
+            <div className="roulette-number-grid">
+              {ROULETTE_NUMBER_ROWS.map((row) => (
+                row.map((number) => {
+                  const color = getRouletteNumberColor(number);
+                  return (
+                    <button
+                      aria-label={`Number ${number}`}
+                      aria-pressed={selectedRouletteBetValue === String(number)}
+                      className={`roulette-number-pocket roulette-number-pocket-${color} ${
+                        selectedRouletteBetValue === String(number) ? "is-selected" : ""
+                      }`}
+                      disabled={isRouletteSpinning}
+                      key={number}
+                      onClick={() => handleRouletteBetValueChange(String(number))}
+                      type="button"
+                    >
+                      {number}
+                    </button>
+                  );
+                })
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div
+            aria-label={`${selectedRouletteTypeMeta.label} options`}
+            className="roulette-bet-options"
+            role="group"
+          >
+            {activeRouletteOptions.map(({ value, label, desc, tone }) => (
+              <button
+                aria-pressed={selectedRouletteBetValue === value}
+                className={`roulette-bet-btn roulette-tone-${tone} ${
+                  selectedRouletteBetValue === value ? "is-selected" : ""
+                }`}
+                disabled={isRouletteSpinning}
+                key={value}
+                onClick={() => handleRouletteBetValueChange(value)}
+                type="button"
+              >
+                <span className="roulette-bet-label">{label}</span>
+                <span className="roulette-bet-desc">{desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="slot-controls">
           <label className="slot-label" htmlFor="roulette-wager">
@@ -635,16 +962,28 @@ export default function EarnPage() {
         {rouletteResult && (
           <div className="slot-result-grid">
             <div className="slot-result-card">
-              <span>Bet</span>
-              <strong>{rouletteResult.betValue}</strong>
+              <span>Bet Type</span>
+              <strong>{getRouletteBetTypeLabel(rouletteResult.betType)}</strong>
             </div>
             <div className="slot-result-card">
-              <span>Winning Slot</span>
+              <span>Selection</span>
+              <strong>
+                {getRouletteBetValueLabel(rouletteResult.betType, rouletteResult.betValue)}
+              </strong>
+            </div>
+            <div className="slot-result-card">
+              <span>Winning Pocket</span>
               <strong
-                className={`roulette-chip roulette-chip-${rouletteResult.winningColor.toLowerCase()}`}
+                className={
+                  `roulette-chip roulette-chip-${rouletteResult.winningColor.toLowerCase()}`
+                }
               >
                 {rouletteResult.winningNumber} {rouletteResult.winningColor}
               </strong>
+            </div>
+            <div className="slot-result-card">
+              <span>Payout</span>
+              <strong>{formatRpc(rouletteResult.payout)} RPC</strong>
             </div>
             <div className="slot-result-card">
               <span>Net</span>
