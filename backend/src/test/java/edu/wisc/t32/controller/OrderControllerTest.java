@@ -15,8 +15,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import edu.wisc.t32.dto.OrderCreateRequest;
+import edu.wisc.t32.enums.OrderStatus;
+import edu.wisc.t32.exception.InsufficientBalanceException;
 import edu.wisc.t32.exception.InsufficientStockException;
 import edu.wisc.t32.exception.OrderItemNotFoundException;
+import edu.wisc.t32.exception.OrderPaymentException;
+import edu.wisc.t32.exception.SelfPurchaseException;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.Order;
 import edu.wisc.t32.model.User;
@@ -83,7 +87,7 @@ class OrderControllerTest {
         .andExpect(jsonPath("$.order.orderId").value(1))
         .andExpect(jsonPath("$.order.totalPrice").value(25.00))
         .andExpect(jsonPath("$.order.items[0].item.itemId").value(4))
-        .andExpect(jsonPath("$.order.orderStatus").value("AWAITING_CONFIRMATION"));
+        .andExpect(jsonPath("$.order.orderStatus").value("COMPLETED"));
   }
 
   @Test
@@ -203,6 +207,57 @@ class OrderControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.error").value("insufficient stock"));
+  }
+
+  @Test
+  void createOrderReturnsBadRequestWhenBuyerBalanceIsInsufficient() throws Exception {
+    User currentUser = buildUser(7);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(any(User.class), any(OrderCreateRequest.class)))
+        .thenThrow(new InsufficientBalanceException("Insufficient RPC balance."));
+
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(List.of(4), List.of(2))))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("Insufficient RPC balance."));
+  }
+
+  @Test
+  void createOrderReturnsBadRequestWhenBuyerPurchasesOwnListing() throws Exception {
+    User currentUser = buildUser(7);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(any(User.class), any(OrderCreateRequest.class)))
+        .thenThrow(new SelfPurchaseException("You cannot purchase your own listing."));
+
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(List.of(4), List.of(1))))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("You cannot purchase your own listing."));
+  }
+
+  @Test
+  void createOrderReturnsInternalServerErrorWhenPaymentProcessingFails() throws Exception {
+    User currentUser = buildUser(7);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
+        .thenReturn(Optional.of(currentUser));
+    when(orderService.createOrder(any(User.class), any(OrderCreateRequest.class)))
+        .thenThrow(new OrderPaymentException("Failed to pay one or more sellers."));
+
+    mockMvc.perform(post("/orders")
+            .cookie(new jakarta.servlet.http.Cookie("jwt", VALID_TOKEN))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(orderRequestJson(List.of(4), List.of(1))))
+        .andExpect(status().isInternalServerError())
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.error").value("Failed to pay one or more sellers."));
   }
 
   @Test
@@ -348,6 +403,7 @@ class OrderControllerTest {
       order.addItemToOrder(items.get(i), itemQuantities.get(i));
     }
     order.finalizeOrder();
+    order.setOrderStatus(OrderStatus.COMPLETED);
     org.springframework.test.util.ReflectionTestUtils.setField(order, "orderId", orderId);
     return order;
   }

@@ -49,20 +49,25 @@ export default function OrderPage() {
   const { user, userBalance, updateUserBalance } = useAuth();
 
   const [orderItems, setOrderItems] = useState(() => normalizeItems(location.state));
+  const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [successfulOrder, setSuccessfulOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // 1. Wrap reloadWallet in useCallback so its identity is stable
   const reloadWallet = useCallback(async () => {
     if (!user) return;
 
+    setWalletLoading(true);
     try {
-      await updateUserBalance();
-      setWalletError("");
-    } catch (error) {
-      setWalletError(error.message || "Unable to load wallet balance");
+      const balance = await updateUserBalance();
+      if (balance === null) {
+        setWalletError("Unable to load wallet balance");
+      } else {
+        setWalletError("");
+      }
+    } finally {
+      setWalletLoading(false);
     }
   }, [user, updateUserBalance]);
 
@@ -72,9 +77,10 @@ export default function OrderPage() {
     setSuccessfulOrder(null);
   }, [location.state]);
 
-  // 2. Safely include reloadWallet in the dependency array (no eslint-disable needed)
   useEffect(() => {
     if (!user) {
+      setWalletLoading(false);
+      setWalletError("");
       return;
     }
     reloadWallet();
@@ -85,6 +91,15 @@ export default function OrderPage() {
   const totalQuantity = orderItems.reduce((count, item) => count + item.quantity, 0);
   const sourceLabel = location.state?.source === "cart" ? "cart checkout" : "buy it now";
   const hasUnavailableItems = orderItems.some((item) => item.stock !== null && item.stock <= 0);
+  const insufficientBalance = userBalance !== null && userBalance < total;
+  const isWalletUnavailable = walletError !== "" || userBalance === null;
+  const isCheckoutDisabled =
+    submitting
+    || orderItems.length === 0
+    || hasUnavailableItems
+    || walletLoading
+    || isWalletUnavailable
+    || insufficientBalance;
 
   const updateQuantity = (itemId, nextQuantity) => {
     setOrderItems((currentItems) =>
@@ -363,18 +378,32 @@ export default function OrderPage() {
             <div className="order-balance-card">
               <span className="order-balance-label">Wallet balance</span>
               <strong>
-                {walletError
+                {walletLoading
+                  ? "Loading..."
+                  : walletError
                   ? "Unavailable"
                   : userBalance !== null
-                    ? `${userBalance} RPC`
-                    : "Loading..."}
+                    ? `${userBalance.toFixed(2)} RPC`
+                    : "Unavailable"}
               </strong>
               <p>
                 {userBalance !== null
-                  ? `After this order: ${(userBalance - total)} RPC`
+                  ? `After this order: ${(userBalance - total).toFixed(2)} RPC`
                   : "The wallet total refreshes again after successful checkout."}
               </p>
             </div>
+
+            {walletError && (
+              <div className="order-feedback order-feedback-error" role="alert">
+                {walletError}
+              </div>
+            )}
+
+            {!walletError && insufficientBalance && (
+              <div className="order-feedback order-feedback-error" role="alert">
+                Insufficient RPC balance for this order.
+              </div>
+            )}
 
             {hasUnavailableItems && (
               <div className="order-feedback order-feedback-error" role="alert">
@@ -386,7 +415,7 @@ export default function OrderPage() {
               type="button"
               className="btn-primary order-submit-btn"
               onClick={handlePlaceOrder}
-              disabled={submitting || orderItems.length === 0 || hasUnavailableItems}
+              disabled={isCheckoutDisabled}
             >
               {submitting
                 ? "Placing order..."

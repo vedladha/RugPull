@@ -29,7 +29,7 @@ describe("OrderPage", () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
       userBalance: 250,
-      updateUserBalance: vi.fn()
+      updateUserBalance: vi.fn().mockResolvedValue(250),
     });
   });
 
@@ -37,7 +37,7 @@ describe("OrderPage", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       userBalance: null,
-      updateUserBalance: vi.fn(),
+      updateUserBalance: vi.fn().mockResolvedValue(null),
     });
 
     renderOrderPage({
@@ -63,7 +63,7 @@ describe("OrderPage", () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
       userBalance: 250,
-      updateUserBalance: vi.fn(),
+      updateUserBalance: vi.fn().mockResolvedValue(250),
     });
 
     renderOrderPage(undefined);
@@ -339,12 +339,8 @@ describe("OrderPage", () => {
   it("shows an unavailable wallet state when the balance request fails", async () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      userBalance: 250,
-      // THE FIX: Synchronous throw forces the catch block to execute instantly, 
-      // preventing the unhandled rejection crash in Vitest.
-      updateUserBalance: vi.fn().mockImplementation(() => {
-        throw new Error("Wallet unavailable");
-      }),
+      userBalance: null,
+      updateUserBalance: vi.fn().mockResolvedValue(null),
     });
 
     renderOrderPage({
@@ -363,5 +359,32 @@ describe("OrderPage", () => {
     });
 
     expect(await screen.findByText("Unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Place order" })).toBeDisabled();
+  });
+
+  it("blocks checkout when the known balance is below the order total", async () => {
+    mockUseAuth.mockReturnValue({
+      user: { userId: 1, displayName: "buyer" },
+      userBalance: 10,
+      updateUserBalance: vi.fn().mockResolvedValue(10),
+    });
+
+    renderOrderPage({
+      source: "listing",
+      items: [
+        {
+          itemId: 9,
+          name: "Ledger Wallet",
+          description: "Hardware wallet",
+          price: 49.99,
+          sellerName: "Alice",
+          stock: 3,
+          quantity: 1,
+        },
+      ],
+    });
+
+    expect(await screen.findByText("Insufficient RPC balance for this order.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Place order" })).toBeDisabled();
   });
 });
