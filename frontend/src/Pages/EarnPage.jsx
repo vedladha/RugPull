@@ -41,6 +41,18 @@ const PAYOUT_ROWS = [
   { symbol: "CHERRY", multiplier: "x3" },
   { symbol: "LEMON", multiplier: "x2" },
 ];
+const ROULETTE_BET_OPTIONS = [
+  {
+    value: "RED",
+    label: "Red",
+    desc: "Pays 2x total",
+  },
+  {
+    value: "BLACK",
+    label: "Black",
+    desc: "Pays 2x total",
+  },
+];
 
 function formatRpc(amount) {
   return Number(amount).toFixed(2);
@@ -93,6 +105,28 @@ function buildSpinMessage(spin) {
   };
 }
 
+function buildRouletteMessage(spin) {
+  const netChange = Number(spin.netChange ?? 0);
+  const outcome = `${spin.winningNumber} ${spin.winningColor}`;
+
+  if (netChange > 0) {
+    return {
+      text: `You won ${formatRpc(netChange)} RPC. Ball landed on ${outcome}.`,
+      type: "success",
+    };
+  }
+  if (netChange < 0) {
+    return {
+      text: `You lost ${formatRpc(Math.abs(netChange))} RPC. Ball landed on ${outcome}.`,
+      type: "error",
+    };
+  }
+  return {
+    text: spin.message || `Spin complete. Ball landed on ${outcome}.`,
+    type: "neutral",
+  };
+}
+
 export default function EarnPage() {
   const { user, userBalance, updateUserBalance } = useAuth();
   const spinTimersRef = useRef([]);
@@ -115,6 +149,11 @@ export default function EarnPage() {
   const [slotResult, setSlotResult] = useState(null);
   const [displayedReels, setDisplayedReels] = useState(DEFAULT_REELS);
   const [settledReels, setSettledReels] = useState([true, true, true]);
+  const [rouletteWager, setRouletteWager] = useState("");
+  const [selectedRouletteBet, setSelectedRouletteBet] = useState("");
+  const [isRouletteSpinning, setIsRouletteSpinning] = useState(false);
+  const [rouletteMsg, setRouletteMsg] = useState({ text: "", type: "" });
+  const [rouletteResult, setRouletteResult] = useState(null);
 
   function clearSpinTimers() {
     for (const timerId of spinTimersRef.current) {
@@ -316,6 +355,60 @@ export default function EarnPage() {
     }
   };
 
+  const handleRouletteSpin = async () => {
+    setRouletteMsg({ text: "", type: "" });
+    setRouletteResult(null);
+
+    if (!selectedRouletteBet) {
+      setRouletteMsg({ text: "Choose red or black before spinning.", type: "error" });
+      return;
+    }
+
+    if (!rouletteWager.trim()) {
+      setRouletteMsg({ text: "Enter a wager before spinning.", type: "error" });
+      return;
+    }
+
+    const wager = Number(rouletteWager);
+    if (!Number.isFinite(wager) || wager <= 0) {
+      setRouletteMsg({ text: "Enter a valid wager greater than 0.", type: "error" });
+      return;
+    }
+
+    setIsRouletteSpinning(true);
+
+    try {
+      const response = await fetch(`${API}/roulette/spin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          wager,
+          betType: "COLOR",
+          betValue: selectedRouletteBet,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to spin roulette.");
+      }
+
+      const data = await response.json();
+      const spin = data.spin;
+      setRouletteResult(spin);
+      setRouletteMsg(buildRouletteMessage(spin));
+      setRouletteWager("");
+    } catch (err) {
+      setRouletteMsg({ text: err.message || "Failed to spin roulette.", type: "error" });
+    } finally {
+      updateUserBalance();
+      setIsRouletteSpinning(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="earn-page">
@@ -472,6 +565,96 @@ export default function EarnPage() {
             <div className="slot-result-card">
               <span>New Balance</span>
               <strong>{formatRpc(slotResult.balance)} RPC</strong>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="slot-machine-card roulette-card">
+        <div className="slot-machine-header">
+          <span className="slot-machine-badge">Table</span>
+          <h2>Roulette</h2>
+          <p className="slot-machine-desc">
+            Pick red or black. Zero is green and loses both color bets.
+          </p>
+        </div>
+
+        <div
+          aria-label="Roulette color selection"
+          className="roulette-bet-options"
+          role="group"
+        >
+          {ROULETTE_BET_OPTIONS.map(({ value, label, desc }) => (
+            <button
+              aria-pressed={selectedRouletteBet === value}
+              className={`roulette-bet-btn roulette-bet-btn-${value.toLowerCase()} ${
+                selectedRouletteBet === value ? "is-selected" : ""
+              }`}
+              disabled={isRouletteSpinning}
+              key={value}
+              onClick={() => setSelectedRouletteBet(value)}
+              type="button"
+            >
+              <span className="roulette-bet-label">{label}</span>
+              <span className="roulette-bet-desc">{desc}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="slot-controls">
+          <label className="slot-label" htmlFor="roulette-wager">
+            Wager
+          </label>
+          <div className="slot-input-row">
+            <input
+              id="roulette-wager"
+              type="text"
+              inputMode="decimal"
+              className="slot-input"
+              placeholder="Enter roulette wager"
+              value={rouletteWager}
+              onChange={(event) => setRouletteWager(normalizeWagerInput(event.target.value))}
+              disabled={isRouletteSpinning}
+            />
+            <button
+              className="slot-btn roulette-spin-btn"
+              onClick={handleRouletteSpin}
+              disabled={isRouletteSpinning}
+            >
+              {isRouletteSpinning ? "Spinning..." : "Spin Roulette"}
+            </button>
+          </div>
+        </div>
+
+        {rouletteMsg.text && (
+          <div className={`slot-msg ${rouletteMsg.type}`}>
+            {rouletteMsg.text}
+          </div>
+        )}
+
+        {rouletteResult && (
+          <div className="slot-result-grid">
+            <div className="slot-result-card">
+              <span>Bet</span>
+              <strong>{rouletteResult.betValue}</strong>
+            </div>
+            <div className="slot-result-card">
+              <span>Winning Slot</span>
+              <strong
+                className={`roulette-chip roulette-chip-${rouletteResult.winningColor.toLowerCase()}`}
+              >
+                {rouletteResult.winningNumber} {rouletteResult.winningColor}
+              </strong>
+            </div>
+            <div className="slot-result-card">
+              <span>Net</span>
+              <strong>{`${Number(rouletteResult.netChange) >= 0 ? "+" : ""}${formatRpc(
+                rouletteResult.netChange,
+              )} RPC`}</strong>
+            </div>
+            <div className="slot-result-card">
+              <span>New Balance</span>
+              <strong>{formatRpc(rouletteResult.balance)} RPC</strong>
             </div>
           </div>
         )}
