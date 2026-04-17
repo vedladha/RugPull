@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * REST controller for managing item entities.
- * Provides endpoints for creating, retrieving, updating, and soft-deleting items.
+ * Provides endpoints for creating, retrieving, updating, patching, and soft-deleting items.
  */
 @RestController
 @RequestMapping("/items")
@@ -205,6 +206,59 @@ public class ItemController {
   }
 
   /**
+   * Performs a partial update for an existing, active item.
+   * Only the fields provided in the request body will be modified.
+   *
+   * @param itemId  the unique identifier of the item to update
+   * @param request the data transfer object containing the fields to update
+   * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
+   * if validation fails, or a 404 NOT FOUND if the item does not exist
+   */
+  @PatchMapping("/{itemId}")
+  public ResponseEntity<?> patchItem(@CookieValue(name = "jwt", required = false) String token,
+                                     @PathVariable Integer itemId,
+                                     @RequestBody ItemUpdateRequest request) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
+    Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+          "Item not found"));
+    }
+
+    Item item = existing.get();
+    if (!item.getUserId().equals(currentUser.get().getUserId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error",
+          "You do not own this item"));
+    }
+
+    String validationError = validatePatch(request);
+    if (validationError != null) {
+      return ResponseEntity.badRequest().body(Map.of("error", validationError));
+    }
+
+    if (request.getName() != null) {
+      item.setName(request.getName().trim());
+    }
+    if (request.getDescription() != null) {
+      item.setDescription(request.getDescription().trim());
+    }
+    if (request.getPrice() != null) {
+      item.setPrice(request.getPrice());
+    }
+    if (request.getStock() != null) {
+      item.setStock(request.getStock());
+    }
+
+    Item saved = itemRepository.save(item);
+    return ResponseEntity.ok(Map.of("item", saved));
+  }
+
+  /**
    * Performs a soft delete on an item.
    * Keeps the database row intact but marks the item as deleted so it is filtered out by standard
    * repository lookups.
@@ -240,6 +294,34 @@ public class ItemController {
   }
 
   /**
+   * Gets all items posted by the authenticated user.
+   *
+   * @param token the token of the authenticated user
+   * @return a response
+   */
+  @GetMapping("/me")
+  public ResponseEntity<?> getMyItems(@CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
+    int id = currentUser.get().getUserId();
+    List<Item> items = itemRepository.findByUserId(id);
+
+    // re-use batch request
+    if (items.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "No item's founding matching input list"));
+    }
+
+    ItemBatchRequest response = ItemBatchRequest.next();
+    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
+    return ResponseEntity.ok(response);
+  }
+
+  /**
    * Validates the fields of an incoming {@link ItemCreateRequest}.
    *
    * @param request the creation request payload to validate
@@ -272,7 +354,7 @@ public class ItemController {
   }
 
   /**
-   * Validates the fields of an incoming {@link ItemUpdateRequest}.
+   * Validates the fields of an incoming {@link ItemUpdateRequest} for PUT operations.
    *
    * @param request the update request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
@@ -298,6 +380,32 @@ public class ItemController {
       return "price must be non-negative";
     }
     if (request.getStock() < 0) {
+      return "stock must be non-negative";
+    }
+    return null;
+  }
+
+  /**
+   * Validates the fields of an incoming {@link ItemUpdateRequest} for PATCH operations.
+   * Allows null fields since it's a partial update.
+   *
+   * @param request the update request payload to validate
+   * @return a string containing the validation error message, or {@code null} if fields are valid
+   */
+  private String validatePatch(ItemUpdateRequest request) {
+    if (request == null) {
+      return "Request body is required";
+    }
+    if (request.getName() != null && isBlank(request.getName())) {
+      return "name cannot be blank";
+    }
+    if (request.getDescription() != null && isBlank(request.getDescription())) {
+      return "description cannot be blank";
+    }
+    if (request.getPrice() != null && request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+      return "price must be non-negative";
+    }
+    if (request.getStock() != null && request.getStock() < 0) {
       return "stock must be non-negative";
     }
     return null;
