@@ -1,10 +1,11 @@
 package edu.wisc.t32.dto;
 
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import java.math.BigDecimal;
 
 /**
- * Data Transfer Object (DTO) for the {@link Item} entity.
+ * Data Transfer Object (DTO) for the {@link Item} entity combined with the thumbnailUrl.
  * Used to safely transfer item data to the client layer without exposing
  * internal database representations or Hibernate proxies.
  */
@@ -41,6 +42,11 @@ public class ItemModelDto {
   private Integer stock;
 
   /**
+   * Thumbnail URL.
+   */
+  private String thumbnailUrl;
+
+  /**
    * Flag indicating whether the item has been soft-deleted.
    */
   private Boolean deleted;
@@ -51,12 +57,15 @@ public class ItemModelDto {
    * @param item the Item entity to convert
    * @return a populated ItemModelDTO, or null if the provided item is null
    */
-  public static ItemModelDto fromItem(Item item) {
+  public static ItemModelDto fromItem(Item item, ItemImage image) {
     if (item == null) {
       return null;
     }
 
     ItemModelDto dto = new ItemModelDto();
+    if (image != null) {
+      dto.setThumbnailUrl(image.getImageUrl());
+    }
     dto.setItemId(item.getItemId());
     dto.setUserId(item.getUserId());
     dto.setPrice(item.getPrice());
@@ -66,6 +75,14 @@ public class ItemModelDto {
     dto.setDeleted(item.getDeleted());
 
     return dto;
+  }
+
+  public String getThumbnailUrl() {
+    return thumbnailUrl;
+  }
+
+  public void setThumbnailUrl(String thumbnailUrl) {
+    this.thumbnailUrl = thumbnailUrl;
   }
 
   /**
