@@ -13,6 +13,8 @@ import edu.wisc.t32.repository.OrderItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -88,6 +90,25 @@ public class OrderService {
    */
   public List<Order> getOrderHistory(User currentUser) {
     return orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+  }
+
+  /**
+   * Gets all transactions related to the user (sales and purchases)
+   *
+   * @param currentUser the authenticated user to get the transaction history of
+   * @return a list containing all orders where the user is involved
+   */
+  public List<Order> getAllRelatedOrders(User currentUser) {
+	List<Order> buyerOrders = orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+    List<Order> sellerOrders = orderRepository.findCompletedOrdersWhereSeller(currentUser.getUserId());
+
+    HashSet<Order> allOrders = new HashSet<>();
+    allOrders.addAll(buyerOrders);
+    allOrders.addAll(sellerOrders);
+
+    return allOrders.stream()
+          .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
+          .toList();
   }
 
   /**

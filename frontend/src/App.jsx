@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
+import History from "./History.jsx";
 import Listings from "./Listings.jsx";
 import SellPage from "./SellPage.jsx"
 import ProfilePage from "./ProfilePage.jsx"
@@ -32,7 +33,9 @@ export default function App() {
                     navigate("/listings");
                   } else if (action === "sell") {
                     navigate("/sell")
-                  }
+                  } else if (action == "history") {
+		    navigate("/history")
+		  }
                 }}
               />
             </>
@@ -65,6 +68,9 @@ export default function App() {
         <Route path="/earn" element={
           <EarnPage />
         } />
+	<Route path="/history" element={
+	  <History />
+	} />
       </Routes>
       <Footer />
     </>

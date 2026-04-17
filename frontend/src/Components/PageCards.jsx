@@ -9,7 +9,7 @@ const pages = [
     icon: "📦",
     name: "My Orders",
     desc: "Track purchases and manage your transactions",
-    action: "orders",
+    action: "history",
   },
   {
     icon: "🏷️",
