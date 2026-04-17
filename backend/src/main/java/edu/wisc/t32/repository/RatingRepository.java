@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Spring Data JPA repository for managing {@link Rating} entities.
+ */
 public interface RatingRepository extends JpaRepository<Rating, Integer> {
 
   /**
