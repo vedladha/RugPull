@@ -52,12 +52,12 @@ public class OrderController {
       OrderRepository orderRepository,
       OrderService orderService,
       CurrentUserService currentUserService,
-	  UserProfileRepository userProfileRepository) {
+      UserProfileRepository userProfileRepository) {
     this.orderItemRepository = orderItemRepository;
     this.orderRepository = orderRepository;
     this.orderService = orderService;
     this.currentUserService = currentUserService;
-	this.userProfileRepository = userProfileRepository;
+    this.userProfileRepository = userProfileRepository;
   }
 
   /**
@@ -87,7 +87,7 @@ public class OrderController {
   }
 
   /**
-   * Retrieves all orders for the authenticated user.
+   * Retrieves all orders made by the authenticated user.
    *
    * @param token the JWT token extracted from the HTTP-only cookie
    * @return the authenticated user's orders, or an auth error
@@ -102,6 +102,36 @@ public class OrderController {
 
     List<Order> orders = orderService.getOrderHistory(currentUser.get());
     return ResponseEntity.ok(Map.of("orders", orders));
+  }
+
+    /**
+   * Retrieves all orders relating to the authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @return the authenticated user's orders, or an auth error
+   */
+  @GetMapping("/all")
+  public ResponseEntity<?> getAllRelatedOrders(@CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+    String currentUserName = currentUser.get().getUserProfile().getDisplayName();
+    List<Order> allOrders = orderService.getAllRelatedOrders(currentUser.get());
+    List<OrderSummary> summaries = new ArrayList<>();
+    for (Order order : allOrders) {
+      String buyerName = order.getUser().getUserProfile().getDisplayName();
+      Integer sellerId = order.getItems().get(0).getItem().getUserId();
+      String sellerName = userProfileRepository.findByUserId(sellerId).getDisplayName();
+      List<OrderItem> itemNames = order.getItems();
+      String orderDate = order.getCreatedAt().toString();
+      String orderType = buyerName.equals(currentUserName) ? "sell" : "buy";
+      for (OrderItem item : itemNames) {
+        summaries.add(new OrderSummary(orderType, buyerName, sellerName, item.getItem().getName(), item.getQuantity(), item.getUnitPrice(), orderDate));
+      }
+    }
+    return ResponseEntity.ok(Map.of("orders", summaries));
   }
 
   /**

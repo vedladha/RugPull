@@ -33,4 +33,3 @@ public class OrderSummary {
     public BigDecimal getTotalPrice() { return totalPrice; }
     public String getCreatedAt() { return createdAt; }
 }
-

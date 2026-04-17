@@ -93,6 +93,7 @@ public class OrderService {
   }
 
   /**
+<<<<<<< HEAD
    * Gets all transactions related to the user (sales and purchases)
    *
    * @param currentUser the authenticated user to get the transaction history of

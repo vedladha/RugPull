@@ -5,9 +5,9 @@ import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
 import History from "./History.jsx";
 import Listings from "./Listings.jsx";
-import SellPage from "./SellPage.jsx"
-import ProfilePage from "./ProfilePage.jsx"
 import WishlistPage from "./WishlistPage.jsx";
+import SellPage from "./SellPage.jsx";
+import ProfilePage from "./Pages/ProfilePage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
 import CartPage from "./Pages/CartPage";
@@ -42,9 +42,16 @@ export default function App() {
           }
         />
         <Route path="/sell" element={<SellPage />} />
-        <Route path="/listings" element={
-          <Listings />
-        }
+        <Route path="/listings" element={<Listings />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/signup"
+          element={
+            // AuthPage checks path to decide what to show
+            <AuthPage />
+          }
         />
         <Route path="/profile" element={
           <ProfilePage />
