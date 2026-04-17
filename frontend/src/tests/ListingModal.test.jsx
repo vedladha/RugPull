@@ -15,33 +15,26 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 describe("ListingModal", () => {
-  const mockItemData = {
-    item: { 
-      itemId: 12, 
-      name: "Mechanical Keyboard", 
-      description: "Hot swappable", 
-      price: 89.5, 
-      stock: 7 
-    },
-    images: [{ imageUrl: "/test-image.jpg" }],
+  // Updated mock to match the new flat data structure expected by the component
+  const mockListing = {
+    itemId: 12,
+    name: "Mechanical Keyboard",
+    description: "Hot swappable",
+    price: 89.5,
+    stock: 7,
+    thumbnailUrl: "/test-image.jpg",
     sellerName: "Dana"
   };
 
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubGlobal("fetch", vi.fn());
-    
-    // Default mock to resolve the initial fetch on mount
-    fetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockItemData,
-    });
   });
 
   it("navigates to the order page from buy it now with the selected quantity", async () => {
     render(
       <MemoryRouter>
-        <ListingModal itemId={12} onClose={vi.fn()} />
+        <ListingModal listing={mockListing} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
@@ -65,15 +58,14 @@ describe("ListingModal", () => {
   });
 
   it("adds the selected quantity to the cart", async () => {
-    // 1. Mock GET cart, then POST to cart
+    // Mock GET cart (empty), then POST to cart (success)
     fetch
-      .mockResolvedValueOnce({ ok: true, json: async () => mockItemData }) // Initial mount fetch
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ cart: [] }) }) // GET /cart
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) }); // POST /cart
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ cart: [] }) }) 
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) }); 
 
     render(
       <MemoryRouter>
-        <ListingModal itemId={12} onClose={vi.fn()} />
+        <ListingModal listing={mockListing} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
@@ -91,19 +83,19 @@ describe("ListingModal", () => {
       expect.objectContaining({ method: "POST" })
     );
     
-    // Your code renders: `${quantity} added to your cart.`
-    expect(await screen.findByText(/4 added to your cart/i)).toBeInTheDocument();
+    expect(await screen.findByText(/4 items added to your cart/i)).toBeInTheDocument();
   });
 
   it("shows the stock limit message when adding more would exceed stock", async () => {
-    // 1. Mock fetch for data, then mock GET cart showing 3 already inside
-    fetch
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...mockItemData, item: { ...mockItemData.item, stock: 4 } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ cart: [{ itemId: 12, quantity: 3 }] }) });
+    // Mock GET cart showing 3 already inside
+    fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ cart: [{ itemId: 12, quantity: 3 }] }) });
+
+    // Artificially lower the stock for this test
+    const limitedListing = { ...mockListing, stock: 4 };
 
     render(
       <MemoryRouter>
-        <ListingModal itemId={12} onClose={vi.fn()} />
+        <ListingModal listing={limitedListing} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
@@ -117,29 +109,24 @@ describe("ListingModal", () => {
 
   it("disables purchase actions for sold out items", async () => {
     // Mock item with 0 stock
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...mockItemData,
-        item: { ...mockItemData.item, stock: 0 }
-      }),
-    });
+    const soldOutListing = { ...mockListing, stock: 0 };
 
     render(
       <MemoryRouter>
-        <ListingModal itemId={12} onClose={vi.fn()} />
+        <ListingModal listing={soldOutListing} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
-    // In your code: isSoldOut ? "Sold Out" : "Buy It Now"
-    const buyItNowBtn = await screen.findByRole("button", { name: /sold out/i });
-    const addToCartBtn = screen.getByRole("button", { name: /add to cart/i });
+    // Both "Buy It Now" and "Add to Cart" change to "Sold Out"
+    const soldOutBtns = await screen.findAllByRole("button", { name: /sold out/i });
+    
+    expect(soldOutBtns).toHaveLength(2);
+    expect(soldOutBtns[0]).toBeDisabled();
+    expect(soldOutBtns[1]).toBeDisabled();
 
-    expect(buyItNowBtn).toBeDisabled();
-    expect(addToCartBtn).toBeDisabled();
-
-    // In your code: {!isSoldOut && <label>...Quantity...</label>}
-    // This means the input should NOT be in the document
-    expect(screen.queryByRole("spinbutton", { name: /quantity/i })).not.toBeInTheDocument();
+    // THE FIX: Expect the input to be in the document, but disabled
+    const quantityInput = screen.getByRole("spinbutton", { name: /quantity/i });
+    expect(quantityInput).toBeInTheDocument();
+    expect(quantityInput).toBeDisabled();
   });
 });

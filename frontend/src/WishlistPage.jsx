@@ -152,7 +152,7 @@ export default function WishlistPage() {
 
       {selectedListing && (
         <ListingModal
-          itemId={selectedListing.itemId}
+          listing={selectedListing} // <--- THE FIX
           onClose={handleCloseListing}
           isWishlisted
           onToggleWishlist={() => handleRemove(selectedListing.itemId)}

@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import WishlistPage from "../WishlistPage.jsx";
+import WishlistPage from "../WishlistPage.jsx"; // Adjust path if needed
 
 const mockGetWishlistItems = vi.fn();
 const mockRemoveFromWishlist = vi.fn();
@@ -81,18 +81,6 @@ describe("WishlistPage", () => {
       sellerName: "john" 
     };
 
-    // Mock the global fetch so ListingModal gets the right data
-    vi.stubGlobal("fetch", vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ 
-          item: guitarItem, 
-          images: [], 
-          sellerName: "john" 
-        }),
-      })
-    ));
-
     mockGetWishlistItems.mockResolvedValue([guitarItem]);
 
     renderWishlistPage();
@@ -101,15 +89,13 @@ describe("WishlistPage", () => {
     const openButton = await screen.findByRole("button", { name: /view details for guitar/i });
     await userEvent.click(openButton);
 
-    // Wait for the Modal to finish its internal fetch and render
+    // The modal now instantly renders using the data we passed it (no internal fetch needed)
     const dialog = await screen.findByRole("dialog", { name: /guitar/i });
     
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: /buy it now/i })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: /add to cart/i })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: /remove from wishlist/i })).toBeInTheDocument();
-    
-    vi.unstubAllGlobals();
   });
 
   it("removes an item from the page after successful removal", async () => {

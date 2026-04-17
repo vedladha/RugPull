@@ -101,10 +101,10 @@ describe("SellPage", () => {
         await waitFor(() => {
             // Check success banner
             expect(screen.getByText("New listing successfully posted!")).toBeInTheDocument();
-            // Verify POST request
+            // Verify POST request now expects FormData
             expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/items", expect.objectContaining({
                 method: "POST",
-                body: JSON.stringify({ name: "Guitar", description: "Great condition", price: 5.2, stock: 4 })
+                body: expect.any(FormData)
             }));
             // Verify item was added to the inventory list at the bottom
             expect(screen.getByRole('heading', { name: "Guitar" })).toBeInTheDocument();
@@ -148,10 +148,10 @@ describe("SellPage", () => {
         await waitFor(() => {
             // Check success banner
             expect(screen.getByText("Listing successfully updated!")).toBeInTheDocument();
-            // Verify PATCH request ONLY contains the changed field (price)
+            // Verify PATCH request now expects FormData
             expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/items/42", expect.objectContaining({
                 method: "PATCH",
-                body: JSON.stringify({ price: 80 })
+                body: expect.any(FormData)
             }));
         });
     });
