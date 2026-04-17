@@ -413,8 +413,8 @@ export default function EarnPage() {
     clearRouletteSpinTimer();
 
     const targetRotation = getRouletteWheelTargetRotation(
-        rouletteWheelRotation,
-        winningNumber,
+      rouletteWheelRotation,
+      winningNumber,
     );
 
     if (prefersReducedMotion()) {
@@ -520,7 +520,7 @@ export default function EarnPage() {
       }
 
       setAdStatus("done");
-      updateWalletBalance();
+      updateUserBalance();
     } catch (err) {
       setAdError(`Claim Error: ${err.message}`);
       setAdStatus("idle");
@@ -802,350 +802,346 @@ export default function EarnPage() {
 
       {/* --- Section 3: Developer Minting Tool --- */}
       <div className="dev-sandbox" style={{ marginTop: "2rem" }}>
-      <div className="slot-machine-card">
-        <div className="slot-machine-header">
-          <span className="slot-machine-badge">Game</span>
-          <h2>RPC Slot Machine</h2>
-          <p className="slot-machine-desc">Match all three reels to win.</p>
-        </div>
-
-        <div className="slot-machine-payouts">
-          {PAYOUT_ROWS.map(({ symbol, multiplier }) => {
-            const meta = SYMBOL_META[symbol];
-            return (
-              <span
-                key={symbol}
-                className={`slot-payout slot-payout-${meta.accentClass}`}
-              >
-                <span aria-hidden="true" className="slot-payout-icon">{meta.icon}</span>
-                <span>{meta.label}</span>
-                <strong>{multiplier}</strong>
-              </span>
-            );
-          })}
-        </div>
-
-        <div className="slot-reels" aria-label="Slot machine reels">
-          {displayedReels.map((reel, index) => {
-            const meta = SYMBOL_META[reel];
-            const isSettled = settledReels[index];
-            return (
-              <div
-                className={`slot-reel slot-reel-${meta.accentClass} ${isSettled
-                  ? "is-settled"
-                  : "is-spinning"}`}
-                key={`${index}-${reel}`}
-              >
-                <div className="slot-reel-track">
-                  <span
-                    aria-label={meta.label}
-                    className="slot-reel-icon"
-                    role="img"
-                  >
-                    {meta.icon}
-                  </span>
-                  <span className="slot-reel-name">{meta.label}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="slot-controls">
-          <label className="slot-label" htmlFor="slot-wager">
-            Wager
-          </label>
-          <div className="slot-input-row">
-            <input
-              id="slot-wager"
-              type="text"
-              inputMode="decimal"
-              className="slot-input"
-              placeholder="Enter RPC wager"
-              value={slotWager}
-              onChange={(event) => setSlotWager(normalizeWagerInput(event.target.value))}
-              disabled={isSpinning}
-            />
-            <button className="slot-btn" onClick={handleSpin} disabled={isSpinning}>
-              {isSpinning ? "Spinning..." : "Spin Slots"}
-            </button>
+        <div className="slot-machine-card">
+          <div className="slot-machine-header">
+            <span className="slot-machine-badge">Game</span>
+            <h2>RPC Slot Machine</h2>
+            <p className="slot-machine-desc">Match all three reels to win.</p>
           </div>
-        </div>
 
-        {slotMsg.text && (
-          <div className={`slot-msg ${slotMsg.type}`}>
-            {slotMsg.text}
+          <div className="slot-machine-payouts">
+            {PAYOUT_ROWS.map(({ symbol, multiplier }) => {
+              const meta = SYMBOL_META[symbol];
+              return (
+                <span
+                  key={symbol}
+                  className={`slot-payout slot-payout-${meta.accentClass}`}
+                >
+                  <span aria-hidden="true" className="slot-payout-icon">{meta.icon}</span>
+                  <span>{meta.label}</span>
+                  <strong>{multiplier}</strong>
+                </span>
+              );
+            })}
           </div>
-        )}
 
-        {slotResult && (
-          <div className="slot-result-grid">
-            <div className="slot-result-card">
-              <span>Wager</span>
-              <strong>{formatRpc(slotResult.wager)} RPC</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Payout</span>
-              <strong>{formatRpc(slotResult.payout)} RPC</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Net</span>
-              <strong>{`${Number(slotResult.netChange) >= 0 ? "+" : ""}${formatRpc(
-                slotResult.netChange,
-              )} RPC`}</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>New Balance</span>
-              <strong>{formatRpc(slotResult.balance)} RPC</strong>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="slot-machine-card roulette-card">
-        <div className="slot-machine-header">
-          <span className="slot-machine-badge">Table</span>
-          <h2>Roulette</h2>
-        </div>
-
-        <div
-          aria-label="Roulette wheel"
-          className={`roulette-wheel-stage ${isRouletteSpinning ? "is-spinning" : ""}`}
-        >
-          <div aria-hidden="true" className="roulette-wheel-pointer" />
-          <div className="roulette-wheel-shell">
-            <div
-              className="roulette-wheel-face"
-              style={{
-                transform: `rotate(${rouletteWheelRotation}deg)`,
-                transitionDuration: `${rouletteWheelTransitionMs}ms`,
-              }}
-            >
-              {ROULETTE_WHEEL_ORDER.map((number, index) => {
-                const color = getRouletteNumberColor(number);
-                const isWinningPocket = rouletteResult?.winningNumber === number;
-                return (
-                  <div
-                    className="roulette-wheel-pocket"
-                    key={number}
-                    style={{ "--pocket-angle": `${index * ROULETTE_SLICE_ANGLE}deg` }}
-                  >
+          <div className="slot-reels" aria-label="Slot machine reels">
+            {displayedReels.map((reel, index) => {
+              const meta = SYMBOL_META[reel];
+              const isSettled = settledReels[index];
+              return (
+                <div
+                  className={`slot-reel slot-reel-${meta.accentClass} ${isSettled
+                    ? "is-settled"
+                    : "is-spinning"}`}
+                  key={`${index}-${reel}`}
+                >
+                  <div className="slot-reel-track">
                     <span
-                      className={`roulette-wheel-pocket-label roulette-wheel-pocket-${color} ${
-                        isWinningPocket ? "is-winning" : ""
-                      }`}
+                      aria-label={meta.label}
+                      className="slot-reel-icon"
+                      role="img"
                     >
-                      {number}
+                      {meta.icon}
                     </span>
+                    <span className="slot-reel-name">{meta.label}</span>
                   </div>
-                );
-              })}
-              <div aria-hidden="true" className="roulette-wheel-center-ring" />
-              <div aria-hidden="true" className="roulette-wheel-hub" />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="slot-controls">
+            <label className="slot-label" htmlFor="slot-wager">
+              Wager
+            </label>
+            <div className="slot-input-row">
+              <input
+                id="slot-wager"
+                type="text"
+                inputMode="decimal"
+                className="slot-input"
+                placeholder="Enter RPC wager"
+                value={slotWager}
+                onChange={(event) => setSlotWager(normalizeWagerInput(event.target.value))}
+                disabled={isSpinning}
+              />
+              <button className="slot-btn" onClick={handleSpin} disabled={isSpinning}>
+                {isSpinning ? "Spinning..." : "Spin Slots"}
+              </button>
             </div>
           </div>
-        </div>
 
-        <div
-          aria-label="Roulette bet types"
-          className="roulette-type-tabs"
-          role="group"
-        >
-          {ROULETTE_BET_TYPES.map(({ type, label, desc }) => (
-            <button
-              aria-pressed={selectedRouletteBetType === type}
-              className={`roulette-type-btn ${
-                selectedRouletteBetType === type ? "is-selected" : ""
-              }`}
-              disabled={isRouletteSpinning}
-              key={type}
-              onClick={() => handleRouletteBetTypeChange(type)}
-              type="button"
-            >
-              <span className="roulette-type-label">{label}</span>
-              <span className="roulette-type-desc">{desc}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="roulette-selection-summary">
-          <span className="slot-label">Current Bet</span>
-          <strong>{getRouletteBetTypeLabel(selectedRouletteBetType)}</strong>
-          <p className="slot-machine-desc">
-            {selectedRouletteBetValue
-              ? `Selected: ${getRouletteBetValueLabel(
-                selectedRouletteBetType,
-                selectedRouletteBetValue,
-              )}`
-              : `Choose a ${selectedRouletteTypeMeta.label.toLowerCase()} bet option below.`}
-          </p>
-        </div>
-
-        {selectedRouletteBetType === "NUMBER" ? (
-          <div className="roulette-number-board" role="group" aria-label="Roulette number board">
-            <button
-              aria-label="Number 0"
-              aria-pressed={selectedRouletteBetValue === "0"}
-              className={`roulette-number-pocket roulette-number-pocket-green ${
-                selectedRouletteBetValue === "0" ? "is-selected" : ""
-              }`}
-              disabled={isRouletteSpinning}
-              onClick={() => handleRouletteBetValueChange("0")}
-              type="button"
-            >
-              0
-            </button>
-
-            <div className="roulette-number-grid">
-              {ROULETTE_NUMBER_ROWS.map((row) => (
-                row.map((number) => {
-                  const color = getRouletteNumberColor(number);
-                  return (
-                    <button
-                      aria-label={`Number ${number}`}
-                      aria-pressed={selectedRouletteBetValue === String(number)}
-                      className={`roulette-number-pocket roulette-number-pocket-${color} ${
-                        selectedRouletteBetValue === String(number) ? "is-selected" : ""
-                      }`}
-                      disabled={isRouletteSpinning}
-                      key={number}
-                      onClick={() => handleRouletteBetValueChange(String(number))}
-                      type="button"
-                    >
-                      {number}
-                    </button>
-                  );
-                })
-              ))}
+          {slotMsg.text && (
+            <div className={`slot-msg ${slotMsg.type}`}>
+              {slotMsg.text}
             </div>
+          )}
+
+          {slotResult && (
+            <div className="slot-result-grid">
+              <div className="slot-result-card">
+                <span>Wager</span>
+                <strong>{formatRpc(slotResult.wager)} RPC</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Payout</span>
+                <strong>{formatRpc(slotResult.payout)} RPC</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Net</span>
+                <strong>{`${Number(slotResult.netChange) >= 0 ? "+" : ""}${formatRpc(
+                  slotResult.netChange,
+                )} RPC`}</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>New Balance</span>
+                <strong>{formatRpc(slotResult.balance)} RPC</strong>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="slot-machine-card roulette-card">
+          <div className="slot-machine-header">
+            <span className="slot-machine-badge">Table</span>
+            <h2>Roulette</h2>
           </div>
-        ) : (
+
           <div
-            aria-label={`${selectedRouletteTypeMeta.label} options`}
-            className="roulette-bet-options"
+            aria-label="Roulette wheel"
+            className={`roulette-wheel-stage ${isRouletteSpinning ? "is-spinning" : ""}`}
+          >
+            <div aria-hidden="true" className="roulette-wheel-pointer" />
+            <div className="roulette-wheel-shell">
+              <div
+                className="roulette-wheel-face"
+                style={{
+                  transform: `rotate(${rouletteWheelRotation}deg)`,
+                  transitionDuration: `${rouletteWheelTransitionMs}ms`,
+                }}
+              >
+                {ROULETTE_WHEEL_ORDER.map((number, index) => {
+                  const color = getRouletteNumberColor(number);
+                  const isWinningPocket = rouletteResult?.winningNumber === number;
+                  return (
+                    <div
+                      className="roulette-wheel-pocket"
+                      key={number}
+                      style={{ "--pocket-angle": `${index * ROULETTE_SLICE_ANGLE}deg` }}
+                    >
+                      <span
+                        className={`roulette-wheel-pocket-label roulette-wheel-pocket-${color} ${isWinningPocket ? "is-winning" : ""
+                          }`}
+                      >
+                        {number}
+                      </span>
+                    </div>
+                  );
+                })}
+                <div aria-hidden="true" className="roulette-wheel-center-ring" />
+                <div aria-hidden="true" className="roulette-wheel-hub" />
+              </div>
+            </div>
+          </div>
+
+          <div
+            aria-label="Roulette bet types"
+            className="roulette-type-tabs"
             role="group"
           >
-            {activeRouletteOptions.map(({ value, label, desc, tone }) => (
+            {ROULETTE_BET_TYPES.map(({ type, label, desc }) => (
               <button
-                aria-pressed={selectedRouletteBetValue === value}
-                className={`roulette-bet-btn roulette-tone-${tone} ${
-                  selectedRouletteBetValue === value ? "is-selected" : ""
-                }`}
+                aria-pressed={selectedRouletteBetType === type}
+                className={`roulette-type-btn ${selectedRouletteBetType === type ? "is-selected" : ""
+                  }`}
                 disabled={isRouletteSpinning}
-                key={value}
-                onClick={() => handleRouletteBetValueChange(value)}
+                key={type}
+                onClick={() => handleRouletteBetTypeChange(type)}
                 type="button"
               >
-                <span className="roulette-bet-label">{label}</span>
-                <span className="roulette-bet-desc">{desc}</span>
+                <span className="roulette-type-label">{label}</span>
+                <span className="roulette-type-desc">{desc}</span>
               </button>
             ))}
           </div>
-        )}
 
-        <div className="slot-controls">
-          <label className="slot-label" htmlFor="roulette-wager">
-            Wager
-          </label>
-          <div className="slot-input-row">
+          <div className="roulette-selection-summary">
+            <span className="slot-label">Current Bet</span>
+            <strong>{getRouletteBetTypeLabel(selectedRouletteBetType)}</strong>
+            <p className="slot-machine-desc">
+              {selectedRouletteBetValue
+                ? `Selected: ${getRouletteBetValueLabel(
+                  selectedRouletteBetType,
+                  selectedRouletteBetValue,
+                )}`
+                : `Choose a ${selectedRouletteTypeMeta.label.toLowerCase()} bet option below.`}
+            </p>
+          </div>
+
+          {selectedRouletteBetType === "NUMBER" ? (
+            <div className="roulette-number-board" role="group" aria-label="Roulette number board">
+              <button
+                aria-label="Number 0"
+                aria-pressed={selectedRouletteBetValue === "0"}
+                className={`roulette-number-pocket roulette-number-pocket-green ${selectedRouletteBetValue === "0" ? "is-selected" : ""
+                  }`}
+                disabled={isRouletteSpinning}
+                onClick={() => handleRouletteBetValueChange("0")}
+                type="button"
+              >
+                0
+              </button>
+
+              <div className="roulette-number-grid">
+                {ROULETTE_NUMBER_ROWS.map((row) => (
+                  row.map((number) => {
+                    const color = getRouletteNumberColor(number);
+                    return (
+                      <button
+                        aria-label={`Number ${number}`}
+                        aria-pressed={selectedRouletteBetValue === String(number)}
+                        className={`roulette-number-pocket roulette-number-pocket-${color} ${selectedRouletteBetValue === String(number) ? "is-selected" : ""
+                          }`}
+                        disabled={isRouletteSpinning}
+                        key={number}
+                        onClick={() => handleRouletteBetValueChange(String(number))}
+                        type="button"
+                      >
+                        {number}
+                      </button>
+                    );
+                  })
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              aria-label={`${selectedRouletteTypeMeta.label} options`}
+              className="roulette-bet-options"
+              role="group"
+            >
+              {activeRouletteOptions.map(({ value, label, desc, tone }) => (
+                <button
+                  aria-pressed={selectedRouletteBetValue === value}
+                  className={`roulette-bet-btn roulette-tone-${tone} ${selectedRouletteBetValue === value ? "is-selected" : ""
+                    }`}
+                  disabled={isRouletteSpinning}
+                  key={value}
+                  onClick={() => handleRouletteBetValueChange(value)}
+                  type="button"
+                >
+                  <span className="roulette-bet-label">{label}</span>
+                  <span className="roulette-bet-desc">{desc}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="slot-controls">
+            <label className="slot-label" htmlFor="roulette-wager">
+              Wager
+            </label>
+            <div className="slot-input-row">
+              <input
+                id="roulette-wager"
+                type="text"
+                inputMode="decimal"
+                className="slot-input"
+                placeholder="Enter roulette wager"
+                value={rouletteWager}
+                onChange={(event) => setRouletteWager(normalizeWagerInput(event.target.value))}
+                disabled={isRouletteSpinning}
+              />
+              <button
+                className="slot-btn roulette-spin-btn"
+                onClick={handleRouletteSpin}
+                disabled={isRouletteSpinning}
+              >
+                {isRouletteSpinning ? "Spinning..." : "Spin Roulette"}
+              </button>
+            </div>
+          </div>
+
+          {rouletteMsg.text && (
+            <div className={`slot-msg ${rouletteMsg.type}`}>
+              {rouletteMsg.text}
+            </div>
+          )}
+
+          {rouletteResult && (
+            <div className="slot-result-grid">
+              <div className="slot-result-card">
+                <span>Bet Type</span>
+                <strong>{getRouletteBetTypeLabel(rouletteResult.betType)}</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Selection</span>
+                <strong>
+                  {getRouletteBetValueLabel(rouletteResult.betType, rouletteResult.betValue)}
+                </strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Winning Pocket</span>
+                <strong
+                  className={
+                    `roulette-chip roulette-chip-${rouletteResult.winningColor.toLowerCase()}`
+                  }
+                >
+                  {rouletteResult.winningNumber} {rouletteResult.winningColor}
+                </strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Payout</span>
+                <strong>{formatRpc(rouletteResult.payout)} RPC</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>Net</span>
+                <strong>{`${Number(rouletteResult.netChange) >= 0 ? "+" : ""}${formatRpc(
+                  rouletteResult.netChange,
+                )} RPC`}</strong>
+              </div>
+              <div className="slot-result-card">
+                <span>New Balance</span>
+                <strong>{formatRpc(rouletteResult.balance)} RPC</strong>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="dev-sandbox">
+          <div className="dev-sandbox-header">
+            <span className="dev-badge">⚠️ DEV ONLY</span>
+            <h3>Arbitrary Minting Tool</h3>
+          </div>
+          <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
+
+          <div className="dev-input-group">
             <input
-              id="roulette-wager"
-              type="text"
-              inputMode="decimal"
-              className="slot-input"
-              placeholder="Enter roulette wager"
-              value={rouletteWager}
-              onChange={(event) => setRouletteWager(normalizeWagerInput(event.target.value))}
-              disabled={isRouletteSpinning}
+              type="number"
+              className="dev-input"
+              placeholder="Amount (e.g. 500)"
+              value={fundAmount}
+              onChange={(event) => setFundAmount(event.target.value)}
+              disabled={isFunding}
+              min="1"
+              step="any"
             />
             <button
-              className="slot-btn roulette-spin-btn"
-              onClick={handleRouletteSpin}
-              disabled={isRouletteSpinning}
+              className="dev-btn"
+              onClick={handleDevMint}
+              disabled={isFunding || !fundAmount}
             >
-              {isRouletteSpinning ? "Spinning..." : "Spin Roulette"}
+              {isFunding ? "Minting..." : "Execute Mint"}
             </button>
           </div>
+
+          {fundMsg.text && (
+            <div className={`dev-msg ${fundMsg.type}`}>
+              {fundMsg.text}
+            </div>
+          )}
         </div>
-
-        {rouletteMsg.text && (
-          <div className={`slot-msg ${rouletteMsg.type}`}>
-            {rouletteMsg.text}
-          </div>
-        )}
-
-        {rouletteResult && (
-          <div className="slot-result-grid">
-            <div className="slot-result-card">
-              <span>Bet Type</span>
-              <strong>{getRouletteBetTypeLabel(rouletteResult.betType)}</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Selection</span>
-              <strong>
-                {getRouletteBetValueLabel(rouletteResult.betType, rouletteResult.betValue)}
-              </strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Winning Pocket</span>
-              <strong
-                className={
-                  `roulette-chip roulette-chip-${rouletteResult.winningColor.toLowerCase()}`
-                }
-              >
-                {rouletteResult.winningNumber} {rouletteResult.winningColor}
-              </strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Payout</span>
-              <strong>{formatRpc(rouletteResult.payout)} RPC</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>Net</span>
-              <strong>{`${Number(rouletteResult.netChange) >= 0 ? "+" : ""}${formatRpc(
-                rouletteResult.netChange,
-              )} RPC`}</strong>
-            </div>
-            <div className="slot-result-card">
-              <span>New Balance</span>
-              <strong>{formatRpc(rouletteResult.balance)} RPC</strong>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="dev-sandbox">
-        <div className="dev-sandbox-header">
-          <span className="dev-badge">⚠️ DEV ONLY</span>
-          <h3>Arbitrary Minting Tool</h3>
-        </div>
-        <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
-        
-        <div className="dev-input-group">
-          <input
-            type="number"
-            className="dev-input"
-            placeholder="Amount (e.g. 500)"
-            value={fundAmount}
-            onChange={(event) => setFundAmount(event.target.value)}
-            disabled={isFunding}
-            min="1"
-            step="any"
-          />
-          <button
-            className="dev-btn"
-            onClick={handleDevMint}
-            disabled={isFunding || !fundAmount}
-          >
-            {isFunding ? "Minting..." : "Execute Mint"}
-          </button>
-        </div>
-
-        {fundMsg.text && (
-          <div className={`dev-msg ${fundMsg.type}`}>
-            {fundMsg.text}
-          </div>
-        )}
       </div>
     </div>
   );

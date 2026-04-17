@@ -56,6 +56,18 @@ public class AdController {
           8,
           5.0f,
           "ads/aura_sound_ad.mp4"
+      ),
+      new Ad(
+          "Verdant Smart Garden",
+          8,
+          5.0f,
+          "ads/smartgarden_ad.mp4"
+      ),
+      new Ad(
+          "Lumina Pack",
+          8,
+          5.0f,
+          "ads/luminapack_ad.mp4"
       )
   );
 
