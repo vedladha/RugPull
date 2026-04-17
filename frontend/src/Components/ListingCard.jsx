@@ -4,6 +4,7 @@ export default function ListingCard({
   price,
   stock,
   seller,
+  thumbnail_url,
   onClick,
 }) {
   const quantity = Number.isFinite(Number(stock)) ? Number(stock) : null;

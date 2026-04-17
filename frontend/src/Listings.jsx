@@ -82,6 +82,7 @@ export default function Listings() {
     };
 
     filterListings();
+    console.log(listings);
   }, [listings, priceFilter, keywordFilter]);
 
   const fetchListings = async () => {

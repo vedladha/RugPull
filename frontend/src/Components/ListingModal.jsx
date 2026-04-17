@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../style/listing-modal.css";
 
 const API = "http://localhost:3001";
+
 export default function ListingModal({
   listing,
   onClose,
@@ -16,11 +17,14 @@ export default function ListingModal({
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartFeedback, setCartFeedback] = useState("");
   const [cartError, setCartError] = useState("");
-  const stock = Number.isFinite(Number(item?.stock)) ? Number(item.stock) : null;
+
+  const stock = Number.isFinite(Number(listing?.stock)) ? Number(listing.stock) : null;
   const isSoldOut = stock !== null && stock <= 0;
+
   const [quantity, setQuantity] = useState(
     stock !== null && stock > 0 ? "1" : "0",
   );
+
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();
@@ -44,7 +48,6 @@ export default function ListingModal({
   }, [listing?.itemId, stock]);
 
   if (!listing) return null;
-  const { item, images } = listing;
 
   const maxQuantity = stock !== null && stock > 0 ? stock : null;
   const parsedQuantity = Number(quantity);
@@ -93,7 +96,7 @@ export default function ListingModal({
 
       const cartPayload = await cartResponse.json().catch(() => ({}));
       if (!cartResponse.ok) {
-        throw new Error(cartPayload.error || "Failed to add item to cart");
+        throw new Error(cartPayload.error || "Failed to fetch cart");
       }
 
       const cartItems = Array.isArray(cartPayload.cart)
@@ -101,7 +104,10 @@ export default function ListingModal({
         : Array.isArray(cartPayload)
           ? cartPayload
           : [];
-      const existingCartItem = cartItems.find((item) => item.itemId === item.itemId);
+
+      // FIX 2: Renamed iterator variable to 'cartItem' so it doesn't shadow the 'item' variable
+      const existingCartItem = cartItems.find((cartItem) => cartItem.itemId === listing.itemId);
+
       const nextQuantity = existingCartItem
         ? existingCartItem.quantity + selectedQuantity
         : selectedQuantity;
@@ -111,7 +117,7 @@ export default function ListingModal({
       }
 
       const response = await fetch(
-        `${API}/cart/${item.itemId}?quantity=${nextQuantity}`,
+        `${API}/cart/${listing.itemId}?quantity=${nextQuantity}`,
         {
           method: existingCartItem ? "PUT" : "POST",
           credentials: "include",
@@ -154,126 +160,124 @@ export default function ListingModal({
         </button>
 
         <div className="listing-modal-gallery">
-          {images && images.length > 0 ? (
-            images.map((img) => (
-              <img
-                key={img.imageId}
-                src={img.imageUrl}
-                alt={item.name}
-                className="modal-image"
-              />
-            ))
+          {listing.thumbnailUrl && listing.thumbnailUrl.length > 0 ? (
+            <img
+              src={API + listing.thumbnailUrl}
+              alt={listing.name}
+              className="modal-main-image"
+            />
           ) : (
-            <div className="placeholder-image">No images available</div>
+          <div className="placeholder-image">No images available</div>
           )}
         </div>
 
         <div className="listing-modal-content">
           <h3 id="listing-modal-title" className="listing-modal-title">
-            {item.name}
+            {listing.name}
           </h3>
 
           <p className="listing-modal-description">
-            {item.description || "No description provided."}
+            {listing.description || "No description provided."}
           </p>
 
-        <div className="listing-modal-meta">
-          <div className="listing-modal-price">{item.price}</div>
-          <div className="listing-modal-seller">Seller: {item.sellerName}</div>
-        </div>
-
-        <div className="listing-modal-stock-row">
-          <div className={`listing-modal-stock ${isSoldOut ? "listing-modal-stock-sold-out" : ""}`}>
-            {stock !== null
-              ? isSoldOut
-                ? "Sold Out"
-                : `${stock} available`
-              : "Stock unavailable"}
+          <div className="listing-modal-meta">
+            <div className="listing-modal-price">${parseFloat(listing.price).toFixed(2)}</div>
+            <div className="listing-modal-seller">Seller: {listing.sellerName || listing.seller}</div>
           </div>
-          <label className="listing-modal-quantity">
-            <span>Quantity</span>
-            <input
-              type="number"
-              min="1"
-              max={maxQuantity ?? undefined}
-              step="1"
-              value={quantity}
-              onChange={(event) => handleQuantityChange(event.target.value)}
-              onBlur={handleQuantityBlur}
+
+          <div className="listing-modal-stock-row">
+            <div className={`listing-modal-stock ${isSoldOut ? "listing-modal-stock-sold-out" : ""}`}>
+              {stock !== null
+                ? isSoldOut
+                  ? "Sold Out"
+                  : `${stock} available`
+                : "Stock unavailable"}
+            </div>
+            <label className="listing-modal-quantity">
+              <span>Quantity</span>
+              <input
+                type="number"
+                min="1"
+                max={maxQuantity ?? undefined}
+                step="1"
+                value={quantity}
+                onChange={(event) => handleQuantityChange(event.target.value)}
+                onBlur={handleQuantityBlur}
+                disabled={isSoldOut}
+                aria-label="Quantity"
+              />
+            </label>
+          </div>
+
+          {wishlistError && (
+            <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
+              {wishlistError}
+            </div>
+          )}
+
+          {cartError && (
+            <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
+              {cartError}
+            </div>
+          )}
+
+          {cartFeedback && (
+            <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
+              {cartFeedback}
+            </div>
+          )}
+
+          {wishlistSuccess && (
+            <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
+              {wishlistSuccess}
+            </div>
+          )}
+
+          <div className="listing-modal-actions">
+            <button
+              type="button"
+              className="listing-action-btn listing-action-btn-primary"
+              onClick={() => navigate("/order", {
+                state: {
+                  source: "listing",
+                  items: [
+                    {
+                      ...listing,
+                      quantity: selectedQuantity,
+                      fromCart: false,
+                    },
+                  ],
+                },
+              })}
               disabled={isSoldOut}
-              aria-label="Quantity"
-            />
-          </label>
-        </div>
-
-        {wishlistError && (
-          <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
-            {wishlistError}
+            >
+              {isSoldOut ? "Sold Out" : "Buy It Now"}
+            </button>
+            <button
+              type="button"
+              className="listing-action-btn listing-action-btn-secondary"
+              onClick={addToCart}
+              disabled={addingToCart || isSoldOut}
+            >
+              {isSoldOut
+                ? "Sold Out"
+                : addingToCart
+                  ? "Adding to your Cart"
+                  : "Add to Cart"}
+            </button>
+            <button
+              type="button"
+              className="listing-action-btn listing-action-btn-secondary"
+              onClick={onToggleWishlist}
+              disabled={wishlistBusy}
+            >
+              {wishlistBusy
+                ? "Saving..."
+                : isWishlisted
+                  ? "Remove from Wishlist"
+                  : "Add to Wishlist"}
+            </button>
           </div>
-        )}
-
-        {cartError && (
-          <div className="listing-modal-feedback listing-modal-feedback-error" role="alert">
-            {cartError}
-          </div>
-        )}
-
-        {cartFeedback && (
-          <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
-            {cartFeedback}
-          </div>
-        )}
-
-        {wishlistSuccess && (
-          <div className="listing-modal-feedback listing-modal-feedback-success" role="status">
-            {wishlistSuccess}
-          </div>
-        )}
-
-        <div className="listing-modal-actions">
-          <button
-            type="button"
-            className="listing-action-btn listing-action-btn-primary"
-            onClick={() => navigate("/order", {
-              state: {
-                source: "listing",
-                items: [
-                  {
-                    ...listing,
-                    quantity: selectedQuantity,
-                    fromCart: false,
-                  },
-                ],
-              },
-            })}
-            disabled={isSoldOut}
-          >
-            {isSoldOut ? "Sold Out" : "Buy It Now"}
-          </button>
-          <button
-            type="button"
-            className="listing-action-btn listing-action-btn-secondary"
-            onClick={addToCart}
-            disabled={addingToCart || isSoldOut}
-          >
-            {isSoldOut
-              ? "Sold Out"
-              : addingToCart
-                ? "Adding to your Cart"
-                : "Add to Cart"}
-          </button>
-          <button
-            type="button"
-            className="listing-action-btn listing-action-btn-secondary"
-            onClick={onToggleWishlist}
-            disabled={wishlistBusy}
-          >
-            {wishlistBusy
-              ? "Saving..."
-              : isWishlisted
-                ? "Remove from Wishlist"
-                : "Add to Wishlist"}
-          </button>
         </div>
       </div>
     </div>

@@ -50,6 +50,7 @@ export default function CartPage() {
                     credentials: "include",
                     body: JSON.stringify(itemIds),
                 });
+                console.log(itemsResponse);
 
                 if (!itemsResponse.ok) throw new Error("Failed to fetch batch items");
                 const itemsJson = await itemsResponse.json();

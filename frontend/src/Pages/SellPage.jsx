@@ -124,8 +124,7 @@ export default function SellPage() {
         if (newPrice !== parseFloat(original.price)) payload.price = newPrice;
         if (newStock !== Number(original.stock)) payload.stock = newStock;
 
-        // If nothing changed, save a network request and exit early
-        if (Object.keys(payload).length === 0) {
+        if (Object.keys(payload).length === 0 && !form.data) {
           setLoading(false);
           setSuccessMsg("No changes were made.");
           handleResetForm();
@@ -149,9 +148,8 @@ export default function SellPage() {
 
       const response = await fetch(url, {
         method: method,
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
