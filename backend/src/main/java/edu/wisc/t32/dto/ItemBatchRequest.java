@@ -1,6 +1,7 @@
 package edu.wisc.t32.dto;
 
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

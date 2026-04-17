@@ -26,8 +26,6 @@ import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.services.ItemImageService;
-import edu.wisc.t32.services.ItemImageService;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -185,9 +183,9 @@ class ItemControllerTest {
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
     when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
-        Item item = inv.getArgument(0);
-        item.setItemId(101);
-        return item;
+      Item item = inv.getArgument(0);
+      item.setItemId(101);
+      return item;
     });
 
     itemController.createItem(VALID_TOKEN, request, fileList);
@@ -203,26 +201,28 @@ class ItemControllerTest {
     List<MultipartFile> fileList = List.of(file1, file2);
 
     ItemCreateRequest request = buildCreateRequest("Item", "Desc", "70", 1);
-    
+
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
     when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
-        Item item = inv.getArgument(0);
-        item.setItemId(500);
-        return item;
+      Item item = inv.getArgument(0);
+      item.setItemId(500);
+      return item;
     });
 
     itemController.createItem(VALID_TOKEN, request, fileList);
 
     // Verify the service was called twice (once per file)
-    // and that the position incremented correctly (0 then 1)
     verify(itemImageService, times(2)).addImageToItem(any(), eq(500), eq(7), anyInt());
   }
 
-  // Checks that getAllItems returns all active items.
+  // Checks that getAllItems returns all active items with their thumbnails.
   @Test
   void getAllItems_returnsListOfActiveItems() {
     Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
     Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
+
+    ItemImage image1 = new ItemImage();
+    image1.setImageUrl("/test-image.jpg");
 
     UserProfile profile1 = mock(UserProfile.class);
     when(profile1.getDisplayName()).thenReturn("Seller One");
@@ -234,6 +234,9 @@ class ItemControllerTest {
     when(userProfileRepository.findByUserId(7)).thenReturn(profile1);
     when(userProfileRepository.findByUserId(8)).thenReturn(profile2);
 
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(1)).thenReturn(List.of(image1));
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(2)).thenReturn(List.of());
+
     ResponseEntity<?> response = itemController.getAllItems();
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -241,6 +244,10 @@ class ItemControllerTest {
     assertNotNull(body);
     List<?> items = (List<?>) body.get("items");
     assertEquals(2, items.size());
+
+    // Verify the first item attached the image URL
+    Map<?, ?> responseItem1 = (Map<?, ?>) items.get(0);
+    assertEquals("/test-image.jpg", responseItem1.get("thumbnailUrl"));
   }
 
   // Checks that getAllItems returns empty list when no items exist.
@@ -261,7 +268,9 @@ class ItemControllerTest {
   @Test
   void getItem_returnsItem_whenItemExists() {
     Item existing = buildItem(1, 7, "Name", "Description", new BigDecimal("10.00"), 3, false);
+
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(1)).thenReturn(List.of());
 
     ResponseEntity<?> response = itemController.getItem(1);
 
@@ -270,6 +279,7 @@ class ItemControllerTest {
     assertNotNull(body);
     Item item = (Item) body.get("item");
     assertNotNull(item);
+    assertNotNull(body.get("images"));
     assertEquals(1, item.getItemId());
     assertEquals("Name", item.getName());
   }
@@ -312,10 +322,10 @@ class ItemControllerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
     assertNotNull(body);
-    
+
     List<?> resultList = (List<?>) body.get("images");
     assertEquals(2, resultList.size());
-    
+
     ItemImage firstImage = (ItemImage) resultList.get(0);
     assertEquals("/images/thumb1.jpg", firstImage.getImageUrl());
     verify(itemImageRepository).findByItemIdOrderByPositionAsc(itemId);
@@ -491,7 +501,7 @@ class ItemControllerTest {
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 1, request);
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 1, request, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -510,6 +520,23 @@ class ItemControllerTest {
     verify(itemRepository).save(any(Item.class));
   }
 
+  // Checks that patching with files saves the files using the service
+  @Test
+  void patchItem_callsImageService_whenFileIsProvided() {
+    Item existing = buildItem(1, 7, "Name", "Desc", new BigDecimal("10"), 1, false);
+    ItemUpdateRequest request = buildRequest("Name", "Desc", "10", 1);
+    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
+    List<MultipartFile> fileList = List.of(mockFile);
+
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
+    when(itemRepository.save(any(Item.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    itemController.patchItem(VALID_TOKEN, 1, request, fileList);
+
+    verify(itemImageService, times(1)).addImageToItem(eq(mockFile), eq(1), eq(7), eq(0));
+  }
+
   // Checks that patching a missing item id is handled and should return 404.
   @Test
   void patchItem_returnsNotFound_whenItemDoesNotExist() {
@@ -519,7 +546,7 @@ class ItemControllerTest {
         Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 99, request);
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 99, request, null);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -541,7 +568,7 @@ class ItemControllerTest {
         Optional.of(buildUser(8)));
     when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 5, request);
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 5, request, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -557,7 +584,7 @@ class ItemControllerTest {
     request.setPrice(new BigDecimal("49.95"));
     when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.patchItem(null, 1, request);
+    ResponseEntity<?> response = itemController.patchItem(null, 1, request, null);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -578,7 +605,7 @@ class ItemControllerTest {
         Optional.of(buildUser(21)));
     when(itemRepository.findByItemIdAndDeletedFalse(12)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 12, request);
+    ResponseEntity<?> response = itemController.patchItem(VALID_TOKEN, 12, request, null);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -664,7 +691,11 @@ class ItemControllerTest {
     Item item1 = buildItem(1, 7, "Item One", "Description", new BigDecimal("10.00"), 3, false);
     Item item2 = buildItem(2, 8, "Item Two", "Description", new BigDecimal("20.00"), 5, false);
     List<Item> mockItems = List.of(item1, item2);
+
     when(itemRepository.findByItemIdInAndDeletedFalse(ids)).thenReturn(mockItems);
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(1)).thenReturn(List.of());
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(2)).thenReturn(List.of());
+
     ResponseEntity<?> responseEntity = itemController.getItemsBatch(ids);
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     ItemBatchRequest batchResponse =
@@ -723,6 +754,7 @@ class ItemControllerTest {
     Item item1 = buildItem(1, 7, "My Item One", "Description", new BigDecimal("10.00"), 3, false);
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
     when(itemRepository.findByUserId(7)).thenReturn(List.of(item1));
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(1)).thenReturn(List.of());
 
     ResponseEntity<?> response = itemController.getMyItems(VALID_TOKEN);
 

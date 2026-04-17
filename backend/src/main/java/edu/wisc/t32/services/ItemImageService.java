@@ -11,49 +11,50 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Service
 public class ItemImageService {
-	
-	private final ItemImageRepository itemImageRepository;
-	private final FileService fileService;
 
-	public ItemImageService(ItemImageRepository itemImageRepository,
-							FileService fileService) {
-		this.itemImageRepository = itemImageRepository;
-		this.fileService = fileService;
-	}
+  private final ItemImageRepository itemImageRepository;
+  private final FileService fileService;
 
-	/**
-	 * Processes a file upload and associates it with an item
-	 */
-	@Transactional
-	public ItemImage addImageToItem(MultipartFile file, Integer itemId, Integer userId, Integer position) {
-		fileService.validate(file);
-		
-		// Save to Docker volume
-		String imageUrl = fileService.save(file);
+  public ItemImageService(ItemImageRepository itemImageRepository,
+                          FileService fileService) {
+    this.itemImageRepository = itemImageRepository;
+    this.fileService = fileService;
+  }
 
-		// Create database record
-		ItemImage itemImage = new ItemImage();
-		itemImage.setItemId(itemId);
-		itemImage.setUserId(userId);
-		itemImage.setImageUrl(imageUrl);
-		itemImage.setAltText("Image for item " + itemId);
-		itemImage.setPosition(position);
+  /**
+   * Processes a file upload and associates it with an item.
+   */
+  @Transactional
+  public ItemImage addImageToItem(MultipartFile file, Integer itemId, Integer userId,
+                                  Integer position) {
+    fileService.validate(file);
 
-		return itemImageRepository.save(itemImage);
-	}
+    // Save to Docker volume
+    String imageUrl = fileService.save(file);
 
-	/**
-	 * Removes an image from the database and filesystem
-	 */
-	@Transactional
-	public void deleteImage(Integer imageId) {
-		ItemImage image = itemImageRepository.findById(imageId)
-			.orElseThrow(() -> new RuntimeException("Image not found"));
+    // Create database record
+    ItemImage itemImage = new ItemImage();
+    itemImage.setItemId(itemId);
+    itemImage.setUserId(userId);
+    itemImage.setImageUrl(imageUrl);
+    itemImage.setAltText("Image for item " + itemId);
+    itemImage.setPosition(position);
 
-		// Delete from database
-		itemImageRepository.delete(image);
+    return itemImageRepository.save(itemImage);
+  }
 
-		// Delete from disk
-		fileService.delete(image.getImageUrl());
-	}
+  /**
+   * Removes an image from the database and filesystem.
+   */
+  @Transactional
+  public void deleteImage(Integer imageId) {
+    ItemImage image = itemImageRepository.findById(imageId)
+        .orElseThrow(() -> new RuntimeException("Image not found"));
+
+    // Delete from database
+    itemImageRepository.delete(image);
+
+    // Delete from disk
+    fileService.delete(image.getImageUrl());
+  }
 }

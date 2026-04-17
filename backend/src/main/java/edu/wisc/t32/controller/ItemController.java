@@ -7,7 +7,6 @@ import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
 import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
-import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
@@ -27,12 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -133,6 +133,7 @@ public class ItemController {
           map.put("itemId", item.getItemId());
           map.put("name", item.getName());
           map.put("price", item.getPrice());
+          map.put("stock", item.getStock());
           map.put("sellerName",
               userProfileRepository.findByUserId(item.getUserId()).getDisplayName());
 
@@ -169,7 +170,11 @@ public class ItemController {
           .body(Map.of("error", "No item's founding matching input list"));
     }
 
-    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
+    response.setItems(items.stream().map((item) -> {
+      List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+      ItemImage image = !images.isEmpty() ? images.getFirst() : null;
+      return ItemModelDto.fromItem(item, image);
+    }).toList());
     return ResponseEntity.ok(response);
   }
 
@@ -178,7 +183,7 @@ public class ItemController {
    *
    * @param itemId the unique identifier of the item to retrieve
    * @return a {@link ResponseEntity} containing the item, or a 404 NOT FOUND if the item
-   *         does not exist or is marked as deleted
+   * does not exist or is marked as deleted
    */
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
@@ -275,7 +280,10 @@ public class ItemController {
   @PatchMapping("/{itemId}")
   public ResponseEntity<?> patchItem(@CookieValue(name = "jwt", required = false) String token,
                                      @PathVariable Integer itemId,
-                                     @RequestBody ItemUpdateRequest request) {
+                                     @RequestPart(value = "item", required = false)
+                                     ItemUpdateRequest request,
+                                     @RequestPart(value = "file", required = false)
+                                     List<MultipartFile> files) {
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
@@ -313,6 +321,13 @@ public class ItemController {
     }
 
     Item saved = itemRepository.save(item);
+    if (files != null && !files.isEmpty()) {
+      for (int i = 0; i < files.size(); i++) {
+        itemImageService.addImageToItem(files.get(i), saved.getItemId(),
+            currentUser.get().getUserId(), i);
+      }
+    }
+
     return ResponseEntity.ok(Map.of("item", saved));
   }
 
@@ -375,7 +390,11 @@ public class ItemController {
     }
 
     ItemBatchRequest response = ItemBatchRequest.next();
-    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
+    response.setItems(items.stream().map((item) -> {
+      List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+      ItemImage image = !images.isEmpty() ? images.getFirst() : null;
+      return ItemModelDto.fromItem(item, image);
+    }).toList());
     return ResponseEntity.ok(response);
   }
 
