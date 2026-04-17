@@ -164,7 +164,7 @@ export default function ListingModal({
             <img
               src={API + listing.thumbnailUrl}
               alt={listing.name}
-              className="modal-main-image"
+              className="card-image"
             />
           ) : (
           <div className="placeholder-image">No images available</div>
