@@ -132,6 +132,7 @@ public class ItemController {
           Map<String, Object> map = new HashMap<>();
           map.put("itemId", item.getItemId());
           map.put("name", item.getName());
+          map.put("description", item.getDescription());
           map.put("price", item.getPrice());
           map.put("stock", item.getStock());
           map.put("sellerName",
