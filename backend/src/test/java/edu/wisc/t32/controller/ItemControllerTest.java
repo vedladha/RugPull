@@ -359,7 +359,7 @@ class ItemControllerTest {
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 1, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 1, request, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -386,7 +386,7 @@ class ItemControllerTest {
         Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 99, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 99, request, null);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -404,7 +404,7 @@ class ItemControllerTest {
         Optional.of(buildUser(8)));
     when(itemRepository.findByItemIdAndDeletedFalse(5)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 5, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 5, request, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -424,7 +424,7 @@ class ItemControllerTest {
     when(itemRepository.findByItemIdAndDeletedFalse(6)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 6, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 6, request, null);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -443,7 +443,7 @@ class ItemControllerTest {
         Optional.of(buildUser(4)));
     when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 10, null);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 10, null, null);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -458,7 +458,7 @@ class ItemControllerTest {
     ItemUpdateRequest request = buildRequest("Updated Item", "Updated description", "49.95", 12);
     when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = itemController.updateItem(null, 1, request);
+    ResponseEntity<?> response = itemController.updateItem(null, 1, request, null);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();
@@ -477,7 +477,7 @@ class ItemControllerTest {
         Optional.of(buildUser(21)));
     when(itemRepository.findByItemIdAndDeletedFalse(12)).thenReturn(Optional.of(existing));
 
-    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 12, request);
+    ResponseEntity<?> response = itemController.updateItem(VALID_TOKEN, 12, request, null);
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     Map<?, ?> body = (Map<?, ?>) response.getBody();

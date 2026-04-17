@@ -111,14 +111,14 @@ describe("SellPage", () => {
         });
     });
 
-    // 6. Successful PATCH (Editing a Listing)
-    it("loads item into form on Edit click, and sends a partial PATCH request", async () => {
+    // 6. Successful PUT (Editing a Listing)
+    it("loads item into form on Edit click, and sends a PUT request", async () => {
         const mockItem = { itemId: 42, name: "Old Camera", description: "Works fine", price: 100, stock: 1 };
         
         const fetchMock = vi.fn()
             // 1st call: on-mount GET (returns 1 item)
             .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ items: [mockItem] }) })
-            // 2nd call: form submission PATCH
+            // 2nd call: form submission PUT
             .mockResolvedValueOnce({ 
                 ok: true, 
                 json: () => Promise.resolve({ 
@@ -148,16 +148,16 @@ describe("SellPage", () => {
         await waitFor(() => {
             // Check success banner
             expect(screen.getByText("Listing successfully updated!")).toBeInTheDocument();
-            // Verify PATCH request now expects FormData
+            // Verify PUT request now expects FormData
             expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/items/42", expect.objectContaining({
-                method: "PATCH",
+                method: "PUT",
                 body: expect.any(FormData)
             }));
         });
     });
 
-    // 7. Prevent Empty PATCH
-    it("aborts PATCH request if no changes were made during edit", async () => {
+    // 7. Prevent Empty PUT
+    it("aborts PUT request if no changes were made during edit", async () => {
         const mockItem = { itemId: 42, name: "Old Camera", description: "Works fine", price: 100, stock: 1 };
         const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ items: [mockItem] }) });
         vi.stubGlobal("fetch", fetchMock);
@@ -170,7 +170,7 @@ describe("SellPage", () => {
 
         await waitFor(() => {
             expect(screen.getByText("No changes were made.")).toBeInTheDocument();
-            // Verify fetch was only called ONCE (the initial GET), meaning the PATCH was aborted
+            // Verify fetch was only called ONCE (the initial GET), meaning the PUT was aborted
             expect(fetchMock).toHaveBeenCalledTimes(1); 
         });
     });

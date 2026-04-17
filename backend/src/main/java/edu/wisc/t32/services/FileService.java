@@ -105,6 +105,30 @@ public class FileService {
   }
 
   /**
+   * Overwrite an existing file in the local filesystem.
+   * 
+   * @param url The url of the file to overwrite.
+   * @param file The file to replace the existing file with.
+   * @return A relative URL string that can be used to access the file.
+   * @throws RuntimeException if the file cannot be overwritten.
+   */
+  public String overwrite(String url, MultipartFile file) {
+    try {
+      String cleanUrl = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+      String filename = Paths.get(cleanUrl).getFileName().toString();
+
+      // Replace the file
+      Files.copy(file.getInputStream(), this.root.resolve(filename),
+          StandardCopyOption.REPLACE_EXISTING);
+
+      return "/images/" + filename;
+
+    } catch (Exception e) {
+      throw new RuntimeException("Could not overwrite the file. Error: " + e.getMessage());
+    }
+  }
+
+  /**
    * Deletes a file from the local filesystem.
    * 
    * @param url The url pointing to the file to delete.
@@ -112,7 +136,8 @@ public class FileService {
    */
   public void delete(String url) {
     try {
-      String filename = url.replace("/images/", "");
+      String cleanUrl = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+      String filename = Paths.get(cleanUrl).getFileName().toString();
       Path filePath = this.root.resolve(filename);
       Files.deleteIfExists(filePath);
     } catch (IOException e) {

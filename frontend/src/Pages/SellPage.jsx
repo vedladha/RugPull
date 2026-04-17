@@ -10,7 +10,18 @@ export default function SellPage() {
   const formRef = useRef(null);
 
   // --- Form & Submission State ---
-  const [form, setForm] = useState({ title: "", bio: "", price: "", quantity: "1", image: null });
+  const [form, setForm] = useState({ 
+    title: "", 
+    bio: "", 
+    price: "", 
+    quantity: "1", 
+    image: null,
+    existingImageUrl: null
+  });
+  
+  // Track the original state for dirty checking (aborting unchanged PUTs)
+  const [originalItem, setOriginalItem] = useState(null);
+  
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -46,27 +57,13 @@ export default function SellPage() {
     };
 
     fetchMyItems();
-  }, [user]);
-
-  if (!user) {
-    return (
-      <div className="sell-page">
-        <div className="sell-header">
-          <span className="hero-tag">Seller Dashboard</span>
-          <h1>Marketplace</h1>
-        </div>
-        <p>Please sign in to manage your listings.</p>
-      </div>
-    );
-  }
+  }, [user, API]);
 
   const handleFileChange = (field, file) => {
     if (!file) return;
 
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-
     if (file.size > MAX_SIZE) {
-      // Set a proper UI error instead of an alert
       setErrors((prev) => ({
         ...prev,
         image: "This file is too large! Please choose an image under 5MB."
@@ -74,10 +71,15 @@ export default function SellPage() {
       return;
     }
 
-    // Update the form state using your existing logic
-    handleChange(field, file);
+    setForm((prev) => ({ 
+      ...prev, 
+      image: file, 
+      existingImageUrl: null 
+    }));
+    
+    if (errors.image) setErrors((prev) => ({ ...prev, image: null }));
+    if (successMsg) setSuccessMsg("");
   };
-
 
   const validate = () => {
     const errs = {};
@@ -101,47 +103,43 @@ export default function SellPage() {
     const errs = validate();
     if (Object.keys(errs).length > 0) return setErrors(errs);
 
+    // --- Dirty Checking / Abort Logic ---
+    if (isEditMode && originalItem) {
+      const firstImage = originalItem.images?.[0]?.imageUrl;
+      const originalImageUrl = firstImage ? `${API}${firstImage}` : null;
+
+      const isUnchanged = 
+        form.title.trim() === originalItem.name &&
+        form.bio.trim() === originalItem.description &&
+        parseFloat(form.price) === originalItem.price &&
+        Number(form.quantity) === (originalItem.stock || 0) &&
+        form.image === null && // No new file selected
+        form.existingImageUrl === originalImageUrl; // Image not removed/changed
+
+      if (isUnchanged) {
+        setSuccessMsg("No changes were made.");
+        return; // Abort the fetch request
+      }
+    }
+
     setLoading(true);
     setErrors({});
     setSuccessMsg("");
 
     try {
       const url = isEditMode ? `${API}/items/${editItemId}` : `${API}/items`;
-      const method = isEditMode ? "PATCH" : "POST";
-      let payload = {};
+      const method = isEditMode ? "PUT" : "POST";
 
-      // 1. THE FIX: If editing, only send fields that have actually changed!
-      if (isEditMode) {
-        const original = items.find(i => i.itemId === editItemId);
-
-        const newName = form.title.trim();
-        const newBio = form.bio.trim();
-        const newPrice = parseFloat(form.price);
-        const newStock = Number(form.quantity);
-
-        if (newName !== original.name) payload.name = newName;
-        if (newBio !== original.description) payload.description = newBio;
-        if (newPrice !== parseFloat(original.price)) payload.price = newPrice;
-        if (newStock !== Number(original.stock)) payload.stock = newStock;
-
-        if (Object.keys(payload).length === 0 && !form.data) {
-          setLoading(false);
-          setSuccessMsg("No changes were made.");
-          handleResetForm();
-          return;
-        }
-      } else {
-        // Standard POST payload
-        payload = {
-          name: form.title.trim(),
-          description: form.bio.trim(),
-          price: parseFloat(form.price),
-          stock: Number(form.quantity),
-        };
-      }
+      const itemPayload = {
+        name: form.title.trim(),
+        description: form.bio.trim(),
+        price: parseFloat(form.price),
+        stock: Number(form.quantity),
+      };
 
       const formData = new FormData();
-      formData.append("item", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+      formData.append("item", new Blob([JSON.stringify(itemPayload)], { type: "application/json" }));
+      
       if (form.image) {
         formData.append("file", form.image);
       }
@@ -161,7 +159,7 @@ export default function SellPage() {
       const savedItem = responseData.item;
 
       if (isEditMode) {
-        setItems(items.map(item => item.itemId === editItemId ? savedItem : item));
+        setItems(items.map(item => item?.itemId === editItemId ? savedItem : item));
         setSuccessMsg("Listing successfully updated!");
       } else {
         setItems([...items, savedItem]);
@@ -177,19 +175,28 @@ export default function SellPage() {
   };
 
   const handleResetForm = () => {
-    setForm({ title: "", bio: "", price: "", quantity: "1" });
+    setForm({ title: "", bio: "", price: "", quantity: "1", image: null, existingImageUrl: null });
+    setOriginalItem(null);
     setErrors({});
     setEditItemId(null);
   };
 
   const handleEditClick = (item) => {
+    if (!item) return;
     setEditItemId(item.itemId);
+    setOriginalItem(item);
+    
+    const firstImage = item.images && item.images.length > 0 ? item.images[0].imageUrl : null;
+    
     setForm({
       title: item.name || "",
       bio: item.description || "",
       price: item.price !== undefined ? item.price.toString() : "",
       quantity: item.stock !== undefined ? item.stock.toString() : "1",
+      image: null,
+      existingImageUrl: firstImage ? `${API}${firstImage}` : null
     });
+
     setErrors({});
     setSuccessMsg("");
 
@@ -209,7 +216,7 @@ export default function SellPage() {
 
       if (!response.ok) throw new Error("Failed to delete item.");
 
-      setItems(items.filter((item) => item.itemId !== itemId));
+      setItems(items.filter((item) => item?.itemId !== itemId));
 
       if (editItemId === itemId) {
         handleResetForm();
@@ -218,6 +225,18 @@ export default function SellPage() {
       alert(err.message);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="sell-page">
+        <div className="sell-header">
+          <span className="hero-tag">Seller Dashboard</span>
+          <h1>Marketplace</h1>
+        </div>
+        <p>Please sign in to manage your listings.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="sell-page">
@@ -259,7 +278,10 @@ export default function SellPage() {
 
         <div className="sell-field">
           <label className="sell-label">Item Photo</label>
-          <ImageUploadBox onImageUpload={(file) => handleFileChange("image", file)} />
+          <ImageUploadBox 
+            initialImage={form.existingImageUrl} 
+            onImageUpload={(file) => handleFileChange("image", file)} 
+          />
           {errors.image && <span className="sell-error-msg">{errors.image}</span>}
         </div>
 
@@ -285,7 +307,7 @@ export default function SellPage() {
             <input
               className={`sell-input sell-input-price ${errors.price ? "sell-input-error" : ""}`}
               type="number" placeholder="0.00" min="0" step="0.01" value={form.price}
-              onChange={(e) => handleChange("price", e.target.value === "" ? "" : Math.max(0, e.target.value))}
+              onChange={(e) => handleChange("price", e.target.value === "" ? "" : Math.max(0, parseFloat(e.target.value)))}
             />
           </div>
           {errors.price && <span className="sell-error-msg">{errors.price}</span>}
@@ -328,45 +350,48 @@ export default function SellPage() {
               You don't have any active listings yet.
             </p>
           ) : (
-            items.map((item) => (
-              <div
-                key={item.itemId}
-                className="listing-card"
-                style={{
-                  flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                  borderColor: editItemId === item.itemId ? "var(--amber)" : "var(--border)"
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  <h3 className="listing-title" style={{ margin: 0 }}>
-                    {item.name}
-                    {editItemId === item.itemId && <span style={{ color: "var(--amber)", fontSize: "0.7rem", marginLeft: "0.5rem" }}>(Editing)</span>}
-                  </h3>
-                  <div style={{ display: "flex", gap: "1rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)" }}>
-                    <span className="listing-price" style={{ fontSize: "0.85rem" }}>${parseFloat(item.price).toFixed(2)}</span>
-                    <span>Stock: {item.stock}</span>
+            items.map((item) => {
+              if (!item) return null;
+              return (
+                <div
+                  key={item.itemId}
+                  className="listing-card"
+                  style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                    borderColor: editItemId === item.itemId ? "var(--amber)" : "var(--border)"
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <h3 className="listing-title" style={{ margin: 0 }}>
+                      {item.name}
+                      {editItemId === item.itemId && <span style={{ color: "var(--amber)", fontSize: "0.7rem", marginLeft: "0.5rem" }}>(Editing)</span>}
+                    </h3>
+                    <div style={{ display: "flex", gap: "1rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)" }}>
+                      <span className="listing-price" style={{ fontSize: "0.85rem" }}>${parseFloat(item.price || 0).toFixed(2)}</span>
+                      <span>Stock: {item.stock}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.75rem" }}>
+                    <button
+                      className="btn-ghost"
+                      style={{ padding: "0.5rem 1rem", fontSize: "0.75rem" }}
+                      onClick={() => handleEditClick(item)}
+                      disabled={editItemId === item.itemId}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn-ghost"
+                      style={{ padding: "0.5rem 1rem", fontSize: "0.75rem", borderColor: "rgba(255, 107, 107, 0.3)", color: "#ff6b6b" }}
+                      onClick={() => handleDeleteClick(item.itemId)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-
-                <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button
-                    className="btn-ghost"
-                    style={{ padding: "0.5rem 1rem", fontSize: "0.75rem" }}
-                    onClick={() => handleEditClick(item)}
-                    disabled={editItemId === item.itemId}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn-ghost"
-                    style={{ padding: "0.5rem 1rem", fontSize: "0.75rem", borderColor: "rgba(255, 107, 107, 0.3)", color: "#ff6b6b" }}
-                    onClick={() => handleDeleteClick(item.itemId)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
