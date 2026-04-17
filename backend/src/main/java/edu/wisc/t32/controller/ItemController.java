@@ -11,6 +11,7 @@ import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.FileService;
 import edu.wisc.t32.services.ItemImageService;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ public class ItemController {
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
   private final UserProfileRepository userProfileRepository;
+  private final FileService fileService;
   private final ItemImageService itemImageService;
   private final ItemImageRepository itemImageRepository;
 
@@ -62,11 +64,13 @@ public class ItemController {
   public ItemController(ItemRepository itemRepository,
                         CurrentUserService currentUserService,
                         UserProfileRepository userProfileRepository,
+                        FileService fileService,
                         ItemImageService itemImageService,
                         ItemImageRepository itemImageRepository) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
     this.userProfileRepository = userProfileRepository;
+    this.fileService = fileService;
     this.itemImageService = itemImageService;
     this.itemImageRepository = itemImageRepository;
   }
@@ -234,9 +238,12 @@ public class ItemController {
    * if validation fails, or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
+  @Transactional
   public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
                                       @PathVariable Integer itemId,
-                                      @RequestBody ItemUpdateRequest request) {
+                                      @RequestPart("item") ItemUpdateRequest request,
+                                      @RequestPart(value = "file", required = false)
+                                      List<MultipartFile> files) {
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
@@ -264,6 +271,24 @@ public class ItemController {
     item.setDescription(request.getDescription().trim());
     item.setPrice(request.getPrice());
     item.setStock(request.getStock());
+
+    // IMAGES
+    // Get existing images
+    List<ItemImage> imgs = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+    int newFilesCount = (files != null) ? files.size() : 0;
+
+    // Update/add images
+    if (files != null && !files.isEmpty()) {
+      for (int i = 0; i < files.size(); i++) {
+        if (i < imgs.size()) { // Image already exists, overwrite it
+          fileService.overwrite(imgs.get(i).getImageUrl(), files.get(i));
+        }
+        else {
+          itemImageService.addImageToItem(files.get(i), item.getItemId(),
+              currentUser.get().getUserId(), i);
+        }
+      }
+    }
 
     Item saved = itemRepository.save(item);
     return ResponseEntity.ok(Map.of("item", saved));

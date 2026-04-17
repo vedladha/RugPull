@@ -38,5 +38,4 @@ public interface ItemImageRepository extends JpaRepository<ItemImage, Integer> {
 	 * @param itemId the ID of the item.
      */
     void deleteByItemId(Integer itemId);
-
 }
