@@ -507,224 +507,218 @@ describe("EarnPage", () => {
   });
 });
 
-        await waitFor(() => {
-            expect(screen.getByText("Mint Error: Unauthorized mint attempt")).toBeInTheDocument();
-        });
+// 10. Ad Feature: Start Session and Display Player
+it("starts an ad session and displays the video player", async () => {
+  const mockAdData = {
+    session: {
+      sessionId: "test-uuid-123",
+      title: "Healing Potion Ad",
+      durationSeconds: 15,
+      rewardAmount: 5.0,
+      videoUrl: "/ads/potion.mp4"
+    }
+  };
+
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) });
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<EarnPage />);
+
+  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+  await userEvent.click(startBtn);
+
+  await waitFor(() => {
+    expect(screen.getByText("Healing Potion Ad")).toBeInTheDocument();
+    expect(screen.getByText(/Reward: 5/i)).toBeInTheDocument();
+    const video = document.querySelector("video");
+    expect(video).toHaveAttribute("src", expect.stringContaining("/ads/potion.mp4"));
+    expect(video).toHaveAttribute("autoplay");
+  });
+});
+
+// 11. Ad Feature: Success Lifecycle & Redesigned Card
+it("claims reward after video ends and shows the redesigned success card", async () => {
+  const mockAdData = {
+    session: {
+      sessionId: "test-uuid-123",
+      title: "Ad",
+      durationSeconds: 1,
+      rewardAmount: 5.0,
+      videoUrl: "/v.mp4"
+    }
+  };
+
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<EarnPage />);
+
+  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+  await userEvent.click(startBtn);
+
+  // Manually trigger the 'ended' event on the video tag
+  const video = await waitFor(() => document.querySelector("video"));
+  video.dispatchEvent(new Event("ended"));
+
+  await waitFor(() => {
+    // Check for elements from the new success-card redesign
+    expect(screen.getByText("SUCCESS!")).toBeInTheDocument();
+    expect(screen.getByText("+5")).toBeInTheDocument();
+    expect(screen.getByText("Your tokens have been successfully deposited in your wallet.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /watch another ad/i })).toBeInTheDocument();
+  });
+});
+
+// 12. Ad Feature: Error Handling for Spoofing/Network
+it("shows error when the ad claim is rejected by the server", async () => {
+  const mockAdData = {
+    session: { sessionId: "bad-id", title: "Ad", durationSeconds: 30, rewardAmount: 5.0, videoUrl: "/v.mp4" }
+  };
+
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+    .mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ error: "Ad completion spoofing detected." })
     });
 
-    // 10. Ad Feature: Start Session and Display Player
-    it("starts an ad session and displays the video player", async () => {
-        const mockAdData = {
-            session: {
-                sessionId: "test-uuid-123",
-                title: "Healing Potion Ad",
-                durationSeconds: 15,
-                rewardAmount: 5.0,
-                videoUrl: "/ads/potion.mp4"
-            }
-        };
+  vi.stubGlobal("fetch", fetchMock);
 
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) });
+  render(<EarnPage />);
 
-        vi.stubGlobal("fetch", fetchMock);
+  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+  await userEvent.click(startBtn);
 
-        render(<EarnPage />);
+  const video = await waitFor(() => document.querySelector("video"));
+  video.dispatchEvent(new Event("ended"));
 
-        const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-        await userEvent.click(startBtn);
+  await waitFor(() => {
+    expect(screen.getByText("Claim Error: Ad completion spoofing detected.")).toBeInTheDocument();
+  });
+});
 
-        await waitFor(() => {
-            expect(screen.getByText("Healing Potion Ad")).toBeInTheDocument();
-            expect(screen.getByText(/Reward: 5/i)).toBeInTheDocument();
-            const video = document.querySelector("video");
-            expect(video).toHaveAttribute("src", expect.stringContaining("/ads/potion.mp4"));
-            expect(video).toHaveAttribute("autoplay");
-        });
+// 13. Ad Feature: Reset State
+it("resets back to idle state when 'Watch Another Ad' is clicked", async () => {
+  const mockAdData = {
+    session: { sessionId: "id", title: "Ad", durationSeconds: 1, rewardAmount: 5.0, videoUrl: "/v.mp4" }
+  };
+
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<EarnPage />);
+
+  // Go through the flow to reach the success card
+  await userEvent.click(await screen.findByRole("button", { name: /watch ad to earn/i }));
+  const video = await waitFor(() => document.querySelector("video"));
+  video.dispatchEvent(new Event("ended"));
+
+  // Click the reset button on the success card
+  const resetBtn = await screen.findByRole("button", { name: /watch another ad/i });
+  await userEvent.click(resetBtn);
+
+  // Verify we are back to the initial state
+  expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+  expect(screen.queryByText("SUCCESS!")).toBeNull();
+});
+
+// 14. Coverage: Initial Load Failure (Lines 76-77)
+it("logs error to console when initial daily fetch fails", async () => {
+  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Initial Fetch Failed")));
+
+  render(<EarnPage />);
+
+  await waitFor(() => {
+    expect(consoleSpy).toHaveBeenCalledWith("Error fetching daily status:", expect.any(Error));
+  });
+
+  consoleSpy.mockRestore();
+});
+
+// 15: 85-87 Coverage: handleWatchAd Network/Parse Failure
+it("handles fetch failure in handleWatchAd and sets error state", async () => {
+  // 1. Mock the initial daily load so the page renders
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ status: { claimed: true } })
+    })
+    // 2. Mock the ad start fetch to explode
+    .mockRejectedValueOnce(new Error("Network Connection Refused"));
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<EarnPage />);
+
+  // Click the button to trigger handleWatchAd
+  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+  await userEvent.click(startBtn);
+
+  // Verify the catch block logic executed
+  await waitFor(() => {
+    expect(screen.getByText(/Network Connection Refused/i)).toBeInTheDocument();
+    // Verify status went back to idle by checking if the start button is visible again
+    expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+  });
+});
+
+// 16. Coverage: handleDevMint Parse Error (Line 244)
+it("handles non-JSON error response in handleDevMint", async () => {
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+    .mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.reject(new Error("Syntax Error")), // Force line 244 catch
     });
 
-    // 11. Ad Feature: Success Lifecycle & Redesigned Card
-    it("claims reward after video ends and shows the redesigned success card", async () => {
-        const mockAdData = {
-            session: {
-                sessionId: "test-uuid-123",
-                title: "Ad",
-                durationSeconds: 1,
-                rewardAmount: 5.0,
-                videoUrl: "/v.mp4"
-            }
-        };
+  vi.stubGlobal("fetch", fetchMock);
 
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
+  render(<EarnPage />);
+  await userEvent.type(screen.getByPlaceholderText("Amount (e.g. 500)"), "100");
+  await userEvent.click(screen.getByRole("button", { name: "Execute Mint" }));
 
-        vi.stubGlobal("fetch", fetchMock);
+  await waitFor(() => {
+    expect(screen.getByText("Mint Error: Failed to fund wallet.")).toBeInTheDocument();
+  });
+});
 
-        render(<EarnPage />);
-
-        const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-        await userEvent.click(startBtn);
-
-        // Manually trigger the 'ended' event on the video tag
-        const video = await waitFor(() => document.querySelector("video"));
-        video.dispatchEvent(new Event("ended"));
-
-        await waitFor(() => {
-            // Check for elements from the new success-card redesign
-            expect(screen.getByText("SUCCESS!")).toBeInTheDocument();
-            expect(screen.getByText("+5")).toBeInTheDocument();
-            expect(screen.getByText("Your tokens have been successfully deposited in your wallet.")).toBeInTheDocument();
-            expect(screen.getByRole("button", { name: /watch another ad/i })).toBeInTheDocument();
-        });
+// 17. Coverage: handleWatchAd Server Error (Lines where !startRes.ok is true)
+it("throws and catches error when startRes is not ok", async () => {
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ status: { claimed: true } })
+    })
+    // 2. Mock a server error response (e.g., 500 Internal Server Error)
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 500
     });
 
-    // 12. Ad Feature: Error Handling for Spoofing/Network
-    it("shows error when the ad claim is rejected by the server", async () => {
-        const mockAdData = {
-            session: { sessionId: "bad-id", title: "Ad", durationSeconds: 30, rewardAmount: 5.0, videoUrl: "/v.mp4" }
-        };
+  vi.stubGlobal("fetch", fetchMock);
 
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-            .mockResolvedValueOnce({
-                ok: false,
-                json: () => Promise.resolve({ error: "Ad completion spoofing detected." })
-            });
+  render(<EarnPage />);
 
-        vi.stubGlobal("fetch", fetchMock);
+  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+  await userEvent.click(startBtn);
 
-        render(<EarnPage />);
-
-        const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-        await userEvent.click(startBtn);
-
-        const video = await waitFor(() => document.querySelector("video"));
-        video.dispatchEvent(new Event("ended"));
-
-        await waitFor(() => {
-            expect(screen.getByText("Claim Error: Ad completion spoofing detected.")).toBeInTheDocument();
-        });
-    });
-
-    // 13. Ad Feature: Reset State
-    it("resets back to idle state when 'Watch Another Ad' is clicked", async () => {
-        const mockAdData = {
-            session: { sessionId: "id", title: "Ad", durationSeconds: 1, rewardAmount: 5.0, videoUrl: "/v.mp4" }
-        };
-
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
-
-        vi.stubGlobal("fetch", fetchMock);
-
-        render(<EarnPage />);
-
-        // Go through the flow to reach the success card
-        await userEvent.click(await screen.findByRole("button", { name: /watch ad to earn/i }));
-        const video = await waitFor(() => document.querySelector("video"));
-        video.dispatchEvent(new Event("ended"));
-
-        // Click the reset button on the success card
-        const resetBtn = await screen.findByRole("button", { name: /watch another ad/i });
-        await userEvent.click(resetBtn);
-
-        // Verify we are back to the initial state
-        expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
-        expect(screen.queryByText("SUCCESS!")).toBeNull();
-    });
-
-    // 14. Coverage: Initial Load Failure (Lines 76-77)
-    it("logs error to console when initial daily fetch fails", async () => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-        vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Initial Fetch Failed")));
-
-        render(<EarnPage />);
-
-        await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith("Error fetching daily status:", expect.any(Error));
-        });
-
-        consoleSpy.mockRestore();
-    });
-
-    // 15: 85-87 Coverage: handleWatchAd Network/Parse Failure
-    it("handles fetch failure in handleWatchAd and sets error state", async () => {
-        // 1. Mock the initial daily load so the page renders
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve({ status: { claimed: true } })
-            })
-            // 2. Mock the ad start fetch to explode
-            .mockRejectedValueOnce(new Error("Network Connection Refused"));
-
-        vi.stubGlobal("fetch", fetchMock);
-
-        render(<EarnPage />);
-
-        // Click the button to trigger handleWatchAd
-        const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-        await userEvent.click(startBtn);
-
-        // Verify the catch block logic executed
-        await waitFor(() => {
-            expect(screen.getByText(/Network Connection Refused/i)).toBeInTheDocument();
-            // Verify status went back to idle by checking if the start button is visible again
-            expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
-        });
-    });
-
-    // 16. Coverage: handleDevMint Parse Error (Line 244)
-    it("handles non-JSON error response in handleDevMint", async () => {
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-            .mockResolvedValueOnce({
-                ok: false,
-                json: () => Promise.reject(new Error("Syntax Error")), // Force line 244 catch
-            });
-
-        vi.stubGlobal("fetch", fetchMock);
-
-        render(<EarnPage />);
-        await userEvent.type(screen.getByPlaceholderText("Amount (e.g. 500)"), "100");
-        await userEvent.click(screen.getByRole("button", { name: "Execute Mint" }));
-
-        await waitFor(() => {
-            expect(screen.getByText("Mint Error: Failed to fund wallet.")).toBeInTheDocument();
-        });
-    });
-
-    // 17. Coverage: handleWatchAd Server Error (Lines where !startRes.ok is true)
-    it("throws and catches error when startRes is not ok", async () => {
-        const fetchMock = vi.fn()
-            .mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve({ status: { claimed: true } })
-            })
-            // 2. Mock a server error response (e.g., 500 Internal Server Error)
-            .mockResolvedValueOnce({
-                ok: false,
-                status: 500
-            });
-
-        vi.stubGlobal("fetch", fetchMock);
-
-        render(<EarnPage />);
-
-        const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-        await userEvent.click(startBtn);
-
-        // This triggers the "if (!startRes.ok)" block and throws your custom string
-        await waitFor(() => {
-            expect(screen.getByText("Failed to secure an ad session.")).toBeInTheDocument();
-            // Confirm we went back to idle
-            expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
-        });
-    });
+  // This triggers the "if (!startRes.ok)" block and throws your custom string
+  await waitFor(() => {
+    expect(screen.getByText("Failed to secure an ad session.")).toBeInTheDocument();
+    // Confirm we went back to idle
+    expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+  });
 });
