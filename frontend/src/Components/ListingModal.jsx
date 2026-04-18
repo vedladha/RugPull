@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import RatingsSummary from "./RatingsSummary.jsx";
 import "../style/listing-modal.css";
+import "../style/rating.css";
 
 const API = "http://localhost:3001";
 
@@ -12,8 +14,8 @@ export default function ListingModal({
   wishlistBusy = false,
   wishlistError = "",
   wishlistSuccess = "",
+  rating,
 }) {
-  console.log(listing);
   const navigate = useNavigate();
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartFeedback, setCartFeedback] = useState("");
@@ -168,7 +170,7 @@ export default function ListingModal({
               className="card-image"
             />
           ) : (
-          <div className="placeholder-image">No images available</div>
+            <div className="placeholder-image">No images available</div>
           )}
         </div>
 
@@ -185,6 +187,13 @@ export default function ListingModal({
             <div className="listing-modal-price">${parseFloat(listing.price).toFixed(2)}</div>
             <div className="listing-modal-seller">Seller: {listing.sellerName || listing.seller}</div>
           </div>
+
+          {rating && (
+            <RatingsSummary
+              average={rating.average}
+              total={rating.total}
+            />
+          )}
 
           <div className="listing-modal-stock-row">
             <div className={`listing-modal-stock ${isSoldOut ? "listing-modal-stock-sold-out" : ""}`}>

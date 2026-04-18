@@ -22,6 +22,7 @@ beforeEach(() => {
         getWishlist: vi.fn(),
         addToWishlist: vi.fn(),
         removeFromWishlist: vi.fn(),
+        getItemRatings: vi.fn().mockResolvedValue({ average: 0, total: 0, distribution: {} }),
     });
 });
 
@@ -176,6 +177,7 @@ describe("Listings", () => {
             getWishlist,
             addToWishlist,
             removeFromWishlist: vi.fn(),
+            getItemRatings: vi.fn().mockResolvedValue({ average: 0, total: 0, distribution: {} }),
         });
 
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
@@ -207,6 +209,7 @@ describe("Listings", () => {
             getWishlist,
             addToWishlist: vi.fn(),
             removeFromWishlist,
+            getItemRatings: vi.fn().mockResolvedValue({ average: 0, total: 0, distribution: {} }),
         });
 
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({

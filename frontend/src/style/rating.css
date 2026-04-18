@@ -1,0 +1,63 @@
+.star-rating {
+  display: inline-block;
+  position: relative;
+  font-family: Arial, sans-serif;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+.star-rating-empty {
+  color: var(--muted);
+}
+.star-rating-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--amber);
+}
+.star-rating-small {
+  font-size: 0.85rem;
+}
+.star-rating-medium {
+  font-size: 1.1rem;
+}
+.star-rating-large {
+  font-size: 1.4rem;
+}
+
+.ratings-summary {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+.ratings-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.4rem;
+}
+.ratings-summary-average {
+  font-family: var(--font-head);
+  font-weight: 700;
+  color: var(--white);
+  font-size: 0.95rem;
+}
+.ratings-summary-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.listing-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}

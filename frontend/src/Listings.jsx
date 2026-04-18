@@ -4,7 +4,7 @@ import ListingModal from "./Components/ListingModal.jsx";
 import { useAuth } from "./Auth/auth-context";
 
 export default function Listings() {
-  const { user, getWishlist, addToWishlist, removeFromWishlist } = useAuth();
+  const { user, getWishlist, addToWishlist, removeFromWishlist, getItemRatings } = useAuth();
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,12 +16,34 @@ export default function Listings() {
   const [wishlistError, setWishlistError] = useState("");
   const [wishlistSuccess, setWishlistSuccess] = useState("");
   const [wishlistBusyItemId, setWishlistBusyItemId] = useState(null);
+  const [ratingsByItemId, setRatingsByItemId] = useState({});
 
   const API = "http://localhost:3001";
 
   useEffect(() => {
     fetchListings();
   }, []);
+
+  useEffect(() => {
+    if (listings.length === 0) {
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      listings.map((listing) =>
+        getItemRatings(listing.itemId)
+          .then((data) => [listing.itemId, data])
+          .catch(() => [listing.itemId, { average: 0, total: 0, distribution: {} }]),
+      ),
+    ).then((entries) => {
+      if (!cancelled) {
+        setRatingsByItemId(Object.fromEntries(entries));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [listings, getItemRatings]);
 
   useEffect(() => {
     if (!user) {
@@ -82,7 +104,6 @@ export default function Listings() {
     };
 
     filterListings();
-    console.log(listings);
   }, [listings, priceFilter, keywordFilter]);
 
   const fetchListings = async () => {
@@ -246,6 +267,7 @@ export default function Listings() {
               stock={listing.stock}
               seller={listing.sellerName}
               thumbnail_url={listing.thumbnailUrl}
+              rating={ratingsByItemId[listing.itemId]}
               onClick={() => handleOpenListing(listing)}
             />
           ))
@@ -261,6 +283,7 @@ export default function Listings() {
           wishlistBusy={wishlistBusyItemId === selectedListing.id}
           wishlistError={wishlistError}
           wishlistSuccess={wishlistSuccess}
+          rating={ratingsByItemId[selectedListing.itemId]}
         />
       )}
     </div>
