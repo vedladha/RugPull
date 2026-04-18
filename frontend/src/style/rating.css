@@ -6,7 +6,7 @@
   letter-spacing: 0.08em;
 }
 .star-rating-empty {
-  color: var(--border);
+  color: var(--muted);
 }
 .star-rating-fill {
   position: absolute;
