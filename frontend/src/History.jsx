@@ -66,18 +66,18 @@ export default function History() {
 
   const filtered = useMemo(() => {
     let result =
-      filter === "all" ? history : history.filter((i) => i.type === filter);
+      filter === "all" ? history : history.filter((i) => i.orderType === filter);
 
     result = [...result].sort((a, b) => {
       switch (sort) {
         case "date-asc":
-          return new Date(a.date) - new Date(b.date);
+          return new Date(a.createdAt) - new Date(b.createdAt);
         case "date-desc":
-          return new Date(b.date) - new Date(a.date);
+          return new Date(b.createdAt) - new Date(a.createdAt);
         case "amount-asc":
-          return a.amount - b.amount;
+          return a.totalPrice - b.totalPrice;
         case "amount-desc":
-          return b.amount - a.amount;
+          return b.totalPrice - a.totalPrice;
         default:
           return 0;
       }
@@ -193,13 +193,13 @@ export default function History() {
           <p className="no-history">No transactions found.</p>
         ) : (
           filtered.map((item) => (
-            <div key={item.id} className={`history-item ${item.type}`}>
+            <div key={item.id} className={`history-item ${item.orderType}`}>
               <div className="item-type-chip">
                 {item.orderType === "buy" ? "Purchase" : "Sale"}
               </div>
               <div className="item-header">
                 <span className="item-title">{item.itemName}</span>
-                <span className={`item-amount ${item.type}`}>
+                <span className={`item-amount ${item.orderType}`}>
                   {item.orderType === "buy" ? "−" : "+"}
                   {formatAmount(item.totalPrice)}
                 </span>
