@@ -15,14 +15,11 @@ import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
 import edu.wisc.t32.repository.UserWalletRepository;
 import java.math.BigDecimal;
-<<<<<<< HEAD
-import java.util.Comparator;
-import java.util.HashSet;
-=======
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
->>>>>>> b7f69a2c5502f87c031455906734d06ce93cb137
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -124,8 +121,6 @@ public class OrderService {
   }
 
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
    * Gets all transactions related to the user (sales and purchases)
    *
    * @param currentUser the authenticated user to get the transaction history of
@@ -148,11 +143,9 @@ public class OrderService {
    * Checks that the quantity is valid for the current stock of an item
    * and reduces the stock by that quantity.
    * 
-=======
    * Checks that the quantity is valid for the current stock of an item and reduces the stock by
    * that quantity.
    *
->>>>>>> b7f69a2c5502f87c031455906734d06ce93cb137
    * @param item The item to check the stock of
    * @param quantity The quantity of the item wanted
    * @throws InsufficientStockException when there is less stock than the quantity requested
