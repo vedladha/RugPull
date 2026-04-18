@@ -13,6 +13,7 @@ export default function ListingModal({
   wishlistError = "",
   wishlistSuccess = "",
 }) {
+  console.log(listing);
   const navigate = useNavigate();
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartFeedback, setCartFeedback] = useState("");

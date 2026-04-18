@@ -1,10 +1,12 @@
 package edu.wisc.t32.controller;
 
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.model.Wishlist;
 import edu.wisc.t32.model.WishlistId;
+import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.WishlistRepository;
@@ -34,6 +36,7 @@ public class WishlistController {
 
   private final WishlistRepository wishlistRepository;
   private final ItemRepository itemRepository;
+  private final ItemImageRepository itemImageRepository;
   private final UserProfileRepository userProfileRepository;
   private final CurrentUserService currentUserService;
 
@@ -48,10 +51,12 @@ public class WishlistController {
   public WishlistController(
       WishlistRepository wishlistRepository,
       ItemRepository itemRepository,
+      ItemImageRepository itemImageRepository,
       UserProfileRepository userProfileRepository,
       CurrentUserService currentUserService) {
     this.wishlistRepository = wishlistRepository;
     this.itemRepository = itemRepository;
+    this.itemImageRepository = itemImageRepository;
     this.userProfileRepository = userProfileRepository;
     this.currentUserService = currentUserService;
   }
@@ -111,6 +116,14 @@ public class WishlistController {
           map.put("description", item.getDescription());
           map.put("price", item.getPrice());
           map.put("stock", item.getStock());
+          
+          List<ItemImage> images =
+              itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+          if (!images.isEmpty()) {
+            map.put("thumbnailUrl", images.get(0).getImageUrl());
+          } else {
+            map.put("thumbnailUrl", null);
+          }
 
           UserProfile seller = userProfileRepository.findByUserId(item.getUserId());
           map.put("sellerName", seller != null ? seller.getDisplayName() : "Unknown seller");

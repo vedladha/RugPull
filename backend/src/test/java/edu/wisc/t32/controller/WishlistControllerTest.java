@@ -12,6 +12,7 @@ import edu.wisc.t32.model.User;
 import edu.wisc.t32.model.UserProfile;
 import edu.wisc.t32.model.Wishlist;
 import edu.wisc.t32.model.WishlistId;
+import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.repository.WishlistRepository;
@@ -36,6 +37,9 @@ class WishlistControllerTest {
   private WishlistRepository wishlistRepository;
 
   @Mock
+  private ItemImageRepository itemImageRepository;
+
+  @Mock
   private ItemRepository itemRepository;
 
   @Mock
@@ -48,7 +52,6 @@ class WishlistControllerTest {
   private WishlistController wishlistController;
 
   // --- GET /wishlist ---
-
   @Test
   void getWishlist_returnsWishlistEntries_whenAuthenticated() {
     User user = new User();
@@ -120,6 +123,9 @@ class WishlistControllerTest {
     item.setPrice(new BigDecimal("5.20"));
     item.setStock(2);
 
+    edu.wisc.t32.model.ItemImage image = new edu.wisc.t32.model.ItemImage();
+    image.setImageUrl("/test-image.jpg");
+
     UserProfile seller = new UserProfile();
     seller.setDisplayName("john");
 
@@ -127,6 +133,8 @@ class WishlistControllerTest {
     when(wishlistRepository.findByUserId(1)).thenReturn(List.of(wishlistEntry));
     when(itemRepository.findByItemIdInAndDeletedFalse(List.of(10))).thenReturn(List.of(item));
     when(userProfileRepository.findByUserId(5)).thenReturn(seller);
+    
+    when(itemImageRepository.findByItemIdOrderByPositionAsc(10)).thenReturn(List.of(image));
 
     ResponseEntity<?> response = wishlistController.getWishlistItems(VALID_TOKEN);
 
@@ -140,6 +148,7 @@ class WishlistControllerTest {
     assertEquals(10, wishlistItem.get("itemId"));
     assertEquals("Guitar", wishlistItem.get("name"));
     assertEquals("john", wishlistItem.get("sellerName"));
+    assertEquals("/test-image.jpg", wishlistItem.get("thumbnailUrl"));
   }
 
   @Test
