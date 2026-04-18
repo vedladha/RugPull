@@ -275,7 +275,7 @@ class RatingControllerTest {
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     verify(ratingRepository, never()).save(any(Rating.class));
-  }
+    }
 
   @Test
   void deleteRating_returnsNotFound_whenNoRating() {
