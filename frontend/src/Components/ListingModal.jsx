@@ -192,7 +192,6 @@ export default function ListingModal({
             <RatingsSummary
               average={rating.average}
               total={rating.total}
-              distribution={rating.distribution}
             />
           )}
 
