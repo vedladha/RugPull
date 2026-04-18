@@ -31,14 +31,11 @@
   border-radius: 4px;
   padding: 1rem;
   margin-bottom: 1.5rem;
-}
-.ratings-summary-header {
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.4rem;
+  flex-direction: column;
+  gap: 0.4rem;
 }
-.ratings-summary-average {
+.ratings-summary-label {
   font-family: var(--font-head);
   font-weight: 700;
   color: var(--white);
