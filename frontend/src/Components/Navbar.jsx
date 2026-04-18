@@ -1,20 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context";
-import { useEffect, useState } from "react";
 
 export default function Navbar({ currentPage }) {
-  const { user, walletBalance, signOut } = useAuth();
-  const [balance, setBalance] = useState(null);
+  const { user, userBalance, signOut } = useAuth();
   const navigate = useNavigate();
-
-
-  useEffect(() => {
-    if (user) {
-      walletBalance()
-        .then((fetchedBalance) => setBalance(fetchedBalance))
-        .catch((err) => console.error("Failed to load balance in nav:", err));
-    }
-  }, [user, walletBalance]);
 
 
   return (
@@ -61,8 +50,8 @@ export default function Navbar({ currentPage }) {
         }
         <button className="nav-btn">About</button>
       </div>
-      {user && balance !== null && (
-        <div className="nav-user">Balance: {balance.toFixed(2)} RPC</div>
+      {user && userBalance !== null && (
+        <div className="nav-user">Balance: {userBalance} RPC</div>
       )}
       {user && <Link to="/profile" style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="nav-user">Hello, {user.displayName}!</div>

@@ -41,7 +41,7 @@ public class DailyRewardController {
   private final RpcWalletService walletService;
 
   /**
-   * represents a new daily reward controller.
+   * Creates a new daily reward controller.
    *
    * @param currentUserService    the current user service
    * @param userWalletRepository  the wallet repository

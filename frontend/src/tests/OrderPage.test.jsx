@@ -28,14 +28,16 @@ describe("OrderPage", () => {
 
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn().mockResolvedValue(250),
+      userBalance: 250,
+      updateUserBalance: vi.fn().mockResolvedValue(250),
     });
   });
 
   it("renders a sign-in prompt when the user is not authenticated", () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      walletBalance: vi.fn(),
+      userBalance: null,
+      updateUserBalance: vi.fn().mockResolvedValue(null),
     });
 
     renderOrderPage({
@@ -60,7 +62,8 @@ describe("OrderPage", () => {
   it("renders the empty checkout state when opened without order data", () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn(() => new Promise(() => {})),
+      userBalance: 250,
+      updateUserBalance: vi.fn().mockResolvedValue(250),
     });
 
     renderOrderPage(undefined);
@@ -336,7 +339,8 @@ describe("OrderPage", () => {
   it("shows an unavailable wallet state when the balance request fails", async () => {
     mockUseAuth.mockReturnValue({
       user: { userId: 1, displayName: "buyer" },
-      walletBalance: vi.fn().mockRejectedValue(new Error("Wallet unavailable")),
+      userBalance: null,
+      updateUserBalance: vi.fn().mockResolvedValue(null),
     });
 
     renderOrderPage({
@@ -355,5 +359,32 @@ describe("OrderPage", () => {
     });
 
     expect(await screen.findByText("Unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Place order" })).toBeDisabled();
+  });
+
+  it("blocks checkout when the known balance is below the order total", async () => {
+    mockUseAuth.mockReturnValue({
+      user: { userId: 1, displayName: "buyer" },
+      userBalance: 10,
+      updateUserBalance: vi.fn().mockResolvedValue(10),
+    });
+
+    renderOrderPage({
+      source: "listing",
+      items: [
+        {
+          itemId: 9,
+          name: "Ledger Wallet",
+          description: "Hardware wallet",
+          price: 49.99,
+          sellerName: "Alice",
+          stock: 3,
+          quantity: 1,
+        },
+      ],
+    });
+
+    expect(await screen.findByText("Insufficient RPC balance for this order.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Place order" })).toBeDisabled();
   });
 });

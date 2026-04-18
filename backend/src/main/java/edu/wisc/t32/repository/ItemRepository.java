@@ -21,7 +21,7 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
    *
    * @param itemId the unique identifier of the item to search for
    * @return an {@link Optional} containing the item if it exists and is not deleted, or an empty
-   * Optional otherwise
+   *     {@link Optional} otherwise
    */
   Optional<Item> findByItemIdAndDeletedFalse(Integer itemId);
 
@@ -45,6 +45,14 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT item FROM Item item WHERE item.itemId = :itemId AND item.deleted = false")
   Optional<Item> findByItemIdAndDeletedFalseForUpdate(@Param("itemId") Integer itemId);
+
+  /**
+   * Finds a list of items by the given user id.
+   *
+   * @param userId the user id
+   * @return the items that belong to the given user
+   */
+  List<Item> findByUserId(Integer userId);
 
   /**
    * Retrieves all active items from the database.

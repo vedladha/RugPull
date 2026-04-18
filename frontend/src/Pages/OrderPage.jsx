@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/order-page.css";
@@ -46,14 +46,30 @@ function normalizeItems(state) {
 export default function OrderPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, walletBalance } = useAuth();
+  const { user, userBalance, updateUserBalance } = useAuth();
 
   const [orderItems, setOrderItems] = useState(() => normalizeItems(location.state));
-  const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
   const [successfulOrder, setSuccessfulOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const reloadWallet = useCallback(async () => {
+    if (!user) return;
+
+    setWalletLoading(true);
+    try {
+      const balance = await updateUserBalance();
+      if (balance === null) {
+        setWalletError("Unable to load wallet balance");
+      } else {
+        setWalletError("");
+      }
+    } finally {
+      setWalletLoading(false);
+    }
+  }, [user, updateUserBalance]);
 
   useEffect(() => {
     setOrderItems(normalizeItems(location.state));
@@ -63,26 +79,27 @@ export default function OrderPage() {
 
   useEffect(() => {
     if (!user) {
-      setWallet(null);
+      setWalletLoading(false);
+      setWalletError("");
       return;
     }
-
-    walletBalance()
-      .then((balance) => {
-        setWallet(balance);
-        setWalletError("");
-      })
-      .catch((error) => {
-        setWallet(null);
-        setWalletError(error.message || "Unable to load wallet balance");
-      });
-  }, [user, walletBalance]);
+    reloadWallet();
+  }, [user, reloadWallet]);
 
   const subtotal = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const total = subtotal;
   const totalQuantity = orderItems.reduce((count, item) => count + item.quantity, 0);
   const sourceLabel = location.state?.source === "cart" ? "cart checkout" : "buy it now";
   const hasUnavailableItems = orderItems.some((item) => item.stock !== null && item.stock <= 0);
+  const insufficientBalance = userBalance !== null && userBalance < total;
+  const isWalletUnavailable = walletError !== "" || userBalance === null;
+  const isCheckoutDisabled =
+    submitting
+    || orderItems.length === 0
+    || hasUnavailableItems
+    || walletLoading
+    || isWalletUnavailable
+    || insufficientBalance;
 
   const updateQuantity = (itemId, nextQuantity) => {
     setOrderItems((currentItems) =>
@@ -120,19 +137,6 @@ export default function OrderPage() {
       setSubmissionError("");
     } catch (error) {
       setSubmissionError(error.message || "Failed to remove item");
-    }
-  };
-
-  const reloadWallet = async () => {
-    if (!user) return;
-
-    try {
-      const balance = await walletBalance();
-      setWallet(balance);
-      setWalletError("");
-    } catch (error) {
-      setWallet(null);
-      setWalletError(error.message || "Unable to load wallet balance");
     }
   };
 
@@ -374,18 +378,32 @@ export default function OrderPage() {
             <div className="order-balance-card">
               <span className="order-balance-label">Wallet balance</span>
               <strong>
-                {walletError
+                {walletLoading
+                  ? "Loading..."
+                  : walletError
                   ? "Unavailable"
-                  : wallet !== null
-                    ? `${wallet.toFixed(2)} RPC`
-                    : "Loading..."}
+                  : userBalance !== null
+                    ? `${userBalance.toFixed(2)} RPC`
+                    : "Unavailable"}
               </strong>
               <p>
-                {wallet !== null
-                  ? `After this order: ${(wallet - total).toFixed(2)} RPC`
+                {userBalance !== null
+                  ? `After this order: ${(userBalance - total).toFixed(2)} RPC`
                   : "The wallet total refreshes again after successful checkout."}
               </p>
             </div>
+
+            {walletError && (
+              <div className="order-feedback order-feedback-error" role="alert">
+                {walletError}
+              </div>
+            )}
+
+            {!walletError && insufficientBalance && (
+              <div className="order-feedback order-feedback-error" role="alert">
+                Insufficient RPC balance for this order.
+              </div>
+            )}
 
             {hasUnavailableItems && (
               <div className="order-feedback order-feedback-error" role="alert">
@@ -397,7 +415,7 @@ export default function OrderPage() {
               type="button"
               className="btn-primary order-submit-btn"
               onClick={handlePlaceOrder}
-              disabled={submitting || orderItems.length === 0 || hasUnavailableItems}
+              disabled={isCheckoutDisabled}
             >
               {submitting
                 ? "Placing order..."

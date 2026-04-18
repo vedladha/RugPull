@@ -63,7 +63,7 @@ class DailyRewardControllerTest {
   // --- getDailyRewardStatus Tests ---
 
   @Test
-  void getDailyRewardStatus_ReturnsFalse_AtExactly24Hours() {
+  void getDailyRewardStatusReturnsFalseAtExactly24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     reward.setStreak(5);
@@ -79,7 +79,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void getDailyRewardStatus_ReturnsTrue_WhenUnder24Hours() {
+  void getDailyRewardStatusReturnsTrueWhenUnder24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     reward.setStreak(10);
@@ -96,7 +96,7 @@ class DailyRewardControllerTest {
   // --- claimDailyReward Tests ---
 
   @Test
-  void claimDailyReward_Success_ContinuesStreak() {
+  void claimDailyRewardSuccessContinuesStreak() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
 
     DailyReward reward = new DailyReward();
@@ -121,7 +121,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_Success_ResetsStreakWhenGracePeriodExceeded() {
+  void claimDailyRewardSuccessResetsStreakWhenGracePeriodExceeded() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
 
     DailyReward reward = new DailyReward();
@@ -146,7 +146,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_Success_ForNewUser() {
+  void claimDailyRewardSuccessForNewUser() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     when(dailyRewardRepository.findById(42)).thenReturn(Optional.empty());
     when(userWalletRepository.findUserWalletByUserId(42)).thenReturn(Optional.of(mockWallet));
@@ -162,7 +162,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_BadRequest_WhenUnder24Hours() {
+  void claimDailyRewardBadRequestWhenUnder24Hours() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(23));
@@ -175,7 +175,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_InternalError_WhenRpcFails() {
+  void claimDailyRewardInternalErrorWhenRpcFails() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
 
     DailyReward reward = new DailyReward();
@@ -194,7 +194,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_InternalError_WhenWalletNotFound() {
+  void claimDailyRewardInternalErrorWhenWalletNotFound() {
     when(currentUserService.getAuthenticatedUser(JWT)).thenReturn(Optional.of(mockUser));
     DailyReward reward = new DailyReward();
     reward.setClaimedLast(LocalDateTime.now(UTC).minusHours(25));
@@ -210,7 +210,7 @@ class DailyRewardControllerTest {
   // --- Authentication Return Tests ---
 
   @Test
-  void getDailyRewardStatus_ReturnsUnauthorized_WhenTokenIsMissingOrInvalid() {
+  void getDailyRewardStatusReturnsUnauthorizedWhenTokenIsMissingOrInvalid() {
     when(currentUserService.getAuthenticatedUser(any())).thenReturn(Optional.empty());
     ResponseEntity<?> response = dailyRewardController.getDailyRewardStatus(null);
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
@@ -218,7 +218,7 @@ class DailyRewardControllerTest {
   }
 
   @Test
-  void claimDailyReward_ReturnsUnauthorized_WhenTokenIsMissingOrInvalid() {
+  void claimDailyRewardReturnsUnauthorizedWhenTokenIsMissingOrInvalid() {
     when(currentUserService.getAuthenticatedUser(any())).thenReturn(Optional.empty());
     ResponseEntity<?> response = dailyRewardController.claimDailyReward("invalid-token");
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());

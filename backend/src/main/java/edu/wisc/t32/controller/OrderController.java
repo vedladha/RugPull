@@ -152,8 +152,7 @@ public class OrderController {
           .body(Map.of("error", "Authentication required"));
     }
 
-    Optional<Order> existing = 
-        orderRepository.findByOrderIdAndUser(orderId, currentUser.get());
+    Optional<Order> existing = orderRepository.findByOrderIdAndUser(orderId, currentUser.get());
     if (existing.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Order not found"));
     }
@@ -175,9 +174,15 @@ public class OrderController {
       return "Items are required.";
     }
     for (OrderCreateRequest.ItemRequest itemRequest : request.getItems()) {
-      if (itemRequest.getItemId() == null) { return "An itemId is required for all items."; }
-      if (itemRequest.getQuantity() == null) { return "Quantity is required for all items."; }
-      if (itemRequest.getQuantity() <= 0) { return "Quantity must be greater than 0 for all items."; }
+      if (itemRequest.getItemId() == null) {
+        return "An itemId is required for all items.";
+      }
+      if (itemRequest.getQuantity() == null) {
+        return "Quantity is required for all items.";
+      }
+      if (itemRequest.getQuantity() <= 0) {
+        return "Quantity must be greater than 0 for all items.";
+      }
     }
 
     return null;

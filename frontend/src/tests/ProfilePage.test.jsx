@@ -16,10 +16,11 @@ describe("ProfilePage", () => {
     beforeEach(() => {
         mockUseAuth.mockReturnValue({
             user: { email: "test@example.com" },
+            userBalance: -99.99,
+            updateUserBalance: vi.fn(),
             profileDetails: mockProfileDetails,
             updateProfile: mockUpdateProfile,
             changePassword: mockChangePassword,
-            walletBalance: vi.fn().mockResolvedValue(-999.99)
         });
 
         mockProfileDetails.mockResolvedValue({
@@ -48,7 +49,7 @@ describe("ProfilePage", () => {
     it("displays the current balance", async () => {
         render(<ProfilePage />);
         await waitFor(() => {
-            expect(screen.getByText(/-999\.99/)).toBeDefined();
+            expect(screen.getByText(/-99\.99/)).toBeDefined();
         });
     });
 

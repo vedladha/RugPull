@@ -5,11 +5,14 @@ import edu.wisc.t32.dto.ItemCreateRequest;
 import edu.wisc.t32.dto.ItemModelDto;
 import edu.wisc.t32.dto.ItemUpdateRequest;
 import edu.wisc.t32.model.Item;
+import edu.wisc.t32.model.ItemImage;
 import edu.wisc.t32.model.User;
-import edu.wisc.t32.model.UserProfile;
+import edu.wisc.t32.repository.ItemImageRepository;
 import edu.wisc.t32.repository.ItemRepository;
 import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
+import edu.wisc.t32.services.FileService;
+import edu.wisc.t32.services.ItemImageService;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -20,19 +23,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST controller for managing item entities.
- * Provides endpoints for creating, retrieving, updating, and soft-deleting items.
+ * Provides endpoints for creating, retrieving, updating, patching, and soft-deleting items.
  */
 @RestController
 @RequestMapping("/items")
@@ -43,6 +50,9 @@ public class ItemController {
   private final ItemRepository itemRepository;
   private final CurrentUserService currentUserService;
   private final UserProfileRepository userProfileRepository;
+  private final FileService fileService;
+  private final ItemImageService itemImageService;
+  private final ItemImageRepository itemImageRepository;
 
   /**
    * Constructs an ItemController with the necessary repository dependency.
@@ -53,10 +63,16 @@ public class ItemController {
    */
   public ItemController(ItemRepository itemRepository,
                         CurrentUserService currentUserService,
-                        UserProfileRepository userProfileRepository) {
+                        UserProfileRepository userProfileRepository,
+                        FileService fileService,
+                        ItemImageService itemImageService,
+                        ItemImageRepository itemImageRepository) {
     this.itemRepository = itemRepository;
     this.currentUserService = currentUserService;
     this.userProfileRepository = userProfileRepository;
+    this.fileService = fileService;
+    this.itemImageService = itemImageService;
+    this.itemImageRepository = itemImageRepository;
   }
 
   /**
@@ -69,8 +85,12 @@ public class ItemController {
    * or a 400 (BAD REQUEST) with an error message if validation fails
    */
   @PostMapping
+  @Transactional
   public ResponseEntity<?> createItem(@CookieValue(name = "jwt", required = false) String token,
-                                      @RequestBody ItemCreateRequest request) {
+                                      @RequestPart("item") ItemCreateRequest request,
+                                      @RequestPart(value = "file", required = false)
+                                      List<MultipartFile> files) {
+    // Authentication
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
@@ -82,16 +102,25 @@ public class ItemController {
       return ResponseEntity.badRequest().body(Map.of("error", validationError));
     }
 
+    // Create item
     Item item = new Item();
     item.setUserId(currentUser.get().getUserId());
     item.setName(request.getName().trim());
     item.setDescription(request.getDescription().trim());
     item.setPrice(request.getPrice());
     item.setStock(request.getStock());
+    Item savedItem = itemRepository.save(item);
 
-    Item saved = itemRepository.save(item);
+    // Create item image if there is one
+    if (files != null && !files.isEmpty()) {
+      for (int i = 0; i < files.size(); i++) {
+        itemImageService.addImageToItem(files.get(i), savedItem.getItemId(),
+            currentUser.get().getUserId(), i);
+      }
+    }
+
     return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("item",
-        saved));
+        savedItem));
   }
 
   /**
@@ -110,8 +139,16 @@ public class ItemController {
           map.put("description", item.getDescription());
           map.put("price", item.getPrice());
           map.put("stock", item.getStock());
-          UserProfile seller = userProfileRepository.findByUserId(item.getUserId());
-          map.put("sellerName", seller.getDisplayName());
+          map.put("sellerName",
+              userProfileRepository.findByUserId(item.getUserId()).getDisplayName());
+
+          List<ItemImage> images =
+              itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+          if (!images.isEmpty()) {
+            map.put("thumbnailUrl", images.get(0).getImageUrl());
+          } else {
+            map.put("thumbnailUrl", null); // Or a placeholder image link
+          }
           return map;
         })
         .collect(Collectors.toList());
@@ -138,7 +175,11 @@ public class ItemController {
           .body(Map.of("error", "No item's founding matching input list"));
     }
 
-    response.setItems(items.stream().map(ItemModelDto::fromItem).toList());
+    response.setItems(items.stream().map((item) -> {
+      List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+      ItemImage image = !images.isEmpty() ? images.getFirst() : null;
+      return ItemModelDto.fromItem(item, image);
+    }).toList());
     return ResponseEntity.ok(response);
   }
 
@@ -152,11 +193,39 @@ public class ItemController {
   @GetMapping("/{itemId}")
   public ResponseEntity<?> getItem(@PathVariable Integer itemId) {
     Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+
     if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "Item not found"));
+    }
+
+    Item item = existing.get();
+
+    // Fetch all images for this specific item
+    List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("item", item);
+    response.put("images", images);
+
+    return ResponseEntity.ok(response);
+  }
+
+  /**
+   * Retrieves an ItemImage list of images associated with the itemId.
+   *
+   * @param itemId item to find the images for
+   * @return a {@link ResponseEntity} containing a list of ItemImages, or a 404 NOT FOUND
+   * if there are no images
+   */
+  @GetMapping("/{itemId}/images")
+  public ResponseEntity<?> getItemImages(@PathVariable Integer itemId) {
+    List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+    if (images.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
           "Item not found"));
     }
-    return ResponseEntity.ok(Map.of("item", existing.get()));
+    return ResponseEntity.ok(Map.of("images", images));
   }
 
   /**
@@ -166,12 +235,15 @@ public class ItemController {
    * @param itemId  the unique identifier of the item to update
    * @param request the data transfer object containing the updated item details
    * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
-   * if validation fails,  or a 404 NOT FOUND if the item does not exist
+   * if validation fails, or a 404 NOT FOUND if the item does not exist
    */
   @PutMapping("/{itemId}")
+  @Transactional
   public ResponseEntity<?> updateItem(@CookieValue(name = "jwt", required = false) String token,
                                       @PathVariable Integer itemId,
-                                      @RequestBody ItemUpdateRequest request) {
+                                      @RequestPart("item") ItemUpdateRequest request,
+                                      @RequestPart(value = "file", required = false)
+                                      List<MultipartFile> files) {
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
@@ -200,7 +272,88 @@ public class ItemController {
     item.setPrice(request.getPrice());
     item.setStock(request.getStock());
 
+    // IMAGES
+    // Get existing images
+    List<ItemImage> imgs = itemImageRepository.findByItemIdOrderByPositionAsc(itemId);
+    int newFilesCount = (files != null) ? files.size() : 0;
+
+    // Update/add images
+    if (files != null && !files.isEmpty()) {
+      for (int i = 0; i < files.size(); i++) {
+        if (i < imgs.size()) { // Image already exists, overwrite it
+          fileService.overwrite(imgs.get(i).getImageUrl(), files.get(i));
+        }
+        else {
+          itemImageService.addImageToItem(files.get(i), item.getItemId(),
+              currentUser.get().getUserId(), i);
+        }
+      }
+    }
+
     Item saved = itemRepository.save(item);
+    return ResponseEntity.ok(Map.of("item", saved));
+  }
+
+  /**
+   * Performs a partial update for an existing, active item.
+   * Only the fields provided in the request body will be modified.
+   *
+   * @param itemId  the unique identifier of the item to update
+   * @param request the data transfer object containing the fields to update
+   * @return a {@link ResponseEntity} containing the updated item, a 400 BAD REQUEST
+   * if validation fails, or a 404 NOT FOUND if the item does not exist
+   */
+  @PatchMapping("/{itemId}")
+  public ResponseEntity<?> patchItem(@CookieValue(name = "jwt", required = false) String token,
+                                     @PathVariable Integer itemId,
+                                     @RequestPart(value = "item", required = false)
+                                     ItemUpdateRequest request,
+                                     @RequestPart(value = "file", required = false)
+                                     List<MultipartFile> files) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
+    Optional<Item> existing = itemRepository.findByItemIdAndDeletedFalse(itemId);
+    if (existing.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error",
+          "Item not found"));
+    }
+
+    Item item = existing.get();
+    if (!item.getUserId().equals(currentUser.get().getUserId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error",
+          "You do not own this item"));
+    }
+
+    String validationError = validatePatch(request);
+    if (validationError != null) {
+      return ResponseEntity.badRequest().body(Map.of("error", validationError));
+    }
+
+    if (request.getName() != null) {
+      item.setName(request.getName().trim());
+    }
+    if (request.getDescription() != null) {
+      item.setDescription(request.getDescription().trim());
+    }
+    if (request.getPrice() != null) {
+      item.setPrice(request.getPrice());
+    }
+    if (request.getStock() != null) {
+      item.setStock(request.getStock());
+    }
+
+    Item saved = itemRepository.save(item);
+    if (files != null && !files.isEmpty()) {
+      for (int i = 0; i < files.size(); i++) {
+        itemImageService.addImageToItem(files.get(i), saved.getItemId(),
+            currentUser.get().getUserId(), i);
+      }
+    }
+
     return ResponseEntity.ok(Map.of("item", saved));
   }
 
@@ -240,6 +393,38 @@ public class ItemController {
   }
 
   /**
+   * Gets all items posted by the authenticated user.
+   *
+   * @param token the token of the authenticated user
+   * @return a response
+   */
+  @GetMapping("/me")
+  public ResponseEntity<?> getMyItems(@CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error",
+          "Authentication required"));
+    }
+
+    int id = currentUser.get().getUserId();
+    List<Item> items = itemRepository.findByUserId(id);
+
+    // re-use batch request
+    if (items.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "No item's founding matching input list"));
+    }
+
+    ItemBatchRequest response = ItemBatchRequest.next();
+    response.setItems(items.stream().map((item) -> {
+      List<ItemImage> images = itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
+      ItemImage image = !images.isEmpty() ? images.getFirst() : null;
+      return ItemModelDto.fromItem(item, image);
+    }).toList());
+    return ResponseEntity.ok(response);
+  }
+
+  /**
    * Validates the fields of an incoming {@link ItemCreateRequest}.
    *
    * @param request the creation request payload to validate
@@ -272,7 +457,7 @@ public class ItemController {
   }
 
   /**
-   * Validates the fields of an incoming {@link ItemUpdateRequest}.
+   * Validates the fields of an incoming {@link ItemUpdateRequest} for PUT operations.
    *
    * @param request the update request payload to validate
    * @return a string containing the validation error message, or {@code null} if all fields are
@@ -298,6 +483,32 @@ public class ItemController {
       return "price must be non-negative";
     }
     if (request.getStock() < 0) {
+      return "stock must be non-negative";
+    }
+    return null;
+  }
+
+  /**
+   * Validates the fields of an incoming {@link ItemUpdateRequest} for PATCH operations.
+   * Allows null fields since it's a partial update.
+   *
+   * @param request the update request payload to validate
+   * @return a string containing the validation error message, or {@code null} if fields are valid
+   */
+  private String validatePatch(ItemUpdateRequest request) {
+    if (request == null) {
+      return "Request body is required";
+    }
+    if (request.getName() != null && isBlank(request.getName())) {
+      return "name cannot be blank";
+    }
+    if (request.getDescription() != null && isBlank(request.getDescription())) {
+      return "description cannot be blank";
+    }
+    if (request.getPrice() != null && request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+      return "price must be non-negative";
+    }
+    if (request.getStock() != null && request.getStock() < 0) {
       return "stock must be non-negative";
     }
     return null;

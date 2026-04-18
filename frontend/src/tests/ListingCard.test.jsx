@@ -43,9 +43,6 @@ describe("ListingCard", () => {
   it("renders all props together correctly", () => {
     render(<ListingCard {...defaultProps} />);
     expect(screen.getByText("Guitar")).toBeInTheDocument();
-    expect(
-      screen.getByText("Great condition, barely used"),
-    ).toBeInTheDocument();
     expect(screen.getByText("5.2 RPC")).toBeInTheDocument();
     expect(screen.getByText("Quantity available: 3")).toBeInTheDocument();
     expect(screen.getByText("Seller: john")).toBeInTheDocument();

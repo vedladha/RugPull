@@ -10,6 +10,8 @@ vi.mock("../Auth/auth-context");
 beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({
         user: null,
+        userBalance: -99.99,
+        updateUserBalance: vi.fn(),
         signOut: vi.fn(),
         walletBalance: vi.fn().mockResolvedValue(-999.99),
         profileDetails: vi.fn().mockResolvedValue({ profile: {} }),
@@ -58,7 +60,7 @@ describe("App", () => {
     it("navigates to login page when Sign In is clicked", async () => {
         renderApp();
         await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
-        
+
         // AuthPage renders an h1 with "Welcome Back" for the login route
         expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeInTheDocument();
     });
@@ -67,7 +69,7 @@ describe("App", () => {
     it("navigates to signup page when Create Account is clicked", async () => {
         renderApp();
         await userEvent.click(screen.getByText("Create Account"));
-        
+
         // AuthPage renders an h1 with "Create Account" for the signup route
         expect(await screen.findByRole("heading", { name: "Create Account" })).toBeInTheDocument();
     });
@@ -85,7 +87,7 @@ describe("App", () => {
 
     it("renders sell page at /sell", () => {
         renderApp("/sell");
-        expect(screen.getByText("List an Item")).toBeInTheDocument();
+        expect(screen.getByText("Please sign in to manage your listings.")).toBeInTheDocument();
     });
 
     it("renders profile page at /profile", async () => {
