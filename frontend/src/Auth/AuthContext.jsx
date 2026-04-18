@@ -218,6 +218,17 @@ export function AuthProvider({ children }) {
     return response.json();
   }
 
+  async function getItemRatings(itemId) {
+    const response = await fetch(`${API}/ratings/item/${itemId}`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch ratings");
+    }
+
+    return response.json();
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -232,6 +243,7 @@ export function AuthProvider({ children }) {
       getWishlistItems,
       addToWishlist,
       removeFromWishlist,
+      getItemRatings,
       register,
       loading
     }}>
