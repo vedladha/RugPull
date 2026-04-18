@@ -192,6 +192,15 @@ export default function Listings() {
     setSelectedListing(null);
   };
 
+  const handleRatingChanged = async (itemId) => {
+    try {
+      const updated = await getItemRatings(itemId);
+      setRatingsByItemId((prev) => ({ ...prev, [itemId]: updated }));
+    } catch {
+      // ignore - leave previous aggregate
+    }
+  };
+
   if (loading) {
     return (
       <div className="listings-section">
@@ -284,6 +293,7 @@ export default function Listings() {
           wishlistError={wishlistError}
           wishlistSuccess={wishlistSuccess}
           rating={ratingsByItemId[selectedListing.itemId]}
+          onRatingChanged={handleRatingChanged}
         />
       )}
     </div>

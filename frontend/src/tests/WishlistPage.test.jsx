@@ -26,6 +26,10 @@ describe("WishlistPage", () => {
       user: { email: "test@example.com", displayName: "Test User" },
       getWishlistItems: mockGetWishlistItems,
       removeFromWishlist: mockRemoveFromWishlist,
+      getUserRating: vi.fn().mockResolvedValue(null),
+      createRating: vi.fn(),
+      updateRating: vi.fn(),
+      deleteRating: vi.fn(),
     });
   });
 
@@ -34,6 +38,10 @@ describe("WishlistPage", () => {
       user: null,
       getWishlistItems: mockGetWishlistItems,
       removeFromWishlist: mockRemoveFromWishlist,
+      getUserRating: vi.fn().mockResolvedValue(null),
+      createRating: vi.fn(),
+      updateRating: vi.fn(),
+      deleteRating: vi.fn(),
     });
 
     renderWishlistPage();

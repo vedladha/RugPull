@@ -178,6 +178,10 @@ describe("Listings", () => {
             addToWishlist,
             removeFromWishlist: vi.fn(),
             getItemRatings: vi.fn().mockResolvedValue({ average: 0, total: 0, distribution: {} }),
+            getUserRating: vi.fn().mockResolvedValue(null),
+            createRating: vi.fn(),
+            updateRating: vi.fn(),
+            deleteRating: vi.fn(),
         });
 
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
@@ -210,6 +214,10 @@ describe("Listings", () => {
             addToWishlist: vi.fn(),
             removeFromWishlist,
             getItemRatings: vi.fn().mockResolvedValue({ average: 0, total: 0, distribution: {} }),
+            getUserRating: vi.fn().mockResolvedValue(null),
+            createRating: vi.fn(),
+            updateRating: vi.fn(),
+            deleteRating: vi.fn(),
         });
 
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
