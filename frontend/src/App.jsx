@@ -6,7 +6,7 @@ import PageCards from "./Components/PageCards.jsx";
 import History from "./History.jsx";
 import Listings from "./Listings.jsx";
 import WishlistPage from "./WishlistPage.jsx";
-import SellPage from "./SellPage.jsx";
+import SellPage from "./Pages/SellPage.jsx";
 import ProfilePage from "./ProfilePage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
