@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/order-page.css";
+import SignInPrompt from "../Components/SignInPrompt.jsx";
 
 const API = "http://localhost:3001";
 
@@ -190,22 +191,11 @@ export default function OrderPage() {
 
   if (!user) {
     return (
-      <section className="order-page">
-        <div className="order-shell order-empty-state">
-          <p className="order-eyebrow">Order review</p>
-          <h1>Sign in to complete your order.</h1>
-          <p className="order-empty-copy">
-            This checkout flow requires an authenticated account.
-          </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => navigate("/login")}
-          >
-            Go to Sign In
-          </button>
-        </div>
-      </section>
+      <SignInPrompt
+        tag="Order Dashboard"
+        title="Sign in to complete your order."
+        message="This checkout flow requires an authenticated account."
+      />
     );
   }
 
@@ -381,10 +371,10 @@ export default function OrderPage() {
                 {walletLoading
                   ? "Loading..."
                   : walletError
-                  ? "Unavailable"
-                  : userBalance !== null
-                    ? `${userBalance.toFixed(2)} RPC`
-                    : "Unavailable"}
+                    ? "Unavailable"
+                    : userBalance !== null
+                      ? `${userBalance.toFixed(2)} RPC`
+                      : "Unavailable"}
               </strong>
               <p>
                 {userBalance !== null

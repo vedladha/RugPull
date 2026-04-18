@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../Auth/auth-context";
 import ImageUploadBox from '../Components/ImageUploadBox';
 import "../style/sell-page.css";
+import SignInPrompt from "../Components/SignInPrompt";
 
 export default function SellPage() {
   const { user } = useAuth();
@@ -10,18 +11,18 @@ export default function SellPage() {
   const formRef = useRef(null);
 
   // --- Form & Submission State ---
-  const [form, setForm] = useState({ 
-    title: "", 
-    bio: "", 
-    price: "", 
-    quantity: "1", 
+  const [form, setForm] = useState({
+    title: "",
+    bio: "",
+    price: "",
+    quantity: "1",
     image: null,
     existingImageUrl: null
   });
-  
+
   // Track the original state for dirty checking (aborting unchanged PUTs)
   const [originalItem, setOriginalItem] = useState(null);
-  
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -71,12 +72,12 @@ export default function SellPage() {
       return;
     }
 
-    setForm((prev) => ({ 
-      ...prev, 
-      image: file, 
-      existingImageUrl: null 
+    setForm((prev) => ({
+      ...prev,
+      image: file,
+      existingImageUrl: null
     }));
-    
+
     if (errors.image) setErrors((prev) => ({ ...prev, image: null }));
     if (successMsg) setSuccessMsg("");
   };
@@ -108,7 +109,7 @@ export default function SellPage() {
       const firstImage = originalItem.images?.[0]?.imageUrl;
       const originalImageUrl = firstImage ? `${API}${firstImage}` : null;
 
-      const isUnchanged = 
+      const isUnchanged =
         form.title.trim() === originalItem.name &&
         form.bio.trim() === originalItem.description &&
         parseFloat(form.price) === originalItem.price &&
@@ -139,7 +140,7 @@ export default function SellPage() {
 
       const formData = new FormData();
       formData.append("item", new Blob([JSON.stringify(itemPayload)], { type: "application/json" }));
-      
+
       if (form.image) {
         formData.append("file", form.image);
       }
@@ -185,9 +186,9 @@ export default function SellPage() {
     if (!item) return;
     setEditItemId(item.itemId);
     setOriginalItem(item);
-    
+
     const firstImage = item.images && item.images.length > 0 ? item.images[0].imageUrl : null;
-    
+
     setForm({
       title: item.name || "",
       bio: item.description || "",
@@ -228,13 +229,11 @@ export default function SellPage() {
 
   if (!user) {
     return (
-      <div className="sell-page">
-        <div className="sell-header">
-          <span className="hero-tag">Seller Dashboard</span>
-          <h1>Marketplace</h1>
-        </div>
-        <p>Please sign in to manage your listings.</p>
-      </div>
+      <SignInPrompt
+        tag="Seller Dashboard"
+        title="Marketplace"
+        message="Please sign in to manage your inventory and post new listings."
+      />
     );
   }
 
@@ -278,9 +277,9 @@ export default function SellPage() {
 
         <div className="sell-field">
           <label className="sell-label">Item Photo</label>
-          <ImageUploadBox 
-            initialImage={form.existingImageUrl} 
-            onImageUpload={(file) => handleFileChange("image", file)} 
+          <ImageUploadBox
+            initialImage={form.existingImageUrl}
+            onImageUpload={(file) => handleFileChange("image", file)}
           />
           {errors.image && <span className="sell-error-msg">{errors.image}</span>}
         </div>

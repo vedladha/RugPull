@@ -1,14 +1,34 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom"; // <-- Required for useNavigate
 import EarnPage from "../Pages/EarnPage.jsx";
 
 const mockUseAuth = vi.fn();
 const mockUpdateUserBalance = vi.fn();
+const mockNavigate = vi.fn();
 
 vi.mock("../Auth/auth-context", () => ({
   useAuth: () => mockUseAuth(),
 }));
+
+// Mock react-router-dom to safely spy on navigation
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+// Helper function to ALWAYS wrap EarnPage in a MemoryRouter
+const renderEarnPage = () => {
+  return render(
+    <MemoryRouter>
+      <EarnPage />
+    </MemoryRouter>
+  );
+};
 
 describe("EarnPage", () => {
   beforeEach(() => {
@@ -29,9 +49,9 @@ describe("EarnPage", () => {
       updateUserBalance: mockUpdateUserBalance,
     });
 
-    render(<EarnPage />);
+    renderEarnPage();
 
-    expect(screen.getByText("Please sign in to view your rewards.")).toBeInTheDocument();
+    expect(screen.getByText("Please sign in to view your rewards, claim daily login bonuses, and play mini-games.")).toBeInTheDocument();
     expect(screen.queryByText("Checking reward status...")).toBeNull();
   });
 
@@ -44,7 +64,7 @@ describe("EarnPage", () => {
       })),
     );
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     expect(screen.getByText("Checking reward status...")).toBeInTheDocument();
 
@@ -62,7 +82,7 @@ describe("EarnPage", () => {
       }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByText("🔥 3 Day Streak")).toBeInTheDocument();
@@ -83,7 +103,7 @@ describe("EarnPage", () => {
       }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(
@@ -109,7 +129,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Claim Tokens" })).toBeInTheDocument();
@@ -139,7 +159,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Claim Tokens" })).toBeInTheDocument();
@@ -159,7 +179,7 @@ describe("EarnPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Amount (e.g. 500)")).toBeInTheDocument();
@@ -187,7 +207,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Amount (e.g. 500)")).toBeInTheDocument();
@@ -223,7 +243,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Amount (e.g. 500)")).toBeInTheDocument();
@@ -243,7 +263,7 @@ describe("EarnPage", () => {
       json: () => Promise.resolve({ status: { claimed: true } }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Spin Slots" })).toBeInTheDocument();
@@ -277,7 +297,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Spin Slots" })).toBeInTheDocument();
@@ -291,9 +311,7 @@ describe("EarnPage", () => {
     await waitFor(() => {
       expect(screen.getByText("You won 90.00 RPC.")).toBeInTheDocument();
       expect(screen.getByText("+90.00 RPC")).toBeInTheDocument();
-      // Original static balance in header
       expect(screen.getByText("$250.00 RPC")).toBeInTheDocument();
-      // New balance from the spin result payload
       expect(screen.getByText("340.00 RPC")).toBeInTheDocument();
       expect(screen.getAllByLabelText("Seven")).toHaveLength(3);
       expect(mockUpdateUserBalance).toHaveBeenCalled();
@@ -321,7 +339,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Spin Slots" })).toBeInTheDocument();
@@ -341,7 +359,7 @@ describe("EarnPage", () => {
       json: () => Promise.resolve({ status: { claimed: true } }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText("Enter RPC wager")).toBeInTheDocument();
@@ -359,7 +377,7 @@ describe("EarnPage", () => {
       json: () => Promise.resolve({ status: { claimed: true } }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByText("Match all three reels to win.")).toBeInTheDocument();
@@ -375,7 +393,7 @@ describe("EarnPage", () => {
       json: () => Promise.resolve({ status: { claimed: true } }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /straight up/i })).toBeInTheDocument();
@@ -398,7 +416,7 @@ describe("EarnPage", () => {
       json: () => Promise.resolve({ status: { claimed: true } }),
     }));
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Spin Roulette" })).toBeInTheDocument();
@@ -445,7 +463,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /straight up/i })).toBeInTheDocument();
@@ -490,7 +508,7 @@ describe("EarnPage", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<EarnPage />);
+    renderEarnPage();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /columns/i })).toBeInTheDocument();
@@ -505,220 +523,220 @@ describe("EarnPage", () => {
       expect(screen.getByText("Insufficient balance")).toBeInTheDocument();
     });
   });
-});
 
-// 10. Ad Feature: Start Session and Display Player
-it("starts an ad session and displays the video player", async () => {
-  const mockAdData = {
-    session: {
-      sessionId: "test-uuid-123",
-      title: "Healing Potion Ad",
-      durationSeconds: 15,
-      rewardAmount: 5.0,
-      videoUrl: "/ads/potion.mp4"
-    }
-  };
+  // 10. Ad Feature: Start Session and Display Player
+  it("starts an ad session and displays the video player", async () => {
+    const mockAdData = {
+      session: {
+        sessionId: "test-uuid-123",
+        title: "Healing Potion Ad",
+        durationSeconds: 15,
+        rewardAmount: 5.0,
+        videoUrl: "/ads/potion.mp4"
+      }
+    };
 
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) });
 
-  vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", fetchMock);
 
-  render(<EarnPage />);
+    renderEarnPage();
 
-  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-  await userEvent.click(startBtn);
+    const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+    await userEvent.click(startBtn);
 
-  await waitFor(() => {
-    expect(screen.getByText("Healing Potion Ad")).toBeInTheDocument();
-    expect(screen.getByText(/Reward: 5/i)).toBeInTheDocument();
-    const video = document.querySelector("video");
-    expect(video).toHaveAttribute("src", expect.stringContaining("/ads/potion.mp4"));
-    expect(video).toHaveAttribute("autoplay");
-  });
-});
-
-// 11. Ad Feature: Success Lifecycle & Redesigned Card
-it("claims reward after video ends and shows the redesigned success card", async () => {
-  const mockAdData = {
-    session: {
-      sessionId: "test-uuid-123",
-      title: "Ad",
-      durationSeconds: 1,
-      rewardAmount: 5.0,
-      videoUrl: "/v.mp4"
-    }
-  };
-
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
-
-  vi.stubGlobal("fetch", fetchMock);
-
-  render(<EarnPage />);
-
-  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-  await userEvent.click(startBtn);
-
-  // Manually trigger the 'ended' event on the video tag
-  const video = await waitFor(() => document.querySelector("video"));
-  video.dispatchEvent(new Event("ended"));
-
-  await waitFor(() => {
-    // Check for elements from the new success-card redesign
-    expect(screen.getByText("SUCCESS!")).toBeInTheDocument();
-    expect(screen.getByText("+5")).toBeInTheDocument();
-    expect(screen.getByText("Your tokens have been successfully deposited in your wallet.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /watch another ad/i })).toBeInTheDocument();
-  });
-});
-
-// 12. Ad Feature: Error Handling for Spoofing/Network
-it("shows error when the ad claim is rejected by the server", async () => {
-  const mockAdData = {
-    session: { sessionId: "bad-id", title: "Ad", durationSeconds: 30, rewardAmount: 5.0, videoUrl: "/v.mp4" }
-  };
-
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-    .mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: "Ad completion spoofing detected." })
+    await waitFor(() => {
+      expect(screen.getByText("Healing Potion Ad")).toBeInTheDocument();
+      expect(screen.getByText(/Reward: 5/i)).toBeInTheDocument();
+      const video = document.querySelector("video");
+      expect(video).toHaveAttribute("src", expect.stringContaining("/ads/potion.mp4"));
+      expect(video).toHaveAttribute("autoplay");
     });
-
-  vi.stubGlobal("fetch", fetchMock);
-
-  render(<EarnPage />);
-
-  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-  await userEvent.click(startBtn);
-
-  const video = await waitFor(() => document.querySelector("video"));
-  video.dispatchEvent(new Event("ended"));
-
-  await waitFor(() => {
-    expect(screen.getByText("Claim Error: Ad completion spoofing detected.")).toBeInTheDocument();
-  });
-});
-
-// 13. Ad Feature: Reset State
-it("resets back to idle state when 'Watch Another Ad' is clicked", async () => {
-  const mockAdData = {
-    session: { sessionId: "id", title: "Ad", durationSeconds: 1, rewardAmount: 5.0, videoUrl: "/v.mp4" }
-  };
-
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
-
-  vi.stubGlobal("fetch", fetchMock);
-
-  render(<EarnPage />);
-
-  // Go through the flow to reach the success card
-  await userEvent.click(await screen.findByRole("button", { name: /watch ad to earn/i }));
-  const video = await waitFor(() => document.querySelector("video"));
-  video.dispatchEvent(new Event("ended"));
-
-  // Click the reset button on the success card
-  const resetBtn = await screen.findByRole("button", { name: /watch another ad/i });
-  await userEvent.click(resetBtn);
-
-  // Verify we are back to the initial state
-  expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
-  expect(screen.queryByText("SUCCESS!")).toBeNull();
-});
-
-// 14. Coverage: Initial Load Failure (Lines 76-77)
-it("logs error to console when initial daily fetch fails", async () => {
-  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Initial Fetch Failed")));
-
-  render(<EarnPage />);
-
-  await waitFor(() => {
-    expect(consoleSpy).toHaveBeenCalledWith("Error fetching daily status:", expect.any(Error));
   });
 
-  consoleSpy.mockRestore();
-});
+  // 11. Ad Feature: Success Lifecycle & Redesigned Card
+  it("claims reward after video ends and shows the redesigned success card", async () => {
+    const mockAdData = {
+      session: {
+        sessionId: "test-uuid-123",
+        title: "Ad",
+        durationSeconds: 1,
+        rewardAmount: 5.0,
+        videoUrl: "/v.mp4"
+      }
+    };
 
-// 15: 85-87 Coverage: handleWatchAd Network/Parse Failure
-it("handles fetch failure in handleWatchAd and sets error state", async () => {
-  // 1. Mock the initial daily load so the page renders
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ status: { claimed: true } })
-    })
-    // 2. Mock the ad start fetch to explode
-    .mockRejectedValueOnce(new Error("Network Connection Refused"));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
 
-  vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", fetchMock);
 
-  render(<EarnPage />);
+    renderEarnPage();
 
-  // Click the button to trigger handleWatchAd
-  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-  await userEvent.click(startBtn);
+    const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+    await userEvent.click(startBtn);
 
-  // Verify the catch block logic executed
-  await waitFor(() => {
-    expect(screen.getByText(/Network Connection Refused/i)).toBeInTheDocument();
-    // Verify status went back to idle by checking if the start button is visible again
+    // Manually trigger the 'ended' event on the video tag
+    const video = await waitFor(() => document.querySelector("video"));
+    video.dispatchEvent(new Event("ended"));
+
+    await waitFor(() => {
+      // Check for elements from the new success-card redesign
+      expect(screen.getByText("SUCCESS!")).toBeInTheDocument();
+      expect(screen.getByText("+5")).toBeInTheDocument();
+      expect(screen.getByText("Your tokens have been successfully deposited in your wallet.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /watch another ad/i })).toBeInTheDocument();
+    });
+  });
+
+  // 12. Ad Feature: Error Handling for Spoofing/Network
+  it("shows error when the ad claim is rejected by the server", async () => {
+    const mockAdData = {
+      session: { sessionId: "bad-id", title: "Ad", durationSeconds: 30, rewardAmount: 5.0, videoUrl: "/v.mp4" }
+    };
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: "Ad completion spoofing detected." })
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderEarnPage();
+
+    const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+    await userEvent.click(startBtn);
+
+    const video = await waitFor(() => document.querySelector("video"));
+    video.dispatchEvent(new Event("ended"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Claim Error: Ad completion spoofing detected.")).toBeInTheDocument();
+    });
+  });
+
+  // 13. Ad Feature: Reset State
+  it("resets back to idle state when 'Watch Another Ad' is clicked", async () => {
+    const mockAdData = {
+      session: { sessionId: "id", title: "Ad", durationSeconds: 1, rewardAmount: 5.0, videoUrl: "/v.mp4" }
+    };
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockAdData) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ message: "Success" }) });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderEarnPage();
+
+    // Go through the flow to reach the success card
+    await userEvent.click(await screen.findByRole("button", { name: /watch ad to earn/i }));
+    const video = await waitFor(() => document.querySelector("video"));
+    video.dispatchEvent(new Event("ended"));
+
+    // Click the reset button on the success card
+    const resetBtn = await screen.findByRole("button", { name: /watch another ad/i });
+    await userEvent.click(resetBtn);
+
+    // Verify we are back to the initial state
     expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+    expect(screen.queryByText("SUCCESS!")).toBeNull();
   });
-});
 
-// 16. Coverage: handleDevMint Parse Error (Line 244)
-it("handles non-JSON error response in handleDevMint", async () => {
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
-    .mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.reject(new Error("Syntax Error")), // Force line 244 catch
+  // 14. Coverage: Initial Load Failure (Lines 76-77)
+  it("logs error to console when initial daily fetch fails", async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Initial Fetch Failed")));
+
+    renderEarnPage();
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith("Error fetching daily status:", expect.any(Error));
     });
 
-  vi.stubGlobal("fetch", fetchMock);
-
-  render(<EarnPage />);
-  await userEvent.type(screen.getByPlaceholderText("Amount (e.g. 500)"), "100");
-  await userEvent.click(screen.getByRole("button", { name: "Execute Mint" }));
-
-  await waitFor(() => {
-    expect(screen.getByText("Mint Error: Failed to fund wallet.")).toBeInTheDocument();
+    consoleSpy.mockRestore();
   });
-});
 
-// 17. Coverage: handleWatchAd Server Error (Lines where !startRes.ok is true)
-it("throws and catches error when startRes is not ok", async () => {
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ status: { claimed: true } })
-    })
-    // 2. Mock a server error response (e.g., 500 Internal Server Error)
-    .mockResolvedValueOnce({
-      ok: false,
-      status: 500
+  // 15: 85-87 Coverage: handleWatchAd Network/Parse Failure
+  it("handles fetch failure in handleWatchAd and sets error state", async () => {
+    // 1. Mock the initial daily load so the page renders
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ status: { claimed: true } })
+      })
+      // 2. Mock the ad start fetch to explode
+      .mockRejectedValueOnce(new Error("Network Connection Refused"));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderEarnPage();
+
+    // Click the button to trigger handleWatchAd
+    const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+    await userEvent.click(startBtn);
+
+    // Verify the catch block logic executed
+    await waitFor(() => {
+      expect(screen.getByText(/Network Connection Refused/i)).toBeInTheDocument();
+      // Verify status went back to idle by checking if the start button is visible again
+      expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
     });
+  });
 
-  vi.stubGlobal("fetch", fetchMock);
+  // 16. Coverage: handleDevMint Parse Error (Line 244)
+  it("handles non-JSON error response in handleDevMint", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: { claimed: true } }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error("Syntax Error")), // Force line 244 catch
+      });
 
-  render(<EarnPage />);
+    vi.stubGlobal("fetch", fetchMock);
 
-  const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
-  await userEvent.click(startBtn);
+    renderEarnPage();
+    await userEvent.type(screen.getByPlaceholderText("Amount (e.g. 500)"), "100");
+    await userEvent.click(screen.getByRole("button", { name: "Execute Mint" }));
 
-  // This triggers the "if (!startRes.ok)" block and throws your custom string
-  await waitFor(() => {
-    expect(screen.getByText("Failed to secure an ad session.")).toBeInTheDocument();
-    // Confirm we went back to idle
-    expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Mint Error: Failed to fund wallet.")).toBeInTheDocument();
+    });
+  });
+
+  // 17. Coverage: handleWatchAd Server Error (Lines where !startRes.ok is true)
+  it("throws and catches error when startRes is not ok", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ status: { claimed: true } })
+      })
+      // 2. Mock a server error response (e.g., 500 Internal Server Error)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderEarnPage();
+
+    const startBtn = await screen.findByRole("button", { name: /watch ad to earn/i });
+    await userEvent.click(startBtn);
+
+    // This triggers the "if (!startRes.ok)" block and throws your custom string
+    await waitFor(() => {
+      expect(screen.getByText("Failed to secure an ad session.")).toBeInTheDocument();
+      // Confirm we went back to idle
+      expect(screen.getByRole("button", { name: /watch ad to earn/i })).toBeInTheDocument();
+    });
   });
 });

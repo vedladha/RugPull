@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Auth/auth-context.js";
 import "../style/cart-page.css";
 import ListingModal from "../Components/ListingModal.jsx";
+import SignInPrompt from "../Components/SignInPrompt.jsx";
 
 export default function CartPage() {
     const { user } = useAuth();
@@ -147,13 +148,12 @@ export default function CartPage() {
 
     if (!user) {
         return (
-            <div className="cart-page">
-                <div className="cart-header">
-                    <h1>Your Cart</h1>
-                </div>
-                <p className="no-listings">Please sign in to view your cart.</p>
-            </div>
-        );
+            <SignInPrompt
+                tag="Cart"
+                title="View Your Cart"
+                message="Sign in to view your cart"
+            />
+        )
     }
 
     if (loading) return <div className="loading">Loading your cart...</div>;

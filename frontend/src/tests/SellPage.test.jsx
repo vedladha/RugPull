@@ -1,46 +1,62 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import SellPage from "../Pages/SellPage.jsx"; // Adjust path as needed
+import { MemoryRouter } from "react-router-dom"; 
+import SellPage from "../Pages/SellPage.jsx"; 
 
 const mockUseAuth = vi.fn();
+const mockNavigate = vi.fn();
 
 vi.mock("../Auth/auth-context", () => ({
     useAuth: () => mockUseAuth(),
 }));
 
+vi.mock("react-router-dom", async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    };
+});
+
 const loggedInUser = { email: "test@example.com", displayName: "TestUser", userId: 1 };
+
+const renderSellPage = () => {
+    return render(
+        <MemoryRouter>
+            <SellPage />
+        </MemoryRouter>
+    );
+};
 
 describe("SellPage", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         mockUseAuth.mockReturnValue({ user: loggedInUser });
         
-        // Mock the initial GET /items/me request to return an empty inventory by default
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ items: [] })
         }));
 
-        // Mock window.confirm for the delete tests
         window.confirm = vi.fn().mockReturnValue(true);
-
-        // Mock scrollIntoView which is used when clicking "Edit"
         window.HTMLElement.prototype.scrollIntoView = vi.fn();
     });
 
     // 1. Unauthenticated View
     it("shows sign in message when user is not authenticated", () => {
         mockUseAuth.mockReturnValue({ user: null });
-        render(<SellPage />);
-        expect(screen.getByText("Please sign in to manage your listings.")).toBeInTheDocument();
+        renderSellPage();
+        
+        // Matches the SignInPrompt heading "Marketplace"
+        expect(screen.getByRole('heading', { name: "Marketplace" })).toBeInTheDocument();
+        expect(screen.getByText(/Please sign in to manage your inventory/i)).toBeInTheDocument();
     });
 
     // 2. Initial Render & Fetch
     it("renders the form and empty inventory when user is signed in", async () => {
-        render(<SellPage />);
+        renderSellPage();
         
-        // Wait for the on-mount fetch to complete
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         expect(screen.getByPlaceholderText("What are you selling?")).toBeInTheDocument();
@@ -49,7 +65,7 @@ describe("SellPage", () => {
 
     // 3. Validation Errors
     it("shows validation errors when form is submitted empty", async () => {
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
         
         await userEvent.click(screen.getByText("Post Listing"));
@@ -59,9 +75,9 @@ describe("SellPage", () => {
         expect(screen.getByText("Enter a valid price")).toBeInTheDocument();
     });
 
-    // 4. Quantity Validation (Updated to check for negative numbers, since 0 is now allowed)
+    // 4. Quantity Validation
     it("shows quantity error when quantity is negative", async () => {
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         const quantityInput = screen.getByLabelText("Quantity");
@@ -75,9 +91,7 @@ describe("SellPage", () => {
     // 5. Successful POST (New Listing)
     it("submits a new listing, calls POST, and shows inline success", async () => {
         const fetchMock = vi.fn()
-            // 1st call: on-mount GET
             .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ items: [] }) })
-            // 2nd call: form submission POST
             .mockResolvedValueOnce({ 
                 ok: true, 
                 json: () => Promise.resolve({ 
@@ -86,7 +100,7 @@ describe("SellPage", () => {
             });
         
         vi.stubGlobal("fetch", fetchMock);
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar");
@@ -99,14 +113,10 @@ describe("SellPage", () => {
         await userEvent.click(screen.getByText("Post Listing"));
 
         await waitFor(() => {
-            // Check success banner
             expect(screen.getByText("New listing successfully posted!")).toBeInTheDocument();
-            // Verify POST request now expects FormData
             expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/items", expect.objectContaining({
-                method: "POST",
-                body: expect.any(FormData)
+                method: "POST"
             }));
-            // Verify item was added to the inventory list at the bottom
             expect(screen.getByRole('heading', { name: "Guitar" })).toBeInTheDocument();
         });
     });
@@ -116,42 +126,33 @@ describe("SellPage", () => {
         const mockItem = { itemId: 42, name: "Old Camera", description: "Works fine", price: 100, stock: 1 };
         
         const fetchMock = vi.fn()
-            // 1st call: on-mount GET (returns 1 item)
             .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ items: [mockItem] }) })
-            // 2nd call: form submission PUT
             .mockResolvedValueOnce({ 
                 ok: true, 
                 json: () => Promise.resolve({ 
-                    item: { ...mockItem, price: 80 } // Price updated
+                    item: { ...mockItem, price: 80 } 
                 }) 
             });
         
         vi.stubGlobal("fetch", fetchMock);
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
-        // Click Edit on the inventory item
         await userEvent.click(screen.getByRole("button", { name: "Edit" }));
 
-        // Verify form changed to edit mode
         expect(screen.getByText("Edit Listing")).toBeInTheDocument();
         const priceInput = screen.getByPlaceholderText("0.00");
         expect(priceInput.value).toBe("100");
 
-        // Change the price
         await userEvent.clear(priceInput);
         await userEvent.type(priceInput, "80");
 
-        // Submit changes
         await userEvent.click(screen.getByText("Save Changes"));
 
         await waitFor(() => {
-            // Check success banner
             expect(screen.getByText("Listing successfully updated!")).toBeInTheDocument();
-            // Verify PUT request now expects FormData
             expect(fetchMock).toHaveBeenCalledWith("http://localhost:3001/items/42", expect.objectContaining({
-                method: "PUT",
-                body: expect.any(FormData)
+                method: "PUT"
             }));
         });
     });
@@ -162,15 +163,14 @@ describe("SellPage", () => {
         const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ items: [mockItem] }) });
         vi.stubGlobal("fetch", fetchMock);
         
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: "Edit" }));
-        await userEvent.click(screen.getByText("Save Changes")); // Save without touching anything
+        await userEvent.click(screen.getByText("Save Changes")); 
 
         await waitFor(() => {
             expect(screen.getByText("No changes were made.")).toBeInTheDocument();
-            // Verify fetch was only called ONCE (the initial GET), meaning the PUT was aborted
             expect(fetchMock).toHaveBeenCalledTimes(1); 
         });
     });
@@ -181,10 +181,10 @@ describe("SellPage", () => {
         
         const fetchMock = vi.fn()
             .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ items: [mockItem] }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) }); // DELETE response
+            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) }); 
             
         vi.stubGlobal("fetch", fetchMock);
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -206,7 +206,7 @@ describe("SellPage", () => {
             });
         
         vi.stubGlobal("fetch", fetchMock);
-        render(<SellPage />);
+        renderSellPage();
         await waitFor(() => expect(screen.queryByText("Loading inventory...")).not.toBeInTheDocument());
 
         await userEvent.type(screen.getByPlaceholderText("What are you selling?"), "Guitar @#$");

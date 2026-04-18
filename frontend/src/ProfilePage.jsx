@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./style/profile-page.css";
 import { useAuth } from "./Auth/auth-context";
+import SignInPrompt from "./Components/SignInPrompt";
 
 export default function ProfilePage() {
     const { user, userBalance, profileDetails, updateProfile, changePassword } = useAuth();
@@ -70,6 +71,16 @@ export default function ProfilePage() {
         }
 
     };
+
+    if (!user) {
+        return (
+            <SignInPrompt
+                tag="Profile"
+                title="You Profile"
+                message="Please sign in to view or change your profile."
+            />
+        );
+    }
 
     return (
         <div className="profile-container">
