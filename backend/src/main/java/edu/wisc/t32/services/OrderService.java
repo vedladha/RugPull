@@ -17,6 +17,8 @@ import edu.wisc.t32.repository.UserWalletRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +121,28 @@ public class OrderService {
   }
 
   /**
+   * Gets all transactions related to the user (sales and purchases)
+   *
+   * @param currentUser the authenticated user to get the transaction history of
+   * @return a list containing all orders where the user is involved
+   */
+  public List<Order> getAllRelatedOrders(User currentUser) {
+	List<Order> buyerOrders = orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+    List<Order> sellerOrders = orderRepository.findCompletedOrdersWhereSeller(currentUser.getUserId());
+
+    HashSet<Order> allOrders = new HashSet<>();
+    allOrders.addAll(buyerOrders);
+    allOrders.addAll(sellerOrders);
+
+    return allOrders.stream()
+          .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
+          .toList();
+  }
+
+  /**
+   * Checks that the quantity is valid for the current stock of an item
+   * and reduces the stock by that quantity.
+   * 
    * Checks that the quantity is valid for the current stock of an item and reduces the stock by
    * that quantity.
    *

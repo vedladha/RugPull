@@ -3,10 +3,11 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import Navbar from "./Components/Navbar.jsx";
 import Hero from "./Hero.jsx";
 import PageCards from "./Components/PageCards.jsx";
+import History from "./History.jsx";
 import Listings from "./Listings.jsx";
-import SellPage from "./Pages/SellPage.jsx"
-import ProfilePage from "./ProfilePage.jsx"
 import WishlistPage from "./WishlistPage.jsx";
+import SellPage from "./Pages/SellPage.jsx";
+import ProfilePage from "./ProfilePage.jsx";
 import Footer from "./Components/Footer.jsx";
 import AuthPage from "./Pages/AuthPage.jsx";
 import CartPage from "./Pages/CartPage";
@@ -32,16 +33,25 @@ export default function App() {
                     navigate("/listings");
                   } else if (action === "sell") {
                     navigate("/sell")
-                  }
+                  } else if (action == "history") {
+		    navigate("/history")
+		  }
                 }}
               />
             </>
           }
         />
         <Route path="/sell" element={<SellPage />} />
-        <Route path="/listings" element={
-          <Listings />
-        }
+        <Route path="/listings" element={<Listings />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/signup"
+          element={
+            // AuthPage checks path to decide what to show
+            <AuthPage />
+          }
         />
         <Route path="/profile" element={
           <ProfilePage />
@@ -65,6 +75,9 @@ export default function App() {
         <Route path="/earn" element={
           <EarnPage />
         } />
+	<Route path="/history" element={
+	  <History />
+	} />
       </Routes>
       <Footer />
     </>

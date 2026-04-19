@@ -2,11 +2,16 @@ package edu.wisc.t32.controller;
 
 import edu.wisc.t32.dto.OrderCreateRequest;
 import edu.wisc.t32.model.Order;
+import edu.wisc.t32.model.OrderItem;
 import edu.wisc.t32.model.User;
 import edu.wisc.t32.repository.OrderItemRepository;
 import edu.wisc.t32.repository.OrderRepository;
+import edu.wisc.t32.repository.UserProfileRepository;
 import edu.wisc.t32.services.CurrentUserService;
 import edu.wisc.t32.services.OrderService;
+import edu.wisc.t32.wrappers.OrderSummary;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +36,7 @@ public class OrderController {
   private final OrderRepository orderRepository;
   private final OrderService orderService;
   private final CurrentUserService currentUserService;
+  private final UserProfileRepository userProfileRepository;
 
   /**
    * Constructs an OrderController with the dependencies needed to place orders.
@@ -39,16 +45,19 @@ public class OrderController {
    * @param orderRepository repository used for saving orders
    * @param orderService service used for locked purchase processing
    * @param currentUserService service used to resolve the authenticated user
+   * @param userProfileRepository repository used to resolve user profiles for order summaries
    */
   public OrderController(
       OrderItemRepository orderItemRepository,
       OrderRepository orderRepository,
       OrderService orderService,
-      CurrentUserService currentUserService) {
+      CurrentUserService currentUserService,
+      UserProfileRepository userProfileRepository) {
     this.orderItemRepository = orderItemRepository;
     this.orderRepository = orderRepository;
     this.orderService = orderService;
     this.currentUserService = currentUserService;
+    this.userProfileRepository = userProfileRepository;
   }
 
   /**
@@ -78,7 +87,7 @@ public class OrderController {
   }
 
   /**
-   * Retrieves all orders for the authenticated user.
+   * Retrieves all orders made by the authenticated user.
    *
    * @param token the JWT token extracted from the HTTP-only cookie
    * @return the authenticated user's orders, or an auth error
@@ -93,6 +102,37 @@ public class OrderController {
 
     List<Order> orders = orderService.getOrderHistory(currentUser.get());
     return ResponseEntity.ok(Map.of("orders", orders));
+  }
+
+  /**
+   * Retrieves all orders relating to the authenticated user.
+   *
+   * @param token the JWT token extracted from the HTTP-only cookie
+   * @return the authenticated user's orders, or an auth error
+   */
+  @GetMapping("/all")
+  public ResponseEntity<?> getAllRelatedOrders(@CookieValue(name = "jwt", required = false) String token) {
+    Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
+    if (currentUser.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+    String currentUserName = currentUser.get().getUserProfile().getDisplayName();
+    List<Order> allOrders = orderService.getAllRelatedOrders(currentUser.get());
+    List<OrderSummary> summaries = new ArrayList<>();
+
+    for (Order order : allOrders) {
+      String buyerName = order.getUser().getUserProfile().getDisplayName();
+      Integer sellerId = order.getItems().get(0).getItem().getUserId();
+      String sellerName = userProfileRepository.findByUserId(sellerId).getDisplayName();
+      List<OrderItem> itemNames = order.getItems();
+      String orderDate = order.getCreatedAt().toString();
+      String orderType = buyerName.equals(currentUserName) ? "buy" : "sell";
+      for (OrderItem item : itemNames) {
+        summaries.add(new OrderSummary(orderType, buyerName, sellerName, item.getItem().getName(), item.getQuantity(), item.getUnitPrice(), orderDate));
+      }
+    }
+    return ResponseEntity.ok(Map.of("orders", summaries));
   }
 
   /**
