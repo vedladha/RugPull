@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useAuth } from "./Auth/auth-context";
 import "./style/history.css";
+import SignInPrompt from "./Components/SignInPrompt";
 
 const SORT_OPTIONS = [
   { value: "date-desc", label: "Newest first" },
@@ -16,6 +18,7 @@ export default function History() {
   const [sort, setSort] = useState("date-desc");
 
   const API = "http://localhost:3001";
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -25,8 +28,8 @@ export default function History() {
 
         const response = await fetch(`${API}/orders/all`, {
           method: "GET",
-		  credentials: "include",
-		  headers: {
+          credentials: "include",
+          headers: {
             "Content-Type": "application/json",
           },
         });
@@ -42,7 +45,7 @@ export default function History() {
 
         const data = await response.json();
         setHistory(data.orders);
-	console.log(data.orders);
+        console.log(data.orders);
       } catch (err) {
         setError("Failed to load transaction history.");
         console.error(err);
@@ -100,6 +103,16 @@ export default function History() {
       style: "currency",
       currency: "USD",
     }).format(amount);
+
+  if (!user) {
+    return (
+      <SignInPrompt
+        tag="History Dashboard"
+        title="History"
+        message="Please sign in to view your transaction history."
+      />
+    );
+  }
 
   if (loading) {
     return (
