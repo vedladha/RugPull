@@ -16,6 +16,7 @@ describe("Navbar", () => {
   beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({ 
         user: null, 
+        userBalance: null, // Added to prevent undefined math errors
         signOut: vi.fn(), 
         walletBalance: vi.fn().mockResolvedValue(-999.99) 
     });
@@ -34,10 +35,23 @@ describe("Navbar", () => {
     expect(screen.getByTestId("location").textContent).toBe("/login");
   });
 
+  it("navigates to /signup when Create Account button is clicked", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Navbar />
+        <LocationDisplay />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByText("Create Account"));
+    expect(screen.getByTestId("location").textContent).toBe("/signup");
+  });
+
   it("calls signOut when Sign Out button is clicked", async () => {
     const signOutMock = vi.fn();
     vi.mocked(useAuth).mockReturnValue({ 
         user: { displayName: "Test User" }, 
+        userBalance: 100, 
         signOut: signOutMock, 
         walletBalance: vi.fn().mockResolvedValue(-999.99) 
     });
@@ -80,6 +94,7 @@ describe("Navbar", () => {
   it("navigates to /profile when user name is clicked", async () => {
     vi.mocked(useAuth).mockReturnValue({ 
         user: {displayName: "Test User" }, 
+        userBalance: 100,
         signOut: vi.fn(), 
         walletBalance: vi.fn().mockResolvedValue(-999.99) 
     });
@@ -91,13 +106,15 @@ describe("Navbar", () => {
       </MemoryRouter>,
     );
 
-    await userEvent.click(screen.getByText("Hello, Test User!"));
+    // THE FIX: Component now renders "Test User" instead of "Hello, Test User!"
+    await userEvent.click(screen.getByText("Test User"));
     expect(screen.getByTestId("location").textContent).toBe("/profile");
   });
 
   it("navigates to /wishlist when Wishlist is clicked", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { displayName: "Test User" },
+      userBalance: 100,
       signOut: vi.fn(),
       walletBalance: vi.fn().mockResolvedValue(-999.99),
     });
@@ -112,6 +129,7 @@ describe("Navbar", () => {
     await userEvent.click(screen.getByText("Wishlist"));
     expect(screen.getByTestId("location").textContent).toBe("/wishlist");
   });
+
   it("navigates to /sell when Sell is clicked", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
