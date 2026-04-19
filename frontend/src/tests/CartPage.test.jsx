@@ -1,25 +1,27 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom"; // <-- Required for useNavigate
 import CartPage from "../Pages/CartPage.jsx";
 
 const mockUseAuth = vi.fn();
 const mockFetch = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("../Auth/auth-context.js", () => ({
+vi.mock("../Auth/auth-context", () => ({
     useAuth: () => mockUseAuth(),
 }));
 
-// Mock ListingModal to isolate CartPage logic
-vi.mock("react-router-dom", async () => {
-    const actual = await vi.importActual("react-router-dom");
+// Mock react-router-dom to safely spy on navigation
+vi.mock("react-router-dom", async (importOriginal) => {
+    const actual = await importOriginal();
     return {
         ...actual,
         useNavigate: () => mockNavigate,
     };
 });
 
+// Mock ListingModal to isolate CartPage logic
 vi.mock("../Components/ListingModal.jsx", () => ({
     default: ({ listing, onClose }) => (
         <div data-testid="listing-modal">
@@ -28,6 +30,15 @@ vi.mock("../Components/ListingModal.jsx", () => ({
         </div>
     ),
 }));
+
+// Helper function to ALWAYS wrap CartPage in a MemoryRouter
+const renderCartPage = () => {
+    return render(
+        <MemoryRouter>
+            <CartPage />
+        </MemoryRouter>
+    );
+};
 
 describe("CartPage", () => {
     beforeEach(() => {
@@ -43,8 +54,11 @@ describe("CartPage", () => {
     // Tests that sign-in prompt is shown when user is missing
     it("renders sign-in message when user is not authenticated", () => {
         mockUseAuth.mockReturnValue({ user: null });
-        render(<CartPage />);
-        expect(screen.getByText(/Please sign in to view your cart/i)).toBeDefined();
+        renderCartPage();
+        
+        // UPDATED: Now gracefully matches the new SignInPrompt component
+        expect(screen.getByRole('heading', { name: "View Your Cart" })).toBeInTheDocument();
+        expect(screen.getByText("Sign in to view your cart")).toBeInTheDocument();
     });
 
     // Tests that empty cart message is shown
@@ -54,10 +68,10 @@ describe("CartPage", () => {
             json: async () => ({ cart: [] }),
         });
 
-        render(<CartPage />);
+        renderCartPage();
 
         await waitFor(() => {
-            expect(screen.getByText(/Your cart is currently empty/i)).toBeDefined();
+            expect(screen.getByText(/Your cart is currently empty/i)).toBeInTheDocument();
         });
     });
 
@@ -81,13 +95,13 @@ describe("CartPage", () => {
             }),
         });
 
-        render(<CartPage />);
+        renderCartPage();
 
         await waitFor(() => {
-            expect(screen.getByText("Laser Sword")).toBeDefined();
-            expect(screen.getByText("$50.00")).toBeDefined();
-            expect(screen.getByText("Qty in cart: 2")).toBeDefined();
-            expect(screen.getByText("5 in stock")).toBeDefined();
+            expect(screen.getByText("Laser Sword")).toBeInTheDocument();
+            expect(screen.getByText("$50.00")).toBeInTheDocument();
+            expect(screen.getByText("Qty in cart: 2")).toBeInTheDocument();
+            expect(screen.getByText("5 in stock")).toBeInTheDocument();
             // Total should be 50 * 2 = 100
             const totals = screen.getAllByText("$100.00");
             expect(totals.length).toBeGreaterThan(0);
@@ -103,8 +117,8 @@ describe("CartPage", () => {
                 json: async () => ({ items: [{ itemId: 101, name: "Item", price: 10, stock: 3 }] })
             });
 
-        render(<CartPage />);
-        await waitFor(() => expect(screen.getByText("Item")).toBeDefined());
+        renderCartPage();
+        await waitFor(() => expect(screen.getByText("Item")).toBeInTheDocument());
 
         // Mock PUT response
         mockFetch.mockResolvedValueOnce({ ok: true });
@@ -117,7 +131,7 @@ describe("CartPage", () => {
                 expect.stringContaining("/cart/101?quantity=2"),
                 expect.objectContaining({ method: "PUT" })
             );
-            expect(screen.getByText("2")).toBeDefined();
+            expect(screen.getByText("2")).toBeInTheDocument();
         });
     });
 
@@ -130,8 +144,8 @@ describe("CartPage", () => {
                 json: async () => ({ items: [{ itemId: 101, name: "Trash Item", price: 5, stock: 2 }] })
             });
 
-        render(<CartPage />);
-        await waitFor(() => expect(screen.getByText("Trash Item")).toBeDefined());
+        renderCartPage();
+        await waitFor(() => expect(screen.getByText("Trash Item")).toBeInTheDocument());
 
         // Mock DELETE response
         mockFetch.mockResolvedValueOnce({ ok: true });
@@ -157,15 +171,15 @@ describe("CartPage", () => {
                 json: async () => ({ items: [{ itemId: 101, name: "Clickable Item", price: 5, stock: 2 }] })
             });
 
-        render(<CartPage />);
-        await waitFor(() => expect(screen.getByText("Clickable Item")).toBeDefined());
+        renderCartPage();
+        await waitFor(() => expect(screen.getByText("Clickable Item")).toBeInTheDocument());
 
         // Click the item name (part of cart-item-info)
         const itemInfo = screen.getByText("Clickable Item");
         await userEvent.click(itemInfo);
 
-        expect(screen.getByTestId("listing-modal")).toBeDefined();
-        expect(screen.getByText("Modal: Clickable Item")).toBeDefined();
+        expect(screen.getByTestId("listing-modal")).toBeInTheDocument();
+        expect(screen.getByText("Modal: Clickable Item")).toBeInTheDocument();
 
         // Close modal
         await userEvent.click(screen.getByText("Close Modal"));
@@ -179,10 +193,10 @@ describe("CartPage", () => {
             status: 404
         });
 
-        render(<CartPage />);
+        renderCartPage();
 
         await waitFor(() => {
-            expect(screen.getByText(/Failed to fetch cart data/i)).toBeDefined();
+            expect(screen.getByText(/Failed to fetch cart data/i)).toBeInTheDocument();
         });
     });
 
@@ -199,8 +213,8 @@ describe("CartPage", () => {
                 }),
             });
 
-        render(<CartPage />);
-        await waitFor(() => expect(screen.getByText("Limited Item")).toBeDefined());
+        renderCartPage();
+        await waitFor(() => expect(screen.getByText("Limited Item")).toBeInTheDocument());
 
         const increaseButton = screen.getByRole("button", { name: "Increase quantity for Limited Item" });
         expect(increaseButton).toBeDisabled();
@@ -223,8 +237,8 @@ describe("CartPage", () => {
                 }),
             });
 
-        render(<CartPage />);
-        await waitFor(() => expect(screen.getByText("Checkout Item")).toBeDefined());
+        renderCartPage();
+        await waitFor(() => expect(screen.getByText("Checkout Item")).toBeInTheDocument());
 
         await userEvent.click(screen.getByRole("button", { name: "Proceed to Checkout" }));
 

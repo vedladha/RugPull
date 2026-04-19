@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../Auth/auth-context";
 import "../style/earn-page.css";
+import SignInPrompt from "../Components/SignInPrompt";
 
 const API = "http://localhost:3001";
 const SLOT_SYMBOLS = ["CHERRY", "LEMON", "BAR", "STAR", "SEVEN"];
@@ -687,13 +688,11 @@ export default function EarnPage() {
 
   if (!user) {
     return (
-      <div className="earn-page">
-        <div className="earn-header">
-          <span className="hero-tag">Rewards</span>
-          <h1>Earn $RPC</h1>
-        </div>
-        <p className="earn-auth-msg">Please sign in to view your rewards.</p>
-      </div>
+      <SignInPrompt
+        tag="Rewards"
+        title="Earn $RPC"
+        message="Please sign in to view your rewards, claim daily login bonuses, and play mini-games."
+      />
     );
   }
 

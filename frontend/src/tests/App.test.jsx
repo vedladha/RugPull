@@ -41,7 +41,8 @@ const renderApp = (initialPath = "/") => {
 describe("App", () => {
     it("renders home page by default", () => {
         renderApp();
-        expect(screen.getByText("Where do you want to go?")).toBeInTheDocument();
+        // Checks for the text in the new FrontPage component
+        expect(screen.getByText("What would you like to do?")).toBeInTheDocument();
     });
 
     it("renders navbar on all pages", () => {
@@ -56,7 +57,6 @@ describe("App", () => {
         });
     });
 
-    // MODIFIED: We now test that the router loads the AuthPage in Login mode
     it("navigates to login page when Sign In is clicked", async () => {
         renderApp();
         await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
@@ -65,18 +65,16 @@ describe("App", () => {
         expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeInTheDocument();
     });
 
-    // MODIFIED: We now test that the router loads the AuthPage in Signup mode
     it("navigates to signup page when Create Account is clicked", async () => {
         renderApp();
-        await userEvent.click(screen.getByText("Create Account"));
+
+        // THE FIX: Use getAllByRole and click the first one in the array [0]
+        const createAccountButtons = screen.getAllByRole("button", { name: /Create Account/i });
+        await userEvent.click(createAccountButtons[0]);
 
         // AuthPage renders an h1 with "Create Account" for the signup route
         expect(await screen.findByRole("heading", { name: "Create Account" })).toBeInTheDocument();
     });
-
-    // DELETED: "closes modal when close button is clicked" 
-    // (This test was removed entirely because there is no modal 'X' button anymore. 
-    // Users just use the browser back button or the navbar logo to leave the AuthPage.)
 
     it("renders listings page at /listings", async () => {
         renderApp("/listings");
@@ -87,13 +85,15 @@ describe("App", () => {
 
     it("renders sell page at /sell", () => {
         renderApp("/sell");
-        expect(screen.getByText("Please sign in to manage your listings.")).toBeInTheDocument();
+        // Looking for the new text rendered by the SignInPrompt component
+        expect(screen.getByText(/Please sign in to manage your inventory/i)).toBeInTheDocument();
     });
 
     it("renders profile page at /profile", async () => {
         // Override the default mock specifically for the profile test
         vi.mocked(useAuth).mockReturnValue({
-            user: { email: "test@example.com" },
+            user: { email: "test@example.com", displayName: "TestUser" }, // Added displayName
+            userBalance: 100,
             profileDetails: vi.fn().mockResolvedValue({
                 profile: { displayName: "TestUser", bio: "Bio" }
             }),
@@ -106,7 +106,9 @@ describe("App", () => {
 
         renderApp("/profile");
         await waitFor(() => {
-            expect(screen.getByText("Your Profile")).toBeInTheDocument();
+            // THE FIX: Looks for the new authenticated ProfilePage header
+            expect(screen.getByText("Welcome, TestUser")).toBeInTheDocument();
+            expect(screen.getByText("Account Overview")).toBeInTheDocument();
         });
     });
 

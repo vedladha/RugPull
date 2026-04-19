@@ -1,0 +1,53 @@
+.sign-in-prompt-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  width: 100%;
+  min-height: 50vh;
+  text-align: center;
+}
+
+.sign-in-prompt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3rem 2.5rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.sign-in-prompt-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--white);
+  margin-top: 0.5rem;
+}
+
+.sign-in-prompt-msg {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.sign-in-prompt-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Ensure buttons stretch slightly to look balanced if needed */
+.sign-in-prompt-actions button {
+  min-width: 160px;
+}
