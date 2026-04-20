@@ -57,10 +57,6 @@ export function AuthProvider({ children }) {
 
     if (!loginResponse.ok) throw new Error("Incorrect email or password");
 
-    const profileResponse = await fetch(`${API}/auth/profile`, {
-      credentials: "include",
-
-    });
     const data = await loginResponse.json();
 
     setUser(data);
