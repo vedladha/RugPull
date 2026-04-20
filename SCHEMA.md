@@ -2,6 +2,9 @@
 
 ---
 
+Implemented tables reflect the current database initialization scripts in `database/database_init/`.
+Some older planned tables remain documented below, and those sections are called out explicitly.
+
 ## Users
 **Stores authentication information for each user**
 
@@ -10,7 +13,6 @@
 | user_id         | INT, primary key, auto-increment | Unique user identifier                  |
 | email           | VARCHAR, unique, not NULL | Login email                               |
 | password_hash   | VARCHAR, not NULL        | Hashed password                            |
-| password_salt   | VARCHAR, not NULL        | Salt for hashing                           |
 | status          | ENUM('PENDING', 'ACTIVE', 'FAILED'), not NULL, default 'PENDING' | Tells status of associated wallet creation |
 | created_at      | DATETIME, default current time |                                         |
 | updated_at      | DATETIME, default current time |                                         |
@@ -68,6 +70,8 @@
 ## Categories
 **Stores predetermined categories that items go under**
 
+This table is not currently created by the active database initialization scripts.
+
 | Column      | Type                     | Notes                                  |
 |------------|-------------------------|---------------------------------------|
 | category_id | INT, primary key, auto-increment | Unique category identifier        |
@@ -78,6 +82,8 @@
 
 ## Tags
 **Stores user defined tags for an item**
+
+This table is not currently created by the active database initialization scripts.
 
 | Column      | Type                     | Notes                                  |
 |------------|-------------------------|---------------------------------------|
@@ -90,6 +96,8 @@
 
 ## ItemTags
 **Stores connections between tags and items**
+
+This table is not currently created by the active database initialization scripts.
 
 | Column      | Type                     | Notes                                  |
 |------------|-------------------------|---------------------------------------|
@@ -108,7 +116,7 @@
 |----------------|-------------------------|---------------------------------------|
 | order_id       | INT, primary key, auto-increment | Unique order identifier             |
 | user_id        | INT, foreign key → Users.user_id | User who placed the order           |
-| order_status   | ENUM('PENDING', 'AWAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED', 'FAILED'), default 'pending' | Status of order completion |
+| order_status   | ENUM('PENDING', 'AWAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED', 'FAILED'), default 'PENDING' | Status of order completion |
 | created_at     | DATETIME, default current timestamp |                                 |
 | updated_at     | DATETIME, default current timestamp |                                 |
 
@@ -180,16 +188,40 @@
 
 ---
 
-## Reviews
-**Stores reviews for items**
+## DailyRewards
+**Stores daily reward streak and last-claim time for each user**
 
 | Column        | Type                     | Notes                                  |
 |---------------|-------------------------|---------------------------------------|
-| review_id     | INT, primary key, auto-increment | Unique review identifier          |
-| item_id       | INT, foreign key → Items.item_id | Item being reviewed               |
-| user_id       | INT, foreign key → Users.user_id | User reviewing item                |
-| item_rating   | INT, 1-5                 | User rating of the item               |
-| comment       | TEXT                     | Review comment                        |
+| user_id       | INT, primary key, foreign key → Users.user_id | Unique user identifier |
+| streak_length | INT                      | Current daily reward streak           |
+| claimed_last  | DATETIME                 | Time the reward was last claimed      |
+
+---
+
+## AdSessions
+**Stores secure server-side advertisement sessions**
+
+| Column          | Type                     | Notes                                  |
+|-----------------|-------------------------|---------------------------------------|
+| id              | VARCHAR(36), primary key | Session identifier                    |
+| user_id         | INT, foreign key → Users.user_id | User watching the ad            |
+| ad_title        | VARCHAR(100), not NULL   | Title of the selected ad              |
+| required_duration_seconds | INT, not NULL | Required watch time                   |
+| started_at      | DATETIME, not NULL       | Session start time                    |
+| is_claimed      | BOOLEAN, default FALSE   | Whether the reward was claimed        |
+
+---
+
+## Ratings
+**Stores 1-5 star ratings for items**
+
+| Column        | Type                     | Notes                                  |
+|---------------|-------------------------|---------------------------------------|
+| rating_id     | INT, primary key, auto-increment | Unique rating identifier         |
+| user_id       | INT, foreign key → Users.user_id | User rating the item              |
+| item_id       | INT, foreign key → Items.item_id | Item being rated                  |
+| rating_value  | TINYINT, not NULL        | Rating value from 1 to 5               |
 | created_at    | DATETIME, default current time |                                     |
 | updated_at    | DATETIME, default current time |                                     |
 | deleted       | BOOLEAN, default FALSE   | Soft delete flag                       |
@@ -199,16 +231,7 @@
 ## Notifications
 **Stores all notifications to deliver to users**
 
-| Column          | Type                     | Notes                                  |
-|-----------------|-------------------------|---------------------------------------|
-| notification_id  | INT, primary key, auto-increment | Unique notification identifier |
-| user_id          | INT, foreign key → Users.user_id | User to notify                   |
-| type             | ENUM('order','gift','review','system') | Type of notification         |
-| seen             | BOOLEAN, default FALSE   | If the user has seen the notification |
-| reference_id     | INT, NULLABLE               | Points to the table that the notification is for |
-| reference_type   | VARCHAR                 | Which table the reference_id points to |
-| created_at       | DATETIME, default current time |                                     |
-| updated_at       | DATETIME, default current time |                                     |
+This table is not currently created by the active database initialization scripts.
 
 ---
 
@@ -217,14 +240,16 @@
 **1:1 (One-to-One)**
 - `Users.user_id → UserProfiles.user_id`
 - `Users.user_id → UserWallets.user_id`
+- `Users.user_id → DailyRewards.user_id`
 
 **1:N (One-to-Many)**
 - `Users.user_id → Items.user_id`
 - `Users.user_id → Orders.user_id`
-- `Users.user_id → Reviews.user_id`
 - `Users.user_id → Notifications.user_id`
+- `Users.user_id → AdSessions.user_id`
+- `Users.user_id → Ratings.user_id`
 - `Items.item_id → ItemImages.item_id`
-- `Items.item_id → Reviews.item_id`
+- `Items.item_id → Ratings.item_id`
 - `Categories.category_id → Items.category_id`
 - `Orders.order_id → CryptoTransactions.order_id (optional)`
 - `Users.user_id → Tags.user_id`

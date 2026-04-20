@@ -37,11 +37,11 @@ Locate the `adCatalog` list inside the controller. Create a new `Ad` object entr
           5.0f,
           "ads/synapse_ad.mp4"
       ),
-      new Ad("My new Ad",
-        "A new advertisement",
-        10, 
+      new Ad(
+        "My New Ad",
+        10,
         5.0f,
-        "ads/my_ad_path.mp4"
+        "ads/my_new_ad.mp4"
       )
   );
 ```

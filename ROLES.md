@@ -9,3 +9,13 @@
 | Sprint 3 Scrum Master    |     Ethan     |
 | Sprint 3 Product Owner   |    Josef      |
 
+## Code Review Roles
+
+| Code Review | Presenter | Moderator |
+|-------------|----------|----------|
+| 1 | Miles | Matt |
+| 2 | Jimmy | Ethan |
+| 3 | Josef | Vedant |
+| 4 | Matt | Miles |
+| 5 | Ethan | Josef |
+| 6 | Vedant | Jimmy |

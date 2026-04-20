@@ -106,7 +106,7 @@ sequenceDiagram
 - `RESEARCH/`: Research reports and references
 - `frontend/`: React/Vite frontend server
 - `backend/`: Java Spring backend app
-- `database/`: MYSQL database schema & setup
+- `database/`: MySQL container setup and initialization scripts
 - `rpc_currency/`: Custom $RPC cryptocurrency wallet implementation (Java)
 
 ## Getting Started
@@ -119,20 +119,23 @@ sequenceDiagram
    ```bash
    docker compose up --build
    ```
-3. Open `http://localhost:3000` in your browser.
+3. The database is initialized automatically from `database/database_init/` on a fresh volume.
+4. Open `http://localhost:3000` in your browser.
    The backend API is exposed at `http://localhost:3001`.
 
 See `docker-compose_guide.md` for more detail.
 
 ## What's Implemented
 
-- **User authentication** — signup, login, logout, and auth-profile lookup with BCrypt-hashed passwords and a JWT cookie flow (`/auth/register`, `/auth/login`, `/auth/logout`, `/auth/profile`)
+- **User authentication** — signup, login, logout, auth-profile lookup, and password change with BCrypt-hashed passwords and a JWT cookie flow (`/auth/register`, `/auth/login`, `/auth/logout`, `/auth/profile`, `/auth/password`)
 - **User profiles** — public profile lookup plus authenticated profile view/update (`/profile/{userId}`, `/profile/me`)
-- **Item listings (full CRUD)** — POST, GET, PUT, and DELETE endpoints for item listings with JUnit tests (`/items`, `/items/{itemId}`)
-- **Wishlist support** — authenticated wishlist list/add/remove endpoints (`/wishlist`, `/wishlist/{itemId}`)
-- **Orders** — authenticated order creation and lookup endpoints (`/orders`, `/orders/{orderId}`)
+- **Item listings (full CRUD)** — GET, POST, PUT, PATCH, and DELETE endpoints for listings, batch item lookup, and item image retrieval (`/items`, `/items/{itemId}`, `/items/batch`, `/items/{itemId}/images`, `/items/me`)
+- **Wishlist support** — authenticated wishlist list/add/remove endpoints plus a wishlist-items view used by the frontend (`/wishlist`, `/wishlist/items`, `/wishlist/{itemId}`)
+- **Orders** — authenticated order creation, order lookup, and buy/sell order history endpoints (`/orders`, `/orders/all`, `/orders/{orderId}`)
 - **Cart** — authenticated cart list/add/update/remove endpoints (`/cart`, `/cart/{itemId}`)
+- **Ratings** — authenticated create/update/delete rating endpoints plus item rating summaries (`/ratings/{itemId}`, `/ratings/item/{itemId}`, `/ratings/user/{itemId}`)
+- **Earn page features** — daily reward, ad rewards, a dev funding tool, slot machine, and roulette (`/daily`, `/daily/claim`, `/ads/start`, `/ads/claim`, `/slots/spin`, `/roulette/spin`, `/wallets/fund`)
 - **Hedera wallet integration** — wallet automatically created on user signup via rpc_currency WalletService, private keys persisted in DB
-- **React frontend** — landing page with sign-in and create-account modals, marketplace browsing page, profile page, and sell page for adding listings
+- **React frontend** — landing page, dedicated login/signup pages, marketplace browsing, profile management, sell flow, wishlist page, cart page, order history, and earn page
 - **Dockerized environment** — all services run via Docker Compose with multi-stage Dockerfiles for frontend, backend, and crypto service
 - **CI/CD pipeline** — GitLab CI pipeline running frontend, backend, crypto, and SQL lint/test jobs on push
