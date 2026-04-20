@@ -16,6 +16,8 @@
   border-radius: 8px;
   padding: 2rem;
   position: relative;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
 }
 .listing-modal-close {
   position: absolute;
