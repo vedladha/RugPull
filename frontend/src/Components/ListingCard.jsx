@@ -8,6 +8,7 @@ export default function ListingCard({
   stock,
   seller,
   thumbnail_url,
+  thumbnail_updated_at,
   rating,
   onClick,
 }) {
@@ -20,7 +21,7 @@ export default function ListingCard({
     if (!url) return null;
     // If it's a local preview (blob:), return it directly.
     // Otherwise, append the backend API prefix.
-    return url.startsWith("blob:") ? url : `http://localhost:3001${url}`;
+    return url.startsWith("blob:") ? url : `http://localhost:3001${url}?v=${thumbnail_updated_at}`;
   };
 
   return (

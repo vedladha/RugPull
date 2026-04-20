@@ -146,8 +146,9 @@ public class ItemController {
               itemImageRepository.findByItemIdOrderByPositionAsc(item.getItemId());
           if (!images.isEmpty()) {
             map.put("thumbnailUrl", images.get(0).getImageUrl());
+            map.put("thumbnailUpdatedAt", images.get(0).getUpdatedAt());
           } else {
-            map.put("thumbnailUrl", null); // Or a placeholder image link
+            map.put("thumbnailUrl", null);
           }
           return map;
         })
@@ -282,6 +283,8 @@ public class ItemController {
       for (int i = 0; i < files.size(); i++) {
         if (i < imgs.size()) { // Image already exists, overwrite it
           fileService.overwrite(imgs.get(i).getImageUrl(), files.get(i));
+          imgs.get(i).setUpdatedAt(java.time.LocalDateTime.now());
+          itemImageRepository.save(imgs.get(i));
         }
         else {
           itemImageService.addImageToItem(files.get(i), item.getItemId(),

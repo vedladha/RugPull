@@ -75,19 +75,19 @@ public class ItemImage {
   }
 
   public String getAltText() {
-	return altText;
+	  return altText;
   }
 
   public void setAltText(String altText) {
-	this.altText = altText;
+	  this.altText = altText;
   }
 
   public Integer getPosition() {
-	return position;
+	  return position;
   }
 
   public void setPosition(Integer position) {
-	this.position = position;
+	  this.position = position;
   }
 
   public LocalDateTime getCreatedAt() {
@@ -95,6 +95,10 @@ public class ItemImage {
   }
 
   public LocalDateTime getUpdatedAt() {
-	return updatedAt;
+	  return updatedAt;
+  }
+
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
   }
 }
