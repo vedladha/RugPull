@@ -267,6 +267,7 @@ export default function Listings() {
               stock={listing.stock}
               seller={listing.sellerName}
               thumbnail_url={listing.thumbnailUrl}
+              thumbnail_updated_at={listing.thumbnailUpdatedAt}
               rating={ratingsByItemId[listing.itemId]}
               onClick={() => handleOpenListing(listing)}
             />

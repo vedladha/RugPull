@@ -60,6 +60,16 @@ export default function ListingModal({
       : parsedQuantity
     : 1;
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    // If it's a local preview (blob:), return it directly.
+    // Otherwise, append the backend API prefix.
+    console.log(url)
+    console.log(listing.thumbnailUpdatedAt)
+    return url.startsWith("blob:") ? url 
+      : `${API}${url}?v=${listing.thumbnailUpdatedAt}`;
+  };
+
   const handleQuantityChange = (value) => {
     if (value === "") {
       setQuantity("");
@@ -165,7 +175,7 @@ export default function ListingModal({
         <div className="listing-modal-gallery">
           {listing.thumbnailUrl && listing.thumbnailUrl.length > 0 ? (
             <img
-              src={API + listing.thumbnailUrl}
+              src={getImageUrl(listing.thumbnailUrl)}
               alt={listing.name}
               className="card-image"
             />
