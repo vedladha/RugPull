@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import ListingModal from "../Components/ListingModal.jsx";
 
 const mockNavigate = vi.fn();
+const mockUseAuth = vi.fn();
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal();
@@ -13,6 +14,10 @@ vi.mock("react-router-dom", async (importOriginal) => {
     useNavigate: () => mockNavigate,
   };
 });
+
+vi.mock("../Auth/auth-context", () => ({
+  useAuth: () => mockUseAuth(),
+}));
 
 describe("ListingModal", () => {
   // Updated mock to match the new flat data structure expected by the component
@@ -29,6 +34,13 @@ describe("ListingModal", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    mockUseAuth.mockReturnValue({
+      user: null,
+      getUserRating: vi.fn(),
+      createRating: vi.fn(),
+      updateRating: vi.fn(),
+      deleteRating: vi.fn(),
+    });
   });
 
   it("navigates to the order page from buy it now with the selected quantity", async () => {

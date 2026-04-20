@@ -57,10 +57,6 @@ export function AuthProvider({ children }) {
 
     if (!loginResponse.ok) throw new Error("Incorrect email or password");
 
-    /*const profileResponse = await fetch(`${API}/auth/profile`, {
-      credentials: "include",
-
-    });*/
     const data = await loginResponse.json();
 
     setUser(data);
@@ -229,6 +225,60 @@ export function AuthProvider({ children }) {
     return response.json();
   }
 
+  async function getUserRating(itemId) {
+    const response = await fetch(`${API}/ratings/user/${itemId}`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch rating");
+    }
+
+    const data = await response.json();
+    return data.rating ?? null;
+  }
+
+  async function createRating(itemId, value) {
+    const response = await fetch(`${API}/ratings/${itemId}?value=${value}`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || "Failed to create rating");
+    }
+    return payload.rating;
+  }
+
+  async function updateRating(itemId, value) {
+    const response = await fetch(`${API}/ratings/${itemId}?value=${value}`, {
+      method: "PUT",
+      credentials: "include",
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || "Failed to update rating");
+    }
+    return payload.rating;
+  }
+
+  async function deleteRating(itemId) {
+    const response = await fetch(`${API}/ratings/${itemId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to delete rating");
+    }
+
+    return response.json();
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -244,6 +294,10 @@ export function AuthProvider({ children }) {
       addToWishlist,
       removeFromWishlist,
       getItemRatings,
+      getUserRating,
+      createRating,
+      updateRating,
+      deleteRating,
       register,
       loading
     }}>

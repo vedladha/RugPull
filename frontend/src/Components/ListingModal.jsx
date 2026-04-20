@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RatingsSummary from "./RatingsSummary.jsx";
+import RatingInput from "./RatingInput.jsx";
+import { useAuth } from "../Auth/auth-context";
 import "../style/listing-modal.css";
 import "../style/rating.css";
 
@@ -15,12 +17,17 @@ export default function ListingModal({
   wishlistError = "",
   wishlistSuccess = "",
   rating,
+  onRatingChanged,
 }) {
   const navigate = useNavigate();
+  const { user, getUserRating, createRating, updateRating, deleteRating } = useAuth();
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartFeedback, setCartFeedback] = useState("");
   const [cartError, setCartError] = useState("");
-
+  const [userRatingValue, setUserRatingValue] = useState(0);
+  const [ratingBusy, setRatingBusy] = useState(false);
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSuccess, setRatingSuccess] = useState("");
   const stock = Number.isFinite(Number(listing?.stock)) ? Number(listing.stock) : null;
   const isSoldOut = stock !== null && stock <= 0;
 
@@ -48,7 +55,64 @@ export default function ListingModal({
     setCartError("");
     setAddingToCart(false);
     setQuantity(stock !== null && stock > 0 ? "1" : "0");
+    setRatingError("");
+    setRatingSuccess("");
+    setUserRatingValue(0);
   }, [listing?.itemId, stock]);
+
+  useEffect(() => {
+    if (!user || !listing?.itemId) {
+      setUserRatingValue(0);
+      return;
+    }
+    let cancelled = false;
+    getUserRating(listing.itemId)
+      .then((existing) => {
+        if (!cancelled) {
+          setUserRatingValue(existing?.ratingValue ?? 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setUserRatingValue(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, listing?.itemId, getUserRating]);
+
+  const handleSubmitRating = async (value) => {
+    setRatingBusy(true);
+    setRatingError("");
+    setRatingSuccess("");
+    try {
+      const saved = userRatingValue > 0
+        ? await updateRating(listing.itemId, value)
+        : await createRating(listing.itemId, value);
+      setUserRatingValue(saved?.ratingValue ?? value);
+      setRatingSuccess(userRatingValue > 0 ? "Rating updated" : "Rating submitted");
+      if (onRatingChanged) onRatingChanged(listing.itemId);
+    } catch (err) {
+      setRatingError(err.message);
+    } finally {
+      setRatingBusy(false);
+    }
+  };
+
+  const handleDeleteRating = async () => {
+    setRatingBusy(true);
+    setRatingError("");
+    setRatingSuccess("");
+    try {
+      await deleteRating(listing.itemId);
+      setUserRatingValue(0);
+      setRatingSuccess("Rating removed");
+      if (onRatingChanged) onRatingChanged(listing.itemId);
+    } catch (err) {
+      setRatingError(err.message);
+    } finally {
+      setRatingBusy(false);
+    }
+  };
 
   if (!listing) return null;
 
@@ -202,6 +266,17 @@ export default function ListingModal({
             <RatingsSummary
               average={rating.average}
               total={rating.total}
+            />
+          )}
+
+          {user && (
+            <RatingInput
+              value={userRatingValue}
+              onSubmit={handleSubmitRating}
+              onDelete={handleDeleteRating}
+              busy={ratingBusy}
+              error={ratingError}
+              success={ratingSuccess}
             />
           )}
 

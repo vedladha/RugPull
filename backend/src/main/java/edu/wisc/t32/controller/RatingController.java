@@ -199,9 +199,9 @@ public class RatingController {
           .body(Map.of("error", "Rating not found"));
     }
 
-    Rating rating = existing.get();
-    rating.setDeleted(true);
-    ratingRepository.save(rating);
+    // instead of marking deleted the desing works better to actually explicitly remove
+    // fixes front end bug where we try to post on a deleted review
+    ratingRepository.delete(existing.get());
     return ResponseEntity.ok(Map.of("message", "Rating removed", "itemId", itemId));
   }
 

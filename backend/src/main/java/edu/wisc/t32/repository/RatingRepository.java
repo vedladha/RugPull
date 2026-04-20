@@ -15,7 +15,7 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
    *
    * @param userId the user who left the rating
    * @param itemId the item that was rated
-   * @return the rating if it exists and is not deleted
+   * @return the rating if it exists and is not deletedd
    */
   Optional<Rating> findByUserIdAndItemIdAndDeletedFalse(Integer userId, Integer itemId);
 
