@@ -799,8 +799,7 @@ export default function EarnPage() {
         )}
       </div>
 
-      {/* --- Section 3: Developer Minting Tool --- */}
-      <div className="dev-sandbox" style={{ marginTop: "2rem" }}>
+      <div className="earn-games-section">
         <div className="slot-machine-card">
           <div className="slot-machine-header">
             <span className="slot-machine-badge">Game</span>
@@ -903,7 +902,7 @@ export default function EarnPage() {
 
         <div className="slot-machine-card roulette-card">
           <div className="slot-machine-header">
-            <span className="slot-machine-badge">Table</span>
+            <span className="slot-machine-badge">Game</span>
             <h2>Roulette</h2>
           </div>
 
@@ -1107,40 +1106,40 @@ export default function EarnPage() {
             </div>
           )}
         </div>
+      </div>
 
-        <div className="dev-sandbox">
-          <div className="dev-sandbox-header">
-            <span className="dev-badge">⚠️ DEV ONLY</span>
-            <h3>Arbitrary Minting Tool</h3>
-          </div>
-          <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
-
-          <div className="dev-input-group">
-            <input
-              type="number"
-              className="dev-input"
-              placeholder="Amount (e.g. 500)"
-              value={fundAmount}
-              onChange={(event) => setFundAmount(event.target.value)}
-              disabled={isFunding}
-              min="1"
-              step="any"
-            />
-            <button
-              className="dev-btn"
-              onClick={handleDevMint}
-              disabled={isFunding || !fundAmount}
-            >
-              {isFunding ? "Minting..." : "Execute Mint"}
-            </button>
-          </div>
-
-          {fundMsg.text && (
-            <div className={`dev-msg ${fundMsg.type}`}>
-              {fundMsg.text}
-            </div>
-          )}
+      <div className="dev-sandbox">
+        <div className="dev-sandbox-header">
+          <span className="dev-badge">⚠️ DEV ONLY</span>
+          <h3>Arbitrary Minting Tool</h3>
         </div>
+        <p className="dev-desc">Force-fund your connected wallet. Not meant for production.</p>
+
+        <div className="dev-input-group">
+          <input
+            type="number"
+            className="dev-input"
+            placeholder="Amount (e.g. 500)"
+            value={fundAmount}
+            onChange={(event) => setFundAmount(event.target.value)}
+            disabled={isFunding}
+            min="1"
+            step="any"
+          />
+          <button
+            className="dev-btn"
+            onClick={handleDevMint}
+            disabled={isFunding || !fundAmount}
+          >
+            {isFunding ? "Minting..." : "Execute Mint"}
+          </button>
+        </div>
+
+        {fundMsg.text && (
+          <div className={`dev-msg ${fundMsg.type}`}>
+            {fundMsg.text}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -375,6 +375,14 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+.earn-games-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
 .roulette-card {
   background:
     radial-gradient(circle at top left, rgba(196, 40, 44, 0.12), transparent 34%),

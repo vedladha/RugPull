@@ -90,6 +90,8 @@ describe("EarnPage", () => {
         screen.getByText("Check in today to claim your free 14.0 $RPC tokens!"),
       ).toBeInTheDocument();
       expect(screen.getByText("$250.00 RPC")).toBeInTheDocument();
+      expect(screen.getAllByText("Game")).toHaveLength(2);
+      expect(screen.queryByText("Table")).toBeNull();
       expect(screen.getByRole("button", { name: "Spin Slots" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Spin Roulette" })).toBeInTheDocument();
     });
