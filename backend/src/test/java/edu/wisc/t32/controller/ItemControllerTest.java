@@ -178,10 +178,12 @@ class ItemControllerTest {
   @Test
   void createItem_callsImageService_whenFileIsProvided() {
     ItemCreateRequest request = buildCreateRequest("Item", "Desc", "10", 1);
-    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
+    MockMultipartFile mockFile =
+        new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
     List<MultipartFile> fileList = List.of(mockFile);
 
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
       Item item = inv.getArgument(0);
       item.setItemId(101);
@@ -196,13 +198,16 @@ class ItemControllerTest {
   // Create an item with multiple associated images
   @Test
   void createItem_callsImageServiceForEveryFileInList() {
-    MockMultipartFile file1 = new MockMultipartFile("files", "front.jpg", "image/jpeg", "data1".getBytes());
-    MockMultipartFile file2 = new MockMultipartFile("files", "back.jpg", "image/jpeg", "data2".getBytes());
+    MockMultipartFile file1 =
+        new MockMultipartFile("files", "front.jpg", "image/jpeg", "data1".getBytes());
+    MockMultipartFile file2 =
+        new MockMultipartFile("files", "back.jpg", "image/jpeg", "data2".getBytes());
     List<MultipartFile> fileList = List.of(file1, file2);
 
     ItemCreateRequest request = buildCreateRequest("Item", "Desc", "70", 1);
 
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.save(any(Item.class))).thenAnswer(inv -> {
       Item item = inv.getArgument(0);
       item.setItemId(500);
@@ -218,9 +223,6 @@ class ItemControllerTest {
   // Checks that getAllItems returns all active items with their thumbnails.
   @Test
   void getAllItems_returnsListOfActiveItems() {
-    Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
-    Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
-
     ItemImage image1 = new ItemImage();
     image1.setImageUrl("/test-image.jpg");
 
@@ -229,6 +231,9 @@ class ItemControllerTest {
 
     UserProfile profile2 = mock(UserProfile.class);
     when(profile2.getDisplayName()).thenReturn("Seller Two");
+
+    Item item1 = buildItem(1, 7, "Item One", "Description one", new BigDecimal("10.00"), 3, false);
+    Item item2 = buildItem(2, 8, "Item Two", "Description two", new BigDecimal("20.00"), 5, false);
 
     when(itemRepository.findByDeletedFalse()).thenReturn(List.of(item1, item2));
     when(userProfileRepository.findByUserId(7)).thenReturn(profile1);
@@ -489,8 +494,6 @@ class ItemControllerTest {
   // Checks that a valid partial item patch saves new values and should return 200.
   @Test
   void patchItem_returnsUpdatedItem_whenPartialRequestIsValid() {
-    Item existing = buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
-
     // Only update price and stock, leave name and description null
     ItemUpdateRequest request = new ItemUpdateRequest();
     request.setPrice(new BigDecimal("49.95"));
@@ -498,6 +501,8 @@ class ItemControllerTest {
 
     when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
         Optional.of(buildUser(7)));
+    Item existing =
+        buildItem(1, 7, "Old Name", "Old Description", new BigDecimal("1.00"), 1, false);
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -524,14 +529,16 @@ class ItemControllerTest {
   @Test
   void patchItem_callsImageService_whenFileIsProvided() {
     Item existing = buildItem(1, 7, "Name", "Desc", new BigDecimal("10"), 1, false);
-    ItemUpdateRequest request = buildRequest("Name", "Desc", "10", 1);
-    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
-    List<MultipartFile> fileList = List.of(mockFile);
+    MockMultipartFile mockFile =
+        new MockMultipartFile("file", "test.jpg", "image/jpeg", "data".getBytes());
 
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByItemIdAndDeletedFalse(1)).thenReturn(Optional.of(existing));
     when(itemRepository.save(any(Item.class))).thenAnswer(inv -> inv.getArgument(0));
 
+    ItemUpdateRequest request = buildRequest("Name", "Desc", "10", 1);
+    List<MultipartFile> fileList = List.of(mockFile);
     itemController.patchItem(VALID_TOKEN, 1, request, fileList);
 
     verify(itemImageService, times(1)).addImageToItem(eq(mockFile), eq(1), eq(7), eq(0));
@@ -752,7 +759,8 @@ class ItemControllerTest {
   @Test
   void getMyItems_returnsItems_whenAuthenticatedAndHasItems() {
     Item item1 = buildItem(1, 7, "My Item One", "Description", new BigDecimal("10.00"), 3, false);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByUserId(7)).thenReturn(List.of(item1));
     when(itemImageRepository.findByItemIdOrderByPositionAsc(1)).thenReturn(List.of());
 
@@ -782,7 +790,8 @@ class ItemControllerTest {
   // Checks that getMyItems returns 404 when user has no items
   @Test
   void getMyItems_returnsNotFound_whenUserHasNoItems() {
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(buildUser(7)));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(
+        Optional.of(buildUser(7)));
     when(itemRepository.findByUserId(7)).thenReturn(List.of());
 
     ResponseEntity<?> response = itemController.getMyItems(VALID_TOKEN);

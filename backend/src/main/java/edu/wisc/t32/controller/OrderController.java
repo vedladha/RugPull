@@ -41,10 +41,10 @@ public class OrderController {
   /**
    * Constructs an OrderController with the dependencies needed to place orders.
    *
-   * @param orderItemRepository repository used for saving individual items in an order
-   * @param orderRepository repository used for saving orders
-   * @param orderService service used for locked purchase processing
-   * @param currentUserService service used to resolve the authenticated user
+   * @param orderItemRepository   repository used for saving individual items in an order
+   * @param orderRepository       repository used for saving orders
+   * @param orderService          service used for locked purchase processing
+   * @param currentUserService    service used to resolve the authenticated user
    * @param userProfileRepository repository used to resolve user profiles for order summaries
    */
   public OrderController(
@@ -63,7 +63,7 @@ public class OrderController {
   /**
    * Places a new order for the authenticated user.
    *
-   * @param token the JWT token extracted from the HTTP-only cookie
+   * @param token   the JWT token extracted from the HTTP-only cookie
    * @param request the item and quantity being ordered
    * @return the created order, or an error if auth or validation fails
    */
@@ -111,7 +111,8 @@ public class OrderController {
    * @return the authenticated user's orders, or an auth error
    */
   @GetMapping("/all")
-  public ResponseEntity<?> getAllRelatedOrders(@CookieValue(name = "jwt", required = false) String token) {
+  public ResponseEntity<?> getAllRelatedOrders(
+      @CookieValue(name = "jwt", required = false) String token) {
     Optional<User> currentUser = currentUserService.getAuthenticatedUser(token);
     if (currentUser.isEmpty()) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -129,7 +130,8 @@ public class OrderController {
       String orderDate = order.getCreatedAt().toString();
       String orderType = buyerName.equals(currentUserName) ? "buy" : "sell";
       for (OrderItem item : itemNames) {
-        summaries.add(new OrderSummary(orderType, buyerName, sellerName, item.getItem().getName(), item.getQuantity(), item.getUnitPrice(), orderDate));
+        summaries.add(new OrderSummary(orderType, buyerName, sellerName, item.getItem().getName(),
+            item.getQuantity(), item.getUnitPrice(), orderDate));
       }
     }
     return ResponseEntity.ok(Map.of("orders", summaries));
@@ -138,7 +140,7 @@ public class OrderController {
   /**
    * Retrieves one order for the authenticated user.
    *
-   * @param token the JWT token extracted from the HTTP-only cookie
+   * @param token   the JWT token extracted from the HTTP-only cookie
    * @param orderId the unique identifier of the order to retrieve
    * @return the matching order, or an error if it is missing or not owned by the user
    */

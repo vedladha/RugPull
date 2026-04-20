@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing a rating in the database
+ * Entity representing a rating in the database.
  */
 @Entity
 @Table(name = "ratings")

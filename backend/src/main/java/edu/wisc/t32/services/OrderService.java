@@ -40,10 +40,10 @@ public class OrderService {
   /**
    * Constructs the service with the repositories and wallet service needed to place orders.
    *
-   * @param orderRepository repository used for saving orders
-   * @param itemRepository repository used for locked item lookups and stock updates
+   * @param orderRepository      repository used for saving orders
+   * @param itemRepository       repository used for locked item lookups and stock updates
    * @param userWalletRepository repository used for loading buyer and seller wallets
-   * @param walletService service used for executing RPC transfers
+   * @param walletService        service used for executing RPC transfers
    */
   public OrderService(OrderRepository orderRepository,
                       ItemRepository itemRepository,
@@ -63,7 +63,7 @@ public class OrderService {
    * corresponding RPC transfers have completed successfully.
    *
    * @param currentUser the authenticated user placing the order
-   * @param request the validated order request payload
+   * @param request     the validated order request payload
    * @return the saved order
    * @throws OrderItemNotFoundException when the item does not exist
    * @throws InsufficientStockException when there is not enough stock left to fulfill the request
@@ -121,35 +121,36 @@ public class OrderService {
   }
 
   /**
-   * Gets all transactions related to the user (sales and purchases)
+   * Gets all transactions related to the user (sales and purchases).
    *
    * @param currentUser the authenticated user to get the transaction history of
    * @return a list containing all orders where the user is involved
    */
   public List<Order> getAllRelatedOrders(User currentUser) {
-	List<Order> buyerOrders = orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
-    List<Order> sellerOrders = orderRepository.findCompletedOrdersWhereSeller(currentUser.getUserId());
+    List<Order> buyerOrders = orderRepository.findByUserOrderByCreatedAtDesc(currentUser);
+    List<Order> sellerOrders =
+        orderRepository.findCompletedOrdersWhereSeller(currentUser.getUserId());
 
     HashSet<Order> allOrders = new HashSet<>();
     allOrders.addAll(buyerOrders);
     allOrders.addAll(sellerOrders);
 
     return allOrders.stream()
-          .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
-          .toList();
+        .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
+        .toList();
   }
 
   /**
    * Checks that the quantity is valid for the current stock of an item
    * and reduces the stock by that quantity.
-   * 
-   * Checks that the quantity is valid for the current stock of an item and reduces the stock by
+   *
+   * <p>Checks that the quantity is valid for the current stock of an item and reduces the stock by
    * that quantity.
    *
-   * @param item The item to check the stock of
+   * @param item     The item to check the stock of
    * @param quantity The quantity of the item wanted
    * @throws InsufficientStockException when there is less stock than the quantity requested
-   * @throws IllegalArgumentException if the quantity is not positive
+   * @throws IllegalArgumentException   if the quantity is not positive
    */
   public void reserveStock(Item item, Integer quantity) {
     if (quantity == null || quantity <= 0) {

@@ -206,7 +206,7 @@ public class RatingController {
   }
 
   /**
-   * Validates that a rating value is present and on the 1-5 scale
+   * Validates that a rating value is present and on the 1-5 scale.
    */
   private String validateRatingValue(Integer value) {
     if (value == null) {
