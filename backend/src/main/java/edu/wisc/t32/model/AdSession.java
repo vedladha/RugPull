@@ -9,7 +9,8 @@ import java.util.UUID;
 
 /**
  * Represents a secure, server-side tracking session for an in-progress advertisement.
- * This prevents clients from spoofing ad completions by enforcing strict server-side duration checks.
+ * This prevents clients from spoofing ad completions by enforcing strict server-side
+ * duration checks.
  */
 @Entity
 @Table(name = "ad_sessions")

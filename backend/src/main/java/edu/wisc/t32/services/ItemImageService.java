@@ -15,6 +15,12 @@ public class ItemImageService {
   private final ItemImageRepository itemImageRepository;
   private final FileService fileService;
 
+  /**
+   * Creates a new item image service.
+   *
+   * @param itemImageRepository the item image repository
+   * @param fileService         the file service
+   */
   public ItemImageService(ItemImageRepository itemImageRepository,
                           FileService fileService) {
     this.itemImageRepository = itemImageRepository;

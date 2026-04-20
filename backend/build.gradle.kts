@@ -38,7 +38,7 @@ dependencies {
     testImplementation(libs.spring.boot.security.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit)
-    
+
     testRuntimeOnly("com.h2database:h2")
     testRuntimeOnly(libs.junit.platform)
 }
@@ -46,6 +46,8 @@ dependencies {
 checkstyle {
     toolVersion = "13.2.0"
     configFile = rootProject.file("config/checkstyle.xml")
+    maxWarnings = 0
+    maxErrors = 0
 }
 
 tasks.named<Test>("test") {

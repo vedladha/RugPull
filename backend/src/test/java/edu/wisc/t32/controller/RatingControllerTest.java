@@ -51,8 +51,7 @@ class RatingControllerTest {
 
   @Test
   void createRating_returnsUnauthorized_whenNotAuthenticated() {
-    when(currentUserService.getAuthenticatedUser(null))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.createRating(null, 10, 5);
 
@@ -67,8 +66,7 @@ class RatingControllerTest {
   void createRating_returnsBadRequest_whenValueIsNull() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 10, null);
 
@@ -83,8 +81,7 @@ class RatingControllerTest {
   void createRating_returnsBadRequest_whenValueTooLow() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 10, 0);
 
@@ -98,8 +95,7 @@ class RatingControllerTest {
   void createRating_returnsBadRequest_whenValueTooHigh() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 10, 6);
 
@@ -113,10 +109,8 @@ class RatingControllerTest {
   void createRating_returnsNotFound_whenItemDoesNotExist() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(itemRepository.findByItemIdAndDeletedFalse(99))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(itemRepository.findByItemIdAndDeletedFalse(99)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 99, 5);
 
@@ -131,12 +125,9 @@ class RatingControllerTest {
   void createRating_returnsForbidden_whenUserHasNotPurchased() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(itemRepository.findByItemIdAndDeletedFalse(10))
-        .thenReturn(Optional.of(new Item()));
-    when(orderItemRepository.existsByUserIdAndItemId(1, 10))
-        .thenReturn(false);
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(new Item()));
+    when(orderItemRepository.existsByUserIdAndItemId(1, 10)).thenReturn(false);
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 10, 5);
 
@@ -151,14 +142,11 @@ class RatingControllerTest {
   void createRating_returnsConflict_whenAlreadyRated() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(itemRepository.findByItemIdAndDeletedFalse(10))
-        .thenReturn(Optional.of(new Item()));
-    when(orderItemRepository.existsByUserIdAndItemId(1, 10))
-        .thenReturn(true);
-    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10))
-        .thenReturn(Optional.of(new Rating()));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(itemRepository.findByItemIdAndDeletedFalse(10)).thenReturn(Optional.of(new Item()));
+    when(orderItemRepository.existsByUserIdAndItemId(1, 10)).thenReturn(true);
+    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10)).thenReturn(
+        Optional.of(new Rating()));
 
     ResponseEntity<?> response = ratingController.createRating(VALID_TOKEN, 10, 5);
 
@@ -171,8 +159,7 @@ class RatingControllerTest {
 
   @Test
   void updateRating_returnsUnauthorized_whenNotAuthenticated() {
-    when(currentUserService.getAuthenticatedUser(null))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.updateRating(null, 10, 5);
 
@@ -184,8 +171,7 @@ class RatingControllerTest {
   void updateRating_returnsBadRequest_whenValueOutOfRange() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
 
     ResponseEntity<?> response = ratingController.updateRating(VALID_TOKEN, 10, 0);
 
@@ -199,10 +185,8 @@ class RatingControllerTest {
   void updateRating_returnsNotFound_whenNoExistingRating() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.updateRating(VALID_TOKEN, 10, 4);
 
@@ -213,11 +197,9 @@ class RatingControllerTest {
     verify(ratingRepository, never()).save(any(Rating.class));
   }
 
-
   @Test
   void getItemRatings_returnsZeros_whenNoRatings() {
-    when(ratingRepository.findByItemIdAndDeletedFalse(10))
-        .thenReturn(List.of());
+    when(ratingRepository.findByItemIdAndDeletedFalse(10)).thenReturn(List.of());
 
     ResponseEntity<?> response = ratingController.getItemRatings(10);
 
@@ -233,16 +215,13 @@ class RatingControllerTest {
     }
   }
 
-
   @Test
   void getUserRating_returnsNullRating_whenNotExists() {
     User user = new User();
     user.setUserId(1);
 
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.getUserRating(VALID_TOKEN, 10);
 
@@ -254,8 +233,7 @@ class RatingControllerTest {
 
   @Test
   void getUserRating_returnsUnauthorized_whenNotAuthenticated() {
-    when(currentUserService.getAuthenticatedUser(null))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.getUserRating(null, 10);
 
@@ -265,26 +243,22 @@ class RatingControllerTest {
     assertEquals("Authentication required", body.get("error"));
   }
 
-
   @Test
   void deleteRating_returnsUnauthorized_whenNotAuthenticated() {
-    when(currentUserService.getAuthenticatedUser(null))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(null)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.deleteRating(null, 10);
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     verify(ratingRepository, never()).save(any(Rating.class));
-    }
+  }
 
   @Test
   void deleteRating_returnsNotFound_whenNoRating() {
     User user = new User();
     user.setUserId(1);
-    when(currentUserService.getAuthenticatedUser(VALID_TOKEN))
-        .thenReturn(Optional.of(user));
-    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10))
-        .thenReturn(Optional.empty());
+    when(currentUserService.getAuthenticatedUser(VALID_TOKEN)).thenReturn(Optional.of(user));
+    when(ratingRepository.findByUserIdAndItemIdAndDeletedFalse(1, 10)).thenReturn(Optional.empty());
 
     ResponseEntity<?> response = ratingController.deleteRating(VALID_TOKEN, 10);
 
@@ -293,6 +267,6 @@ class RatingControllerTest {
     assertNotNull(body);
     assertEquals("Rating not found", body.get("error"));
     verify(ratingRepository, never()).save(any(Rating.class));
-    }
+  }
 }
 
