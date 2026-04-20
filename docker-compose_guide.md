@@ -27,11 +27,15 @@ docker compose ps
 You should see all three containers: frontend, backend, and database up and running.
 
 ## Initializing the database schema
-The database container needs the schema loaded.
+The database container loads its schema automatically from `database/database_init/`
+when the database volume is created.
 
-This needs to be done once per developer on setup, and then subsequently rerun when the database is dropped or the schema is updated.
+For a normal first-time setup, `docker compose up --build -d` is enough.
+
+If you need to reset your local database and rerun the initialization scripts, use:
 ```bash
-docker compose exec -T database   mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ./database/schema.sql
+docker compose down -v
+docker compose up --build -d
 ```
 
 For existing databases, if signup fails because `wallet_private_key` is missing, run:
@@ -116,4 +120,5 @@ This will not remove your local database, to remove your local database, run:
 ```bash
 docker compose down -v
 ```
-When you run docker compose up again, docker will rebuild the database based on database/schema.sql.
+When you run `docker compose up` again after that, Docker will rebuild the database and rerun the
+scripts in `database/database_init/`.

@@ -25,6 +25,7 @@ frontend-backed API.
 | `/auth/login`    | POST   | Authenticate user and set the `jwt` cookie |
 | `/auth/profile`  | GET    | Fetch the logged in user's auth profile    |
 | `/auth/logout`   | POST   | Logout and clear the `jwt` cookie          |
+| `/auth/password` | PUT    | Change the logged in user's password       |
 
 ---
 
@@ -47,10 +48,12 @@ Marketplace listings management.
 | Endpoint          | Method | Description                                        |
 |-------------------|--------|----------------------------------------------------|
 | `/items`          | GET    | List all non-deleted items                         |
-| `/items/{itemId}` | GET    | Fetch single item details                          |
-| `/items`          | POST   | Create a new item listing                          |
-| `/items/{itemId}` | PUT    | Update item info (name, description, price, stock) |
+| `/items/{itemId}` | GET    | Fetch single item details and images               |
+| `/items`          | POST   | Create a new item listing with optional images     |
+| `/items/{itemId}` | PUT    | Fully update an item listing                       |
+| `/items/{itemId}` | PATCH  | Partially update an item listing                   |
 | `/items/{itemId}` | DELETE | Soft delete an item                                |
+| `/items/{itemId}/images` | GET | Fetch images for a single item                 |
 | `/items/batch`    | POST   | Fetch items using a bulk list of ids               |
 | `/items/me`       | GET    | Fetch items by your user                           |
 
@@ -79,6 +82,7 @@ Buying and selling workflow.
 | Endpoint            | Method | Description                        |
 |---------------------|--------|------------------------------------|
 | `/orders`           | GET    | List authenticated user's orders   |
+| `/orders/all`       | GET    | List buy and sell order summaries  |
 | `/orders/{orderId}` | GET    | Get one authenticated user's order |
 | `/orders`           | POST   | Place a new order                  |
 
@@ -89,40 +93,63 @@ Buying and selling workflow.
 | Endpoint             | Method | Description                                     |
 |----------------------|--------|-------------------------------------------------|
 | `/wishlist`          | GET    | List items in the authenticated user's wishlist |
+| `/wishlist/items`    | GET    | List wishlisted items with item details         |
 | `/wishlist/{itemId}` | POST   | Add item to wishlist                            |
 | `/wishlist/{itemId}` | DELETE | Remove item from wishlist                       |
 
 ---
 
-### 8. Crypto Transactions & Wallets
+### 8. Wallets
 
 | Endpoint        | Method | Description                                                                |
 |-----------------|--------|----------------------------------------------------------------------------|
 | `/wallets`      | GET    | Fetch authenticated user's wallet balance                                  |
-| `/wallets/fund/ | POST   | Allows self funding of arbitrary amount of currency (dev and testing only) | 
+| `/wallets/fund` | POST   | Allows self funding of arbitrary amount of currency (dev and testing only) |
 
 Deposit, withdraw, transfer, and transaction history endpoints are not currently implemented in
 the backend controllers.
 
+---
 
+### 9. Ratings
+
+| Endpoint                 | Method | Description                                  |
+|--------------------------|--------|----------------------------------------------|
+| `/ratings/{itemId}`      | POST   | Create a rating for an item                  |
+| `/ratings/{itemId}`      | PUT    | Update the current user's rating             |
+| `/ratings/{itemId}`      | DELETE | Delete the current user's rating             |
+| `/ratings/item/{itemId}` | GET    | Fetch aggregate rating data for an item      |
+| `/ratings/user/{itemId}` | GET    | Fetch the current user's rating for an item  |
 
 ---
 
-### 9. Reviews
+### 10. Daily Rewards & Ads
 
-No review endpoints are currently implemented in the backend controllers.
-
-
+| Endpoint       | Method | Description                                 |
+|----------------|--------|---------------------------------------------|
+| `/daily`       | GET    | Fetch daily reward claim status             |
+| `/daily/claim` | GET    | Claim the current daily reward              |
+| `/ads/start`   | GET    | Start an authenticated ad session           |
+| `/ads/claim`   | POST   | Claim the reward for a completed ad session |
 
 ---
 
-### 10. Notifications
+### 11. Games
+
+| Endpoint         | Method | Description                      |
+|------------------|--------|----------------------------------|
+| `/slots/spin`    | POST   | Spin the earn-page slot machine  |
+| `/roulette/spin` | POST   | Spin the earn-page roulette game |
+
+---
+
+### 12. Notifications
 
 No notification endpoints are currently implemented in the backend controllers.
 
 ---
 
-### 11. Cart
+### 13. Cart
 
 | Endpoint         | Method | Description                                 |
 |------------------|--------|---------------------------------------------|
@@ -133,7 +160,7 @@ No notification endpoints are currently implemented in the backend controllers.
 
 ---
 
-### 12. Legacy `/api` User Endpoints
+### 14. Legacy `/api` User Endpoints
 
 These routes still exist in `UserController`, but they are older/testing endpoints.
 
@@ -237,6 +264,42 @@ Returns the authenticated user's basic auth profile.
     "email": "user@example.com",
     "displayName": "User"
   }
+}
+```
+
+---
+
+### PUT /auth/password
+
+Changes the authenticated user's password.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Request Body
+
+| Field             | Type   | Required | Description          |
+|-------------------|--------|----------|----------------------|
+| currentPassword   | String | Y        | User's current password |
+| newPassword       | String | Y        | New password         |
+
+#### Request Example
+
+```json
+{
+  "currentPassword": "password123",
+  "newPassword": "newPassword123"
+}
+```
+
+#### Response Example
+
+```json
+{
+  "message": "Password updated successfully"
 }
 ```
 
@@ -410,12 +473,6 @@ This route is not implemented in the current backend.
 
 ### GET /items
 
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
 Returns all non-deleted items.
 The filtering query parameters listed below were part of an older draft and are not currently
 implemented in the backend controller.
@@ -431,7 +488,9 @@ implemented in the backend controller.
       "description": "Limited edition painting",
       "price": 2.0,
       "stock": 10,
-      "sellerName": "artist1"
+      "sellerName": "artist1",
+      "thumbnailUrl": "/images/1.png",
+      "thumbnailUpdatedAt": "2026-04-05T12:00:00"
     },
     {
       "itemId": 2,
@@ -439,7 +498,8 @@ implemented in the backend controller.
       "description": "Limited edition Pokemon card",
       "price": 5.12,
       "stock": 2,
-      "sellerName": "collector7"
+      "sellerName": "collector7",
+      "thumbnailUrl": null
     }
   ]
 }
@@ -448,12 +508,6 @@ implemented in the backend controller.
 ---
 
 ### GET /items/{itemId}
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
 
 #### Path Parameters
 
@@ -473,7 +527,15 @@ implemented in the backend controller.
     "price": 2.0,
     "stock": 10,
     "deleted": false
-  }
+  },
+  "images": [
+    {
+      "imageId": 1,
+      "itemId": 1,
+      "imageUrl": "/images/1.png",
+      "position": 0
+    }
+  ]
 }
 ```
 
@@ -481,22 +543,23 @@ implemented in the backend controller.
 
 ### POST /items
 
-#### Headers
+Creates a new item listing for the authenticated user.
+This endpoint expects `multipart/form-data` with an `item` part and optional uploaded files.
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+#### Headers & Cookies
 
-#### Request Body
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
-| Field       | Type   | Required | Description               |
-|-------------|--------|----------|---------------------------|
-| name        | String | Y        | Item name                 |
-| description | String | Y        | Item description          |
-| price       | Number | Y        | Price in crypto           |
-| stock       | Number | Y        | Number of items available |
+#### Request Parts
 
-#### Request Example
+| Part   | Type                   | Required | Description                          |
+|--------|------------------------|----------|--------------------------------------|
+| `item` | JSON `ItemCreateRequest` | Y      | Item metadata (`name`, `description`, `price`, `stock`) |
+| `file` | one or more files      | N        | Optional item images                 |
+
+#### `item` Part Example
 
 ```json
 {
@@ -527,11 +590,14 @@ implemented in the backend controller.
 
 ### PUT /items/{itemId}
 
-#### Headers
+Fully updates an existing item listing for the authenticated owner.
+This endpoint expects `multipart/form-data` with an `item` part and optional uploaded files.
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Path Parameters
 
@@ -539,14 +605,12 @@ implemented in the backend controller.
 |-----------|--------|----------|----------------|
 | itemId    | String | Y        | ID of the item |
 
-#### Request Body
+#### Request Parts
 
-| Field       | Type   | Required | Description                          |
-|-------------|--------|----------|--------------------------------------|
-| name        | String | Y        | Updated item name (non-empty)        |
-| description | String | Y        | Updated item description (non-empty) |
-| price       | Number | Y        | Updated price (must be non-negative) |
-| stock       | Number | Y        | Updated stock (must be non-negative) |
+| Part   | Type                    | Required | Description                          |
+|--------|-------------------------|----------|--------------------------------------|
+| `item` | JSON `ItemUpdateRequest` | Y       | Full item metadata update            |
+| `file` | one or more files       | N        | Optional replacement or appended images |
 
 #### Request Example
 
@@ -588,6 +652,14 @@ implemented in the backend controller.
   "error": "price must be non-negative"
 }
 ```
+
+---
+
+### PATCH /items/{itemId}
+
+Partially updates an existing item listing for the authenticated owner.
+This endpoint accepts the same multipart structure as `PUT /items/{itemId}`, but only the
+provided fields in the `item` part are updated.
 
 ---
 
@@ -742,32 +814,33 @@ Returned if the authenticated user has not posted any items.
 
 ---
 
----
+### GET /items/{itemId}/images
 
-### POST /items/{item_id}/images
-
-This route is not implemented in the current backend.
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-| Content-Type  | multipart/form-data     |
+Returns the ordered image list for a single item.
 
 #### Path Parameters
 
 | Parameter | Type   | Required | Description    |
 |-----------|--------|----------|----------------|
-| item_id   | String | Y        | ID of the item |
+| itemId    | String | Y        | ID of the item |
 
 #### Response Example
 
 ```json
 {
-  "uploaded": [
-    "image1.png",
-    "image2.png"
+  "images": [
+    {
+      "imageId": 1,
+      "itemId": 5,
+      "imageUrl": "/images/5-0.png",
+      "position": 0
+    },
+    {
+      "imageId": 2,
+      "itemId": 5,
+      "imageUrl": "/images/5-1.png",
+      "position": 1
+    }
   ]
 }
 ```
@@ -1170,11 +1243,11 @@ This route is not implemented in the current backend.
 
 ### GET /orders
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Query Parameters
 
@@ -1194,14 +1267,47 @@ the backend controller.
   "orders": [
     {
       "orderId": 5001,
-      "userId": 123,
-      "itemId": 101,
-      "quantity": 1,
-      "price": 2.5,
-      "feePercentage": 2.5,
-      "orderStatus": "pending",
+      "orderStatus": "PENDING",
+      "totalPrice": 2.50,
       "createdAt": "2026-02-18T17:00:00",
-      "updatedAt": "2026-02-18T17:00:00"
+      "updatedAt": "2026-02-18T17:00:00",
+      "items": [
+        {
+          "orderItemId": 1,
+          "quantity": 1,
+          "unitPrice": 2.50
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET /orders/all
+
+Returns buy and sell order summaries related to the authenticated user.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Response Example
+
+```json
+{
+  "orders": [
+    {
+      "orderType": "buy",
+      "buyerName": "buyer1",
+      "sellerName": "seller1",
+      "itemName": "Painting",
+      "quantity": 1,
+      "totalPrice": 2.50,
+      "createdAt": "2026-04-06T21:00:00"
     }
   ]
 }
@@ -1211,11 +1317,11 @@ the backend controller.
 
 ### GET /orders/{orderId}
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Path Parameters
 
@@ -1229,14 +1335,17 @@ the backend controller.
 {
   "order": {
     "orderId": 5001,
-    "userId": 123,
-    "itemId": 101,
-    "quantity": 1,
-    "price": 2.5,
-    "feePercentage": 2.5,
-    "orderStatus": "pending",
+    "orderStatus": "PENDING",
+    "totalPrice": 2.50,
     "createdAt": "2026-02-18T17:00:00",
-    "updatedAt": "2026-02-18T17:00:00"
+    "updatedAt": "2026-02-18T17:00:00",
+    "items": [
+      {
+        "orderItemId": 1,
+        "quantity": 1,
+        "unitPrice": 2.50
+      }
+    ]
   }
 }
 ```
@@ -1245,25 +1354,28 @@ the backend controller.
 
 ### POST /orders
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Request Body
 
-| Field    | Type   | Required | Description                |
-|----------|--------|----------|----------------------------|
-| itemId   | Number | Y        | ID of the item to purchase |
-| quantity | Number | Y        | Quantity to purchase       |
+| Field   | Type   | Required | Description                      |
+|---------|--------|----------|----------------------------------|
+| items   | Array  | Y        | Order line items                 |
 
 #### Request Example
 
 ```json
 {
-  "itemId": 100,
-  "quantity": 3
+  "items": [
+    {
+      "itemId": 100,
+      "quantity": 3
+    }
+  ]
 }
 ```
 
@@ -1273,12 +1385,8 @@ the backend controller.
 {
   "order": {
     "orderId": 5003,
-    "userId": 1,
-    "itemId": 100,
-    "quantity": 3,
-    "price": 22.33,
-    "feePercentage": 2.5,
-    "orderStatus": "pending"
+    "orderStatus": "PENDING",
+    "totalPrice": 22.33
   }
 }
 ```
@@ -1328,11 +1436,11 @@ This route is not implemented in the current backend.
 
 ### GET /wishlist
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Response Example
 
@@ -1350,13 +1458,43 @@ This route is not implemented in the current backend.
 
 ---
 
+### GET /wishlist/items
+
+Returns the authenticated user's wishlist entries with item details for the frontend wishlist page.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Response Example
+
+```json
+{
+  "wishlistItems": [
+    {
+      "itemId": 101,
+      "name": "Painting",
+      "description": "Limited edition painting",
+      "price": 2.0,
+      "stock": 3,
+      "thumbnailUrl": "/images/101-0.png",
+      "sellerName": "artist1"
+    }
+  ]
+}
+```
+
+---
+
 ### POST /wishlist/{itemId}
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Path Parameters
 
@@ -1380,11 +1518,11 @@ This route is not implemented in the current backend.
 
 ### DELETE /wishlist/{itemId}
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Path Parameters
 
@@ -1405,11 +1543,11 @@ This route is not implemented in the current backend.
 
 ### GET /wallets
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Response Example
 
@@ -1421,11 +1559,11 @@ This route is not implemented in the current backend.
 
 ### POST /wallets/fund
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Request Example
 
@@ -1434,6 +1572,10 @@ This route is not implemented in the current backend.
   "amount": 10.12
 }
 ```
+
+#### Response Example
+
+Successful requests return `200 OK` with an empty body.
 
 ---
 
@@ -1513,193 +1655,141 @@ This route is not implemented in the current backend.
 
 ---
 
-### GET /reviews
+### GET /ratings/item/{itemId}
 
-This route is not implemented in the current backend.
+Returns aggregate rating data for an item.
 
-#### Headers
+#### Response Example
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+```json
+{
+  "itemId": 101,
+  "average": 4.5,
+  "total": 2,
+  "distribution": {
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 1,
+    "5": 1
+  }
+}
+```
+
+---
+
+### GET /ratings/user/{itemId}
+
+Returns the authenticated user's rating for an item, if it exists.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Response Example
+
+```json
+{
+  "rating": {
+    "ratingId": 7,
+    "userId": 1,
+    "itemId": 101,
+    "ratingValue": 5,
+    "createdAt": "2026-04-06T20:00:00",
+    "updatedAt": "2026-04-06T20:00:00",
+    "deleted": false
+  }
+}
+```
+
+---
+
+### POST /ratings/{itemId}
+
+Creates a rating for an item using the `value` query parameter.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Query Parameters
 
-| Parameters | Type   | Required | Description                |
-|------------|--------|----------|----------------------------|
-| item_id    | Number | N        | Filters reviews by item    |
-| user_id    | Number | N        | Filters reviews by user    |
-| rating     | Number | N        | Filters review by rating   |
-| page       | Number | N        | Page number for pagination |
-| limit      | Number | N        | Number of reviews per page |
+| Parameter | Type   | Required | Description          |
+|-----------|--------|----------|----------------------|
+| value     | Number | Y        | Rating value from 1-5 |
 
 #### Response Example
 
 ```json
-[
-  {
-    "id": 7001,
-    "item_id": 101,
-    "user_id": 123,
-    "rating": 5,
-    "comment": "Amazing quality!",
-    "created_at": "2026-02-18T21:00:00Z"
-  },
-  {
-    "id": 7002,
-    "item_id": 101,
-    "user_id": 456,
-    "rating": 4,
-    "comment": "Great but a bit pricey.",
-    "created_at": "2026-02-18T21:05:00Z"
+{
+  "rating": {
+    "ratingId": 7,
+    "userId": 1,
+    "itemId": 101,
+    "ratingValue": 5,
+    "createdAt": "2026-04-06T20:00:00",
+    "updatedAt": "2026-04-06T20:00:00",
+    "deleted": false
   }
-]
-```
-
----
-
-### GET /reviews/{review_id}
-
-This route is not implemented in the current backend.
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
-#### Path Parameters
-
-| Parameter | Type   | Required | Description      |
-|-----------|--------|----------|------------------|
-| review_id | Number | Y        | ID of the review |
-
-#### Response Example
-
-```json
-{
-  "id": 7001,
-  "item_id": 101,
-  "user_id": 123,
-  "rating": 5,
-  "comment": "Amazing quality!",
-  "created_at": "2026-02-18T21:00:00Z",
-  "updated_at": "2026-02-18T21:00:00Z"
 }
 ```
 
 ---
 
-### POST /reviews
+### PUT /ratings/{itemId}
 
-This route is not implemented in the current backend.
+Updates the authenticated user's existing rating for an item using the `value` query parameter.
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
-#### Request Body
+#### Query Parameters
 
-| Field   | Type   | Required | Description                   |
-|---------|--------|----------|-------------------------------|
-| item_id | Number | Y        | ID of the item being reviewed |
-| rating  | Number | Y        | Rating value                  |
-| Comment | String | N        | Review text                   |
-
-#### Request Example
-
-```json
-{
-  "item_id": 101,
-  "rating": 5,
-  "comment": "Absolutely loved it!"
-}
-```
+| Parameter | Type   | Required | Description          |
+|-----------|--------|----------|----------------------|
+| value     | Number | Y        | Rating value from 1-5 |
 
 #### Response Example
 
 ```json
 {
-  "id": 7003,
-  "item_id": 101,
-  "user_id": 123,
-  "rating": 5,
-  "comment": "Absolutely loved it!",
-  "created_at": "2026-02-18T21:15:00Z"
+  "rating": {
+    "ratingId": 7,
+    "userId": 1,
+    "itemId": 101,
+    "ratingValue": 4,
+    "createdAt": "2026-04-06T20:00:00",
+    "updatedAt": "2026-04-06T20:30:00",
+    "deleted": false
+  }
 }
 ```
 
 ---
 
-### PUT/PATCH /reviews/{review_id}
+### DELETE /ratings/{itemId}
 
-This route is not implemented in the current backend.
+Deletes the authenticated user's rating for an item.
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
-#### Path Parameters
-
-| Parameter | Type   | Required | Description      |
-|-----------|--------|----------|------------------|
-| review_id | Number | Y        | ID of the review |
-
-#### Request Body
-
-| Field   | Type   | Required | Description      |
-|---------|--------|----------|------------------|
-| rating  | Number | Y        | New rating value |
-| Comment | String | N        | New review text  |
-
-#### Request Example
-
-```json
-{
-  "rating": 4,
-  "comment": "Great!"
-}
-```
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Response Example
 
 ```json
 {
-  "id": 7003,
-  "rating": 4,
-  "comment": "Great!",
-  "updated_at": "2026-02-18T21:30:00Z"
-}
-```
-
----
-
-### DELETE /reviews/{review_id}
-
-This route is not implemented in the current backend.
-
-#### Headers
-
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
-
-#### Path Parameters
-
-| Parameter | Type   | Required | Description      |
-|-----------|--------|----------|------------------|
-| review_id | Number | Y        | ID of the review |
-
-#### Response Example
-
-```json
-{
-  "message": "Review successfully deleted",
-  "deleted": true
+  "message": "Rating removed",
+  "itemId": 101
 }
 ```
 
@@ -2029,13 +2119,13 @@ Returns the stored profile for the given user ID.
 
 ### GET /daily
 
-Returns the status of the user's daily reward at the current moment
+Returns the current authenticated user's daily reward status.
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   |
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
 
 #### Response Example
 
@@ -2043,7 +2133,7 @@ Returns the status of the user's daily reward at the current moment
 {
   "status": {
     "streak": 10,
-    "next_reward_amount": 12,
+    "nextReward": 12.0,
     "claimed": false
   }
 }
@@ -2053,10 +2143,172 @@ Returns the status of the user's daily reward at the current moment
 
 ### GET /daily/claim
 
-Claims daily reward if possible
+Claims the current daily reward if the user is eligible.
 
-#### Headers
+#### Headers & Cookies
 
-| Header        | Value                   | 
-|---------------|-------------------------|
-| Authorization | Bearer `<access_token>` |
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+Successful requests return `200 OK` with an empty body.
+
+#### Error Response Example
+
+```json
+{
+  "error": "Daily reward has already been claimed today"
+}
+```
+
+---
+
+### GET /ads/start
+
+Starts an authenticated ad session and returns the server-authoritative session data.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Response Example
+
+```json
+{
+  "session": {
+    "sessionId": "81d1f59d-7ed8-4b9b-9f77-123456789abc",
+    "title": "Synapse Data Analytics",
+    "durationSeconds": 8,
+    "rewardAmount": 5.0,
+    "videoUrl": "ads/synapse_ad.mp4"
+  }
+}
+```
+
+---
+
+### POST /ads/claim
+
+Claims the reward for a completed ad session.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Request Body
+
+| Field     | Type   | Required | Description            |
+|-----------|--------|----------|------------------------|
+| sessionId | String | Y        | Active ad session ID   |
+
+#### Request Example
+
+```json
+{
+  "sessionId": "81d1f59d-7ed8-4b9b-9f77-123456789abc"
+}
+```
+
+#### Response Example
+
+```json
+{
+  "message": "Reward claimed successfully!",
+  "rewardAmount": 5.0
+}
+```
+
+---
+
+### POST /slots/spin
+
+Spins the authenticated user's slot machine wager.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Request Body
+
+| Field | Type   | Required | Description       |
+|-------|--------|----------|-------------------|
+| wager | Number | Y        | Slot wager amount |
+
+#### Request Example
+
+```json
+{
+  "wager": 2.50
+}
+```
+
+#### Response Example
+
+```json
+{
+  "spin": {
+    "reels": ["CHERRY", "CHERRY", "CHERRY"],
+    "wager": 2.50,
+    "payout": 7.50,
+    "netChange": 5.00,
+    "balance": 22.50,
+    "won": true,
+    "message": "Three CHERRY symbols! Payout awarded."
+  }
+}
+```
+
+---
+
+### POST /roulette/spin
+
+Spins the authenticated user's roulette wager.
+
+#### Headers & Cookies
+
+| Type   | Name  | Value         |
+|--------|-------|---------------|
+| Cookie | `jwt` | `<jwt_token>` |
+
+#### Request Body
+
+| Field    | Type   | Required | Description                       |
+|----------|--------|----------|-----------------------------------|
+| wager    | Number | Y        | Roulette wager amount             |
+| betType  | String | Y        | Bet category such as `COLOR`      |
+| betValue | String | Y        | Bet selection such as `RED`       |
+
+#### Request Example
+
+```json
+{
+  "wager": 2.50,
+  "betType": "COLOR",
+  "betValue": "RED"
+}
+```
+
+#### Response Example
+
+```json
+{
+  "spin": {
+    "winningNumber": 7,
+    "winningColor": "RED",
+    "betType": "COLOR",
+    "betValue": "RED",
+    "wager": 2.50,
+    "payout": 5.00,
+    "netChange": 2.50,
+    "balance": 25.00,
+    "won": true,
+    "message": "Winning color matched."
+  }
+}
+```

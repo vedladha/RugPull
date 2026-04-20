@@ -1,16 +1,32 @@
-# React + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend is a React 19 + Vite 7 application for the $RPC marketplace.
 
-Currently, two official plugins are available:
+## Main Routes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `/` landing page
+- `/login` and `/signup` authentication page
+- `/listings` marketplace listings
+- `/sell` item creation flow
+- `/profile` profile management
+- `/wishlist` wishlist page
+- `/cart` shopping cart
+- `/order` order checkout flow
+- `/history` order history
+- `/earn` daily reward, ads, wallet funding, slot machine, and roulette
 
-## React Compiler
+## Auth And API Usage
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Authentication uses the backend's HTTP-only `jwt` cookie flow
+- Shared auth, profile, wallet, wishlist, and ratings helpers live in `src/Auth/AuthContext.jsx`
+- The frontend talks to the backend at `http://localhost:3001`
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+npm test
+```
