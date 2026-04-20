@@ -56,13 +56,19 @@ public class AuthController {
    * @return response containing the user's email and display name, or an error status
    */
   @PostMapping("/register")
-  public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
+  public ResponseEntity<?> register(@RequestBody Map<String, String> body,
+                                    HttpServletResponse response) {
     String displayName = body.get("displayName");
     String email = body.get("email");
     String password = body.get("password");
 
     try {
       UserRegisteredEvent user = authService.registerWithWallet(displayName, email, password);
+      String token = jwtUtil.generateToken(user.email());
+
+      response.addHeader(HttpHeaders.SET_COOKIE,
+          buildJwtCookie(token, JWT_COOKIE_MAX_AGE_SECONDS).toString());
+
       return ResponseEntity.ok(
           Map.of("email", user.email(), "displayName", user.userProfile().getDisplayName()));
     } catch (edu.wisc.t32.exception.WalletProvisioningException e) {
