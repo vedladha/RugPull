@@ -5,12 +5,14 @@ import { useAuth } from "./Auth/auth-context";
 import SignInPrompt from "./Components/SignInPrompt";
 
 export default function ProfilePage() {
-    const { user, userBalance, profileDetails, updateProfile, changePassword } = useAuth();
+    const HEDERA_LINK = "https://hashscan.io/testnet/account/"
+    const { user, userBalance, profileDetails, updateProfile, changePassword, getWalletInfo } = useAuth();
     const navigate = useNavigate();
-    
+
     const [displayName, setDisplayName] = useState("");
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
+    const [walletAddress, setWalletAddress] = useState("")
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,7 +23,7 @@ export default function ProfilePage() {
     // Load user data on component mount
     useEffect(() => {
         if (!user) return;
-        
+
         profileDetails()
             .then((fetchedDetails) => {
                 const profileData = fetchedDetails.profile;
@@ -30,7 +32,13 @@ export default function ProfilePage() {
                 setDisplayName(profileData.displayName || "");
                 setBio(profileData.bio || "");
             });
-    }, [user, profileDetails]);
+
+        getWalletInfo().then((fetchedDetails) => {
+            const walletData = fetchedDetails.wallet;
+
+            setWalletAddress(walletData.accountId);
+        });
+    }, [user, profileDetails, getWalletInfo]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -76,6 +84,10 @@ export default function ProfilePage() {
         }
     };
 
+    const handleWalletIdClick = async () => {
+        window.open(HEDERA_LINK + walletAddress, '_blank').focus()
+    }
+
     if (!user) {
         return (
             <SignInPrompt
@@ -95,7 +107,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="profile-content">
-                
+
                 {/* --- Notifications --- */}
                 {error && (
                     <div className="message-banner error-banner">
@@ -119,8 +131,14 @@ export default function ProfilePage() {
                                 {userBalance !== null ? `${Number(userBalance).toFixed(2)} RPC` : "Loading..."}
                             </span>
                         </div>
+                        <div className="detail-item" onClick={handleWalletIdClick} style={{ cursor: 'pointer' }}>
+                            <span className="detail-label">Wallet ID</span>
+                            <span className="detail-value highlight">
+                                {walletAddress !== null ? walletAddress : "Loading...."}
+                            </span>
+                        </div>
                     </div>
-                    
+
                     <div className="profile-history-section">
                         <h3>Order History</h3>
                         <p>Review your past purchases, track recent orders, and check your transaction history.</p>
@@ -169,7 +187,7 @@ export default function ProfilePage() {
                         <div className="password-section">
                             <h3>Change Password</h3>
                             <p>Leave blank if you do not wish to change your password.</p>
-                            
+
                             <div className="form-group">
                                 <label className="form-label">Current Password</label>
                                 <input

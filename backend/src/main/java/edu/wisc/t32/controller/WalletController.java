@@ -57,11 +57,11 @@ public class WalletController {
    *              missing
    * @return a {@link ResponseEntity} containing:
    *        <ul>
-   *        <li>{@code 200 OK} with the balance (float) if successful</li>
-   *        <li>{@code 401 UNAUTHORIZED} with an error map if the token is invalid or missing</li>
-   *        <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if
-   *            the user has no associated wallet</li>
-   *        </ul>
+   *         <li>{@code 200 OK} with the balance (float) if successful</li>
+   *         <li>{@code 401 UNAUTHORIZED} with an error map if the token is invalid or missing</li>
+   *         <li>{@code 500 INTERNAL_SERVER_ERROR} with an error map if
+   *             the user has no associated wallet</li>
+   *         </ul>
    */
   @GetMapping
   public ResponseEntity<?> getWalletBalance(
@@ -82,6 +82,37 @@ public class WalletController {
 
     float balance = this.walletService.getWalletBalance(wallet.get());
     return ResponseEntity.ok(balance);
+  }
+
+  /**
+   * Gets basic crytpo account info.
+   *
+   * @param token the token
+   * @return the response
+   */
+  @GetMapping("/me")
+  public ResponseEntity<?> getMyInfo(@CookieValue(name = "jwt", required = false) String token) {
+    final Optional<User> user = currentUserService.getAuthenticatedUser(token);
+    if (user.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required"));
+    }
+
+    final Optional<UserWallet> wallet = userWalletRepository.findUserWalletByUserId(
+        user.get().getUserId());
+    if (wallet.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "Internal service error fetching wallet"));
+    }
+
+    final UserWallet actualWallet = wallet.get();
+
+    return ResponseEntity.ok(
+        Map.of("wallet", Map.of(
+                "accountId", actualWallet.getWalletAddress()
+            )
+        )
+    );
   }
 
   /**
