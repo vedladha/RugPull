@@ -7,6 +7,7 @@ import ProfilePage from "../ProfilePage.jsx"; // Adjust path as needed
 const mockUpdateProfile = vi.fn();
 const mockChangePassword = vi.fn();
 const mockProfileDetails = vi.fn();
+const mockGetWalletInfo = vi.fn();
 const mockUseAuth = vi.fn();
 const mockNavigate = vi.fn();
 
@@ -43,6 +44,7 @@ describe("ProfilePage", () => {
             profileDetails: mockProfileDetails,
             updateProfile: mockUpdateProfile,
             changePassword: mockChangePassword,
+            getWalletInfo: mockGetWalletInfo,
         });
 
         mockProfileDetails.mockResolvedValue({
@@ -51,6 +53,12 @@ describe("ProfilePage", () => {
                 bio: "This is my bio",
             },
         });
+
+        mockGetWalletInfo.mockResolvedValue({
+            wallet: {
+                accountId: "1.1.1.1"
+            }
+        })
 
         // JSDOM doesn't implement window.scrollTo, so we must mock it to prevent crashes on save
         window.scrollTo = vi.fn();

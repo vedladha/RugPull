@@ -18,6 +18,7 @@ beforeEach(() => {
         updateProfile: vi.fn(),
         getWishlistItems: vi.fn().mockResolvedValue([]),
         removeFromWishlist: vi.fn(),
+        getWalletInfo: vi.fn().mockResolvedValue({ wallet: { accountId: "1.1.1.1" } }),
     });
 
     // Stub window.scrollTo since JSDOM doesn't implement a real window
@@ -102,6 +103,7 @@ describe("App", () => {
             walletBalance: vi.fn().mockResolvedValue(-999.99),
             getWishlistItems: vi.fn().mockResolvedValue([]),
             removeFromWishlist: vi.fn(),
+            getWalletInfo: vi.fn().mockResolvedValue({ wallet: { accountId: "1.1.1.1" } })
         });
 
         renderApp("/profile");

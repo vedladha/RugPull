@@ -279,6 +279,20 @@ export function AuthProvider({ children }) {
     return response.json();
   }
 
+  async function getWalletInfo() {
+    const response = await fetch(`${API}/wallets/me`, {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch wallet info")
+    }
+    
+    return response.json();
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -299,6 +313,7 @@ export function AuthProvider({ children }) {
       updateRating,
       deleteRating,
       register,
+      getWalletInfo,
       loading
     }}>
       {children}
